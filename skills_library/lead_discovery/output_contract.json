@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "selection_reason": {
+      "type": "string",
+      "description": "2-3 sentences on why this candidate ranked highest"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": ["selection_reason", "confidence"]
+}

@@ -1,0 +1,42 @@
+rule_group: ranking
+description: >
+  Deterministic candidate scoring, reusing the same weighted-band engine as
+  Lead Qualification's category scores (agent_platform/skills/rules_engine.py
+  score_category) — a discovery_score is just another weighted average of
+  banded factors. Boolean fields (gst_active) work with the same band
+  comparison because True/False behave as 1/0 in Python.
+
+factors:
+  - id: TURNOVER_GROWTH
+    field: financials.turnover_growth_pct
+    weight: 0.35
+    bands:
+      - {min: 15, score: 100}
+      - {min: 5, score: 75}
+      - {min: 0, score: 50}
+      - {min: -100, score: 20}
+
+  - id: VINTAGE
+    field: business_vintage_years
+    weight: 0.20
+    bands:
+      - {min: 5, score: 100}
+      - {min: 3, score: 75}
+      - {min: 1, score: 50}
+      - {min: -100, score: 10}
+
+  - id: GST_ACTIVE
+    field: gst_active
+    weight: 0.20
+    bands:
+      - {min: 1, score: 100}
+      - {min: 0, score: 30}
+
+  - id: CASH_HEALTH
+    field: financials.monthly_avg_balance_lakhs
+    weight: 0.25
+    bands:
+      - {min: 10, score: 100}
+      - {min: 5, score: 70}
+      - {min: 2, score: 40}
+      - {min: -100, score: 10}

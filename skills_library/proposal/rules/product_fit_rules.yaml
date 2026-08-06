@@ -1,0 +1,66 @@
+rule_group: product_fit
+description: >
+  Ranks products AMONG the already-eligible set qualification produced
+  (proposal_stages.select_products filters the catalog to
+  eligible_products before calling rules_engine.evaluate_products — these
+  `when` conditions are a ranking tie-breaker among eligible products, not
+  a second eligibility gate). Reuses the exact same generic engine as Lead
+  Qualification's product_fit.yaml, with a richer per-product catalog
+  (key_benefits, required_documents) that a real proposal needs and a
+  qualification decision doesn't.
+
+products:
+  - id: WORKING_CAPITAL_OD
+    name: Working Capital Overdraft
+    reason: "Revolving facility that matches day-to-day working-capital needs."
+    key_benefits:
+      - "Flexible drawdown up to the sanctioned limit"
+      - "Interest charged only on the amount utilized"
+      - "Renewable annually with the banking relationship"
+    required_documents:
+      - "Last 2 years GST returns"
+      - "6 months bank statements"
+      - "Latest financial statements"
+    when:
+      - {field: qualification.composite_score, operator: gte, value: 55}
+
+  - id: TERM_LOAN_EXPANSION
+    name: Term Loan (Business Expansion)
+    reason: "Structured financing for expansion or capex, backed by strong debt-service capacity."
+    key_benefits:
+      - "Fixed EMI for predictable cash-flow planning"
+      - "Longer tenure than a working-capital facility"
+      - "Competitive pricing for well-rated borrowers"
+    required_documents:
+      - "Business expansion / project plan"
+      - "Last 3 years financial statements"
+      - "Collateral or security documents"
+    when:
+      - {field: qualification.composite_score, operator: gte, value: 75}
+      - {field: lead.financials.dscr, operator: gte, value: 1.25}
+
+  - id: TRADE_FINANCE
+    name: Trade Finance Facility
+    reason: "Supports import/export or intermediary trade cash-flow cycles."
+    key_benefits:
+      - "Bridges the gap between shipment and payment"
+      - "Supports letter-of-credit and bank-guarantee needs"
+      - "Scales with trade volume"
+    required_documents:
+      - "Trade contracts / purchase orders"
+      - "Import-export code (IEC)"
+      - "Last 2 years GST returns"
+    when:
+      - {field: lead.industry, operator: in, value: [manufacturing, trading, import_export]}
+
+  - id: CURRENT_ACCOUNT_ONLY
+    name: Current Account Relationship
+    reason: "Minimum-viable banking relationship pending further qualification."
+    key_benefits:
+      - "No-frills operating account"
+      - "Fast to set up"
+      - "Foundation for future credit products"
+    required_documents:
+      - "KYC documents"
+      - "Proof of business registration"
+    when: []

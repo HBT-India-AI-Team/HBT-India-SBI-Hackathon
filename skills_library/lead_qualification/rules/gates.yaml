@@ -1,0 +1,53 @@
+rule_group: gates
+description: >
+  Hard eligibility gates. Every gate is evaluated (nothing short-circuits)
+  so the explanation always shows the full picture; the most severe failure
+  determines the forced decision.
+
+gates:
+  - id: KYC_COMPLETE
+    description: KYC/KYB must be verified before any product discussion
+    field: kyc.status
+    operator: eq
+    value: VERIFIED
+    on_fail:
+      decision: NOT_QUALIFIED
+      reason: "KYC/KYB is not verified"
+
+  - id: NO_SANCTIONS_HIT
+    description: Lead must not appear on a sanctions/watchlist screen
+    field: kyc.sanctions_hit
+    operator: eq
+    value: false
+    on_fail:
+      decision: NOT_QUALIFIED
+      reason: "Sanctions/watchlist hit on KYC screening"
+
+  - id: MIN_VINTAGE
+    description: Business must be at least 1 year old
+    field: lead.business_vintage_years
+    operator: gte
+    value: 1
+    on_fail:
+      decision: NOT_QUALIFIED
+      reason: "Business vintage is below the 1-year minimum"
+
+  - id: NO_BUREAU_DEFAULT
+    description: Lead must not have an active bureau default flag
+    field: bureau.default_flag
+    operator: eq
+    value: false
+    on_fail:
+      decision: NOT_QUALIFIED
+      reason: "Active default flag on credit bureau record"
+
+  - id: BUREAU_SCORE_FLOOR
+    description: >
+      Below this bureau score, automated qualification is not reliable
+      enough to proceed without a human underwriter
+    field: bureau.score
+    operator: gte
+    value: 650
+    on_fail:
+      decision: NEEDS_HUMAN_REVIEW
+      reason: "Bureau score is below the automated-decision floor (650)"

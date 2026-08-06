@@ -1,0 +1,41 @@
+rule_group: product_fit
+description: >
+  Deterministic product matching. A product matches when ALL of its `when`
+  conditions pass; matches are ranked by how many conditions they matched
+  (more specific fit first) and the top 3 are kept. The LLM only explains
+  *why* a matched product fits — it cannot add or remove products.
+
+products:
+  - id: WORKING_CAPITAL_OD
+    name: Working Capital Overdraft
+    reason: >
+      Positive turnover trend and a healthy current ratio support a
+      revolving working-capital facility.
+    when:
+      - {field: financials.turnover_growth_pct, operator: gte, value: 0}
+      - {field: financials.current_ratio, operator: gte, value: 1.0}
+
+  - id: TERM_LOAN_EXPANSION
+    name: Term Loan (Business Expansion)
+    reason: >
+      Strong growth, comfortable debt service coverage, and an established
+      operating history support financing capacity expansion.
+    when:
+      - {field: financials.turnover_growth_pct, operator: gte, value: 15}
+      - {field: financials.dscr, operator: gte, value: 1.25}
+      - {field: lead.business_vintage_years, operator: gte, value: 3}
+
+  - id: TRADE_FINANCE
+    name: Trade Finance Facility
+    reason: >
+      The business's industry involves cross-border or intermediary trade
+      flows that a trade finance facility is built for.
+    when:
+      - {field: lead.industry, operator: in, value: [manufacturing, trading, import_export]}
+
+  - id: CURRENT_ACCOUNT_ONLY
+    name: Current Account Relationship
+    reason: >
+      Minimum-viable banking relationship pending further qualification or
+      additional documentation.
+    when: []

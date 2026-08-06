@@ -1,0 +1,73 @@
+agent_id: lead_qualification
+version: "1.0.0"
+purpose: >
+  Qualify SME/business-banking leads: run hard eligibility gates, score
+  financial health / credit risk / business risk / growth potential,
+  recommend fitting products, and produce an explainable, human-reviewable
+  decision.
+
+skills:
+  - lead_qualification
+
+pipeline:
+  - load_input
+  - gather_evidence
+  - evaluate_rules
+  - reason_llm
+  - validate_output
+  - decide
+  - hitl_gate
+  - explain
+
+capabilities:
+  - name: lead_data.get_lead
+    kind: tool
+  - name: credit_bureau.get_report
+    kind: tool
+  - name: kyc.get_status
+    kind: tool
+
+governance:
+  permissions:
+    - read:lead_profile
+    - read:credit_bureau
+    - read:kyc_status
+  data_scope:
+    - sme_leads
+  hitl_conditions:
+    - low_confidence
+    - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+
+llm:
+  model: gemma4:12b
+  temperature: 0.0
+  seed: 7
+  timeout_seconds: 120
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    lead_id:
+      type: string
+      description: Identifier of the SME lead to qualify (e.g. "SME-1001")
+    evidence:
+      type: object
+      description: >
+        Arbitrary evidence dict, used in place of the fixture lookup. One
+        of lead_id or evidence is required (enforced by gather_evidence,
+        not this schema); if both are given, evidence wins.
+
+output_schema:
+  type: object
+  required: [outcome, reason, composite_score]
+  properties:
+    outcome:
+      type: string
+      enum: [QUALIFIED, CONDITIONALLY_QUALIFIED, NEEDS_HUMAN_REVIEW, NOT_QUALIFIED]
+    reason:
+      type: string
+    composite_score:
+      type: number

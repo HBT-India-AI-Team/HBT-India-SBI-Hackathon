@@ -1,0 +1,14 @@
+skill_id: echo_probe
+version: "1.0.0"
+description: >
+  Placeholder skill for the reusability-proof agent. No rules, no LLM
+  call in its pipeline — exists only to show a second, unrelated skill
+  package loading through the same AgentLoader.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules: {}

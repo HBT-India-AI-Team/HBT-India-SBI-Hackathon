@@ -1,0 +1,1 @@
+Write `customer_proposal`, `next_best_action` and `confidence` using ONLY the facts above. Output must match the provided JSON schema exactly — do not add a product selection, a decision, or any field not in the schema.

@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/* Brand palette lifted from the HBT mark: deep navy hull + gold sun. Navy
+   carries primary actions and active nav state; gold is a sparing accent
+   (logo mark, current-selection glow) — never a second primary color. */
+@theme {
+  --color-brand-50: #eef3fa;
+  --color-brand-100: #d9e6f4;
+  --color-brand-200: #b3cce9;
+  --color-brand-300: #82abd9;
+  --color-brand-400: #5286c4;
+  --color-brand-500: #3268ab;
+  --color-brand-600: #1f4f8c;
+  --color-brand-700: #1a3f70;
+  --color-brand-800: #16345c;
+  --color-brand-900: #122a4a;
+  --color-brand-950: #0a1a30;
+
+  --color-gold-50: #fffaeb;
+  --color-gold-100: #fef0c7;
+  --color-gold-200: #fde08a;
+  --color-gold-300: #fbc94d;
+  --color-gold-400: #f8b524;
+  --color-gold-500: #f0a30c;
+  --color-gold-600: #d18408;
+  --color-gold-700: #a8650a;
+  --color-gold-800: #86500f;
+  --color-gold-900: #6f4210;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+/* CodeMirror should fill whatever container it's placed in. The library's
+   own wrapper div (.cm-theme-*) has no height set, so .cm-editor's
+   height:100% has nothing to resolve against unless we stretch that
+   wrapper too — otherwise the editor collapses to content height and
+   leaves the page background exposed below it. */
+.cm-theme,
+.cm-theme-dark,
+.cm-theme-light {
+  height: 100%;
+}
+
+.cm-editor {
+  height: 100%;
+}

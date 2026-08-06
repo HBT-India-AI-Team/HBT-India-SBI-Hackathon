@@ -1,0 +1,17 @@
+skill_id: mca_lead_qualification
+version: "1.0.0"
+kind: deterministic
+description: >
+  MCA Lead Eligibility Evaluation
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

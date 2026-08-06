@@ -1,0 +1,19 @@
+skill_id: advisor_growth
+version: "1.0.0"
+kind: deterministic
+description: >
+  Growth-potential-focused review — gates on minimum growth rate, scores on
+  growth rate. Use when the request is about growth, expansion, or upside
+  potential rather than risk.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

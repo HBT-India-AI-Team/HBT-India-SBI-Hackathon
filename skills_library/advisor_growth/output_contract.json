@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "summary": { "type": "string", "description": "2-3 sentence overview" },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": { "point": { "type": "string" }, "evidence_key": { "type": "string" } },
+        "required": ["point", "evidence_key"]
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": { "point": { "type": "string" }, "evidence_key": { "type": "string" } },
+        "required": ["point", "evidence_key"]
+      }
+    },
+    "next_best_action": { "type": "string" },
+    "product_rationale": { "type": "object", "additionalProperties": { "type": "string" } },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "required": ["summary", "strengths", "risks", "next_best_action", "product_rationale", "confidence"]
+}

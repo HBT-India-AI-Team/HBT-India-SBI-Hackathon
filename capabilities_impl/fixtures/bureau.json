@@ -1,0 +1,7 @@
+{
+  "SME-1001": {"score": 780, "delinquencies_12m": 0, "default_flag": false},
+  "SME-1002": {"score": 705, "delinquencies_12m": 1, "default_flag": false},
+  "SME-1003": {"score": 630, "delinquencies_12m": 2, "default_flag": false},
+  "SME-1004": {"score": 740, "delinquencies_12m": 0, "default_flag": false},
+  "SME-1005": {"score": 580, "delinquencies_12m": 3, "default_flag": false}
+}

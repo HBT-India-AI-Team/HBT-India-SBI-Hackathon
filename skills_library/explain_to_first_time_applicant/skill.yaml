@@ -1,0 +1,9 @@
+skill_id: explain_to_first_time_applicant
+version: "1.0.0"
+kind: procedural
+description: >
+  How to phrase the rationale for someone applying for the first time —
+  relevant when the request mentions a first-time, new, or prospective
+  applicant.
+
+instructions: instructions.md

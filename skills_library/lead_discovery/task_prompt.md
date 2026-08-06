@@ -1,0 +1,1 @@
+Write `selection_reason` and `confidence` using ONLY the facts above. Output must match the provided JSON schema exactly — do not add a `decision`, a different `selected_lead_id`, or any field not in the schema.

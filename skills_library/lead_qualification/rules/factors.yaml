@@ -1,0 +1,82 @@
+rule_group: factors
+description: >
+  Weighted scoring factors, grouped into categories. Each factor maps a
+  field to a 0-100 score via banded thresholds (highest matching band
+  wins); a category's score is the weighted average of its factors.
+
+categories:
+  financial_health:
+    factors:
+      - id: TURNOVER_TREND
+        field: financials.turnover_growth_pct
+        weight: 0.4
+        bands:
+          - {min: 15, score: 100}
+          - {min: 5, score: 75}
+          - {min: 0, score: 50}
+          - {min: -100, score: 20}
+      - id: CURRENT_RATIO
+        field: financials.current_ratio
+        weight: 0.3
+        bands:
+          - {min: 1.5, score: 100}
+          - {min: 1.2, score: 80}
+          - {min: 1.0, score: 55}
+          - {min: -100, score: 20}
+      - id: CASH_BUFFER
+        field: financials.monthly_avg_balance_lakhs
+        weight: 0.3
+        bands:
+          - {min: 10, score: 100}
+          - {min: 5, score: 70}
+          - {min: 2, score: 40}
+          - {min: -100, score: 10}
+
+  credit_risk:
+    factors:
+      - id: BUREAU_SCORE
+        field: bureau.score
+        weight: 0.5
+        bands:
+          - {min: 750, score: 100}
+          - {min: 700, score: 85}
+          - {min: 650, score: 60}
+          - {min: -100, score: 20}
+      - id: DSCR
+        field: financials.dscr
+        weight: 0.5
+        bands:
+          - {min: 1.5, score: 100}
+          - {min: 1.25, score: 80}
+          - {min: 1.0, score: 55}
+          - {min: -100, score: 20}
+
+  business_risk:
+    factors:
+      - id: VINTAGE
+        field: lead.business_vintage_years
+        weight: 0.4
+        bands:
+          - {min: 5, score: 100}
+          - {min: 3, score: 75}
+          - {min: 1, score: 50}
+          - {min: -100, score: 10}
+      - id: GST_REGULARITY
+        field: kyc.gst_filing_regularity_pct
+        weight: 0.6
+        bands:
+          - {min: 95, score: 100}
+          - {min: 80, score: 70}
+          - {min: 60, score: 40}
+          - {min: -100, score: 10}
+
+  growth_potential:
+    factors:
+      - id: TURNOVER_TREND_GROWTH
+        field: financials.turnover_growth_pct
+        weight: 1.0
+        bands:
+          - {min: 20, score: 100}
+          - {min: 10, score: 80}
+          - {min: 0, score: 50}
+          - {min: -100, score: 10}

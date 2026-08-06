@@ -1,0 +1,19 @@
+skill_id: lead_qualification
+version: "1.0.0"
+description: >
+  SME/business-banking lead qualification: financial health, credit risk,
+  business risk and growth potential scoring, hard eligibility gates, and
+  product-fit recommendation for working capital, term loan, trade finance
+  and current-account relationships.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

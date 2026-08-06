@@ -1,0 +1,73 @@
+agent_id: Financialagent
+version: "1.0.0"
+purpose: >
+  Build a lead qualification agent for SBI's commercial/business banking segment. It qualifies leads from three different signal channels, each with its own separate rules.
+
+  For MCA leads (registered companies): qualify if annual turnover is above 50 lakh and years in business is above 2. Reject if the company has any regulatory red flags.
+
+  For GeM leads (government vendors): qualify if the vendor has completed at least 5 government orders and average order value is above 2 lakh. Reject if the vendor has any cancelled or disputed orders in the last year.
+
+  For GST leads (GST-registered businesses): qualify if monthly GST turnover is above 5 lakh and GST filing compliance is above 90 percent. Reject if GST filings have lapsed for more than 2 consecutive months.
+
+  Recommend one of: working capital loan, GeM vendor financing, or business current account, based on channel and turnover. Every recommendation needs human relationship manager review before contact.
+
+skills:
+  - mca_lead_qualification
+  - gem_lead_qualification
+  - gst_lead_qualification
+
+pipeline:
+  - load_input
+  - gather_evidence
+  - load_skills
+  - evaluate_rules
+  - reason_llm
+  - validate_output
+  - decide
+  - hitl_gate
+  - explain
+
+capabilities: []
+
+governance:
+  hitl_conditions:
+    - low_confidence
+    - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+
+llm:
+  model: gemma4:12b
+  temperature: 0.0
+  seed: 7
+  timeout_seconds: 120
+
+draft: true
+routable: false
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: |
+        Evidence dict evaluated against this agent's generated rules. Expected fields:
+        - annual_turnover (number): Annual turnover in local currency
+        - years_in_business (number): Number of years the company has been in operation
+        - regulatory_red_flags (string): Status of regulatory compliance (e.g., NONE, WARNING)
+        - channel (string): Lead source channel
+        - flagged (boolean): Placeholder — replace with a real field.
+        - score (number): Placeholder — replace with a real field.
+
+output_schema:
+  type: object
+  required: [outcome, reason, composite_score]
+  properties:
+    outcome:
+      type: string
+      enum: [QUALIFIED, CONDITIONALLY_QUALIFIED, NEEDS_HUMAN_REVIEW, NOT_QUALIFIED]
+    reason:
+      type: string
+    composite_score:
+      type: number

@@ -1,0 +1,16 @@
+skill_id: proposal
+version: "1.0.0"
+description: >
+  Product-fit ranking among a lead's already-qualified-eligible products,
+  and a short customer-facing proposal narrative. Never re-derives
+  eligibility — that already happened in Lead Qualification.
+
+instructions: instructions.md
+task_prompt: task_prompt.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  product_fit: rules/product_fit_rules.yaml

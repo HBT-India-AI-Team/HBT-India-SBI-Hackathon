@@ -1,0 +1,17 @@
+skill_id: gem_lead_qualification
+version: "1.0.0"
+kind: deterministic
+description: >
+  Evaluate GeM vendor lead eligibility by checking if the vendor has completed at least 5 government orders with an average value over 2 lakh and no cancelled or disputed orders in the last year; then recommend a product (working capital loan, GeM vendor financing, or business current account) based on channel and turnover, requiring human review before contact.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

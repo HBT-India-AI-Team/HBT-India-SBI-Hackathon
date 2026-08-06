@@ -1,0 +1,12 @@
+skill_id: jht
+version: "1.0.0"
+description: >
+  Describe this skill.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules: {}

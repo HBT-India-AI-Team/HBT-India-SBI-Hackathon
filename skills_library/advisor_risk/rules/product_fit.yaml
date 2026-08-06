@@ -1,0 +1,9 @@
+rule_group: product_fit
+description: >
+  Products fitting a risk-cleared applicant.
+
+products:
+  - id: SECURED_OVERDRAFT
+    name: Secured Overdraft
+    reason: "Low-risk profile suits a secured, revolving credit line"
+    when: []

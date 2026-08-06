@@ -1,0 +1,7 @@
+{
+  "SME-1001": {"status": "VERIFIED", "sanctions_hit": false, "gst_filing_regularity_pct": 98},
+  "SME-1002": {"status": "VERIFIED", "sanctions_hit": false, "gst_filing_regularity_pct": 82},
+  "SME-1003": {"status": "VERIFIED", "sanctions_hit": false, "gst_filing_regularity_pct": 88},
+  "SME-1004": {"status": "VERIFIED", "sanctions_hit": true, "gst_filing_regularity_pct": 90},
+  "SME-1005": {"status": "PENDING", "sanctions_hit": false, "gst_filing_regularity_pct": 55}
+}

@@ -1,0 +1,16 @@
+rule_group: composite
+description: >
+  Combines category scores into a single composite score and defines the
+  decision thresholds. A gate failure (see gates.yaml) overrides these
+  thresholds entirely — the composite score is still computed for
+  transparency even when a gate has already forced the decision.
+
+weights:
+  financial_health: 0.30
+  credit_risk: 0.35
+  business_risk: 0.20
+  growth_potential: 0.15
+
+thresholds:
+  qualified_min: 75
+  conditional_min: 55

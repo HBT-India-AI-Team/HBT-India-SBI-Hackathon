@@ -1,0 +1,13 @@
+rule_group: gates
+description: >
+  Growth-focused eligibility gate: requires a minimum growth signal.
+
+gates:
+  - id: MIN_GROWTH_SIGNAL
+    description: "Growth rate must be at least 5%"
+    field: growth_rate
+    operator: gte
+    value: 5
+    on_fail:
+      decision: NOT_QUALIFIED
+      reason: "Growth rate is below the 5% minimum signal"

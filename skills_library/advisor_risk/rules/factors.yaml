@@ -1,0 +1,15 @@
+rule_group: factors
+description: >
+  Scores credit_score into a risk-profile category.
+
+categories:
+  risk_profile:
+    factors:
+      - id: CREDIT_SCORE_BAND
+        description: "Credit score banded into a 0-100 risk-profile score"
+        field: credit_score
+        weight: 1.0
+        bands:
+          - {min: 750, score: 100}
+          - {min: 650, score: 65}
+          - {min: 0, score: 30}

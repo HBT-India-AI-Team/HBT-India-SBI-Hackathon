@@ -1,0 +1,33 @@
+skill_id: finance_analysis
+version: "1.0.0"
+kind: deterministic
+description: >
+  Build a finance-analysis agent that evaluates SME loan applications.
+
+  The agent should accept annual revenue, monthly cash flow, existing monthly debt payments, requested loan amount, credit score, years in business, collateral value, and whether the applicant has an active default.
+
+  Automatically reject applicants with an active default, a credit score below 550, or negative monthly cash flow.
+
+  For all other applicants, calculate the debt-service ratio and assign a risk score from 0 to 100 using credit score, cash flow, existing debt, business age, and collateral coverage.
+
+  Classify applications as:
+
+  * Low risk: 75-100
+  * Medium risk: 50-74
+  * High risk: below 50
+
+  Approve low-risk applications, send medium-risk applications for manual review, and reject high-risk applications. Never approve a loan larger than 25 percent of annual revenue.
+
+  Return the decision, risk score, triggered rules, calculation breakdown, major risk factors, and a short explanation.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

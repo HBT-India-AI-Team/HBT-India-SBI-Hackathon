@@ -1,0 +1,13 @@
+rule_group: gates
+description: >
+  Risk-focused eligibility gate: rejects outright if debt ratio is too high.
+
+gates:
+  - id: ACCEPTABLE_DEBT_RATIO
+    description: "Debt ratio must be below 0.6"
+    field: debt_ratio
+    operator: lt
+    value: 0.6
+    on_fail:
+      decision: NOT_QUALIFIED
+      reason: "Debt ratio is at or above the 0.6 risk ceiling"

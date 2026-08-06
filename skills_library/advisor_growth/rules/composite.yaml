@@ -1,0 +1,10 @@
+rule_group: composite
+description: >
+  Single-category composite driven entirely by growth_profile.
+
+weights:
+  growth_profile: 1.0
+
+thresholds:
+  qualified_min: 75
+  conditional_min: 50

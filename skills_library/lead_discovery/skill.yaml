@@ -1,0 +1,17 @@
+skill_id: lead_discovery
+version: "1.0.0"
+description: >
+  SME lead discovery: search a controlled demo lead pool by industry,
+  location and business need, deterministically rank candidates on
+  business signals, and select the strongest one to hand off to
+  qualification.
+
+instructions: instructions.md
+task_prompt: task_prompt.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  ranking: rules/ranking_rules.yaml

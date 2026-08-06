@@ -1,0 +1,18 @@
+skill_id: advisor_risk
+version: "1.0.0"
+kind: deterministic
+description: >
+  Debt/credit-risk-focused review — gates on debt ratio, scores on credit
+  score. Use when the request is about risk, debt, or default exposure.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

@@ -1,0 +1,15 @@
+rule_group: factors
+description: >
+  Scores growth_rate into a growth-profile category.
+
+categories:
+  growth_profile:
+    factors:
+      - id: GROWTH_RATE_BAND
+        description: "Growth rate (%) banded into a 0-100 growth-profile score"
+        field: growth_rate
+        weight: 1.0
+        bands:
+          - {min: 20, score: 100}
+          - {min: 10, score: 65}
+          - {min: 0, score: 30}

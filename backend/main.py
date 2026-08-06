@@ -1,0 +1,150 @@
+"""FastAPI surface over the Skill-Driven Agent Runtime. Thin by design: it
+does input validation and HTTP shaping, then delegates to
+agent_platform.runtime.executor.invoke_agent — the same function cli.py
+calls. Adding a future agent means adding YAML/Markdown under agents/ and
+skills_library/; this file needs no changes, since every route is already
+generic over agent_id.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent / ".env")
+
+import capabilities_impl  # noqa: E402,F401  (registers mock tools)
+from agent_platform.composition import list_agents, load_agent  # noqa: E402
+from agent_platform.runtime.executor import invoke_agent  # noqa: E402
+from agent_platform.state import get_run, list_runs  # noqa: E402
+from agent_platform.workflows import list_workflows, run_workflow  # noqa: E402
+
+from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+from . import admin  # noqa: E402
+
+app = FastAPI(
+    title="Reusable Agent Runtime",
+    description="Skill-driven agent runtime demo — Lead Discovery, Lead Qualification and Proposal agents",
+    version="1.0.0",
+)
+
+# Vite dev server runs on a different origin during development; the built
+# frontend (served as static files below) is same-origin and doesn't need this.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5174", "http://127.0.0.1:5174",
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(admin.router)
+
+
+@app.get("/healthz")
+def healthz() -> dict:
+    return {"status": "ok"}
+
+
+@app.get("/agents")
+def get_agents() -> dict:
+    return {"agents": list_agents()}
+
+
+@app.get("/agents/{agent_id}")
+def get_agent(agent_id: str) -> dict:
+    try:
+        bundle = load_agent(agent_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+    return {
+        "agent_id": bundle.definition.agent_id,
+        "version": bundle.definition.version,
+        "purpose": bundle.definition.purpose,
+        "skills": bundle.definition.skills,
+        "pipeline": bundle.definition.pipeline,
+        "capabilities": [c.name for c in bundle.definition.capabilities],
+        "governance": bundle.definition.governance.model_dump(),
+    }
+
+
+@app.post("/agents/{agent_id}/invoke")
+def invoke(agent_id: str, request: dict[str, Any]) -> dict:
+    """Body is the agent's raw input as-is (e.g. {"lead_id": "SME-1001"} for
+    lead_qualification, {"industry": ..., "location": ...} for
+    lead_discovery) — generic over any agent's input_schema. An optional
+    `correlation_id` key is pulled out rather than passed through.
+    """
+    request = dict(request)
+    correlation_id = request.pop("correlation_id", None)
+    try:
+        ctx = invoke_agent(agent_id, raw_input=request, correlation_id=correlation_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+
+    return {
+        "run_id": ctx.run_id,
+        "outcome": (ctx.decision or {}).get("outcome"),
+        "decision": ctx.decision,
+        "hitl": ctx.hitl,
+        "error": ctx.error,
+    }
+
+
+@app.get("/workflows")
+def get_workflows() -> dict:
+    return {"workflows": list_workflows()}
+
+
+@app.post("/workflows/{workflow_id}/invoke")
+def invoke_workflow(workflow_id: str, request: dict[str, Any]) -> dict:
+    request = dict(request)
+    correlation_id = request.pop("correlation_id", None)
+    try:
+        return run_workflow(workflow_id, request, correlation_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Unknown workflow_id '{workflow_id}'")
+
+
+@app.get("/runs")
+def get_runs(limit: int = 50) -> dict:
+    return {"runs": list_runs(limit=limit)}
+
+
+@app.get("/runs/{run_id}")
+def get_run_detail(run_id: str) -> dict:
+    record = get_run(run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'")
+    return record
+
+
+@app.get("/runs/{run_id}/explanation")
+def get_run_explanation(run_id: str) -> dict:
+    record = get_run(run_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'")
+    if record.get("explanation") is None:
+        raise HTTPException(status_code=404, detail=f"Run '{run_id}' has no explanation")
+    return record["explanation"]
+
+
+# Serves the built React editor UI (`npm run build` in frontend/) once it
+# exists. Must be mounted last — Starlette tries every route above first,
+# so this only ever catches paths none of the API routes matched. During
+# active frontend development, run the Vite dev server instead (it talks to
+# this API via CORS) and this mount is simply unused.
+_FRONTEND_DIST = REPO_ROOT / "frontend" / "dist"
+if _FRONTEND_DIST.exists():
+    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")

@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "customer_proposal": {
+      "type": "string",
+      "description": "short customer-facing proposal paragraph, 4-6 sentences"
+    },
+    "next_best_action": {
+      "type": "string",
+      "description": "one concrete action for the relationship manager"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": ["customer_proposal", "next_best_action", "confidence"]
+}

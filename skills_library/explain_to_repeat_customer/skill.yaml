@@ -1,0 +1,9 @@
+skill_id: explain_to_repeat_customer
+version: "1.0.0"
+kind: procedural
+description: >
+  How to phrase the rationale for an existing, returning customer —
+  relevant when the request mentions a repeat, existing, or returning
+  customer.
+
+instructions: instructions.md

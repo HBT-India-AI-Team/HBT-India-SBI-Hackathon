@@ -1,0 +1,53 @@
+agent_id: lead_discovery
+version: "1.0.0"
+purpose: >
+  Search a controlled SME lead pool by industry, location and business
+  need; deterministically rank candidates on business signals; select the
+  strongest one and explain why.
+
+skills:
+  - lead_discovery
+
+pipeline:
+  - load_input
+  - search_leads
+  - rank_leads
+  - reason_llm
+  - validate_output
+  - explain
+
+capabilities:
+  - name: lead_discovery.search_leads
+    kind: tool
+
+governance:
+  permissions:
+    - read:lead_pool
+  data_scope:
+    - sme_leads
+  hitl_conditions: []
+  confidence_threshold: 0.5
+  max_llm_retries: 1
+
+llm:
+  model: gemma4:12b
+  temperature: 0.0
+  seed: 7
+  timeout_seconds: 120
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    industry: {type: string}
+    location: {type: string}
+    business_need: {type: string}
+    minimum_turnover: {type: number}
+    limit: {type: integer, description: "max ranked leads to return, default 3"}
+
+output_schema:
+  type: object
+  required: [selected_lead_id, ranked_leads]
+  properties:
+    selected_lead_id: {type: string}
+    ranked_leads: {type: array}

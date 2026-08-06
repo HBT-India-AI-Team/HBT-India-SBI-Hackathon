@@ -1,0 +1,5 @@
+{
+  "type": "object",
+  "properties": {},
+  "description": "Unused by this agent's pipeline (no reason_llm stage); present because SkillPackage requires an output_contract file."
+}

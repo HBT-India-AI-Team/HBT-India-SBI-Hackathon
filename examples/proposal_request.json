@@ -1,0 +1,17 @@
+{
+  "lead": {
+    "business_name": "Anand Precision Tools Pvt Ltd",
+    "industry": "manufacturing",
+    "business_vintage_years": 6,
+    "financials": {
+      "dscr": 1.55,
+      "current_ratio": 1.6
+    }
+  },
+  "qualification_result": {
+    "outcome": "QUALIFIED",
+    "reason": "Composite score 97.0 meets the qualified threshold (75)",
+    "composite_score": 97.0
+  },
+  "eligible_products": ["WORKING_CAPITAL_OD", "TERM_LOAN_EXPANSION", "TRADE_FINANCE"]
+}
