@@ -25,11 +25,11 @@ from agent_platform.runtime.executor import invoke_agent  # noqa: E402
 from agent_platform.state import get_run, list_runs  # noqa: E402
 from agent_platform.workflows import list_workflows, run_workflow  # noqa: E402
 
-from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi import FastAPI, Header, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from . import admin  # noqa: E402
+from . import admin, api_keys  # noqa: E402
 
 app = FastAPI(
     title="Reusable Agent Runtime",
@@ -80,12 +80,19 @@ def get_agent(agent_id: str) -> dict:
 
 
 @app.post("/agents/{agent_id}/invoke")
-def invoke(agent_id: str, request: dict[str, Any]) -> dict:
+def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Header(default=None)) -> dict:
     """Body is the agent's raw input as-is (e.g. {"lead_id": "SME-1001"} for
     lead_qualification, {"industry": ..., "location": ...} for
     lead_discovery) — generic over any agent's input_schema. An optional
     `correlation_id` key is pulled out rather than passed through.
+
+    Requires the agent's own API key in the X-API-Key header — this is the
+    endpoint a client's own site calls once an agent is created and its key
+    handed out via the admin UI.
     """
+    if not api_keys.is_valid(agent_id, x_api_key):
+        raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key for this agent")
+
     request = dict(request)
     correlation_id = request.pop("correlation_id", None)
     try:

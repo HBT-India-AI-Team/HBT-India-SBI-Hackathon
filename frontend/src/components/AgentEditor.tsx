@@ -6,11 +6,12 @@ import { ReferencePanel } from './ReferencePanel'
 import { YamlPreview } from './YamlPreview'
 import { ConfirmDialog } from './ConfirmDialog'
 import { AddSkillModal } from './AddSkillModal'
+import { IntegratePanel } from './IntegratePanel'
 import { Badge, Button, DangerIconButton, SegmentedControl, Skeleton, TextInput, TrashIcon } from './ui'
 import { api, ApiRequestError } from '../api'
 import type { AgentFiles, AgentSummary, Capability, TemplateSummary } from '../types'
 
-type TopTab = 'files' | 'playground' | 'reference'
+type TopTab = 'files' | 'playground' | 'reference' | 'integrate'
 type FileViewMode = 'raw' | 'preview'
 
 interface FileTab {
@@ -279,7 +280,7 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
     <div className="flex flex-col h-full bg-white">
       <div className="flex items-center justify-between border-b border-neutral-200 px-4">
         <div className="flex gap-1">
-          {(['files', 'playground', 'reference'] as TopTab[]).map((tab) => (
+          {(['files', 'playground', 'integrate', 'reference'] as TopTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setTopTab(tab)}
@@ -289,7 +290,7 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
                   : 'border-transparent text-neutral-500 hover:text-neutral-700'
               }`}
             >
-              {tab === 'playground' ? 'Playground' : tab}
+              {tab === 'playground' ? 'Playground' : tab === 'integrate' ? 'Integrate' : tab}
             </button>
           ))}
         </div>
@@ -433,6 +434,15 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
         {topTab === 'playground' && (
           <div className="h-full p-4 bg-neutral-50">
             <Playground agents={agents} lockedAgentId={agentId} />
+          </div>
+        )}
+
+        {topTab === 'integrate' && (
+          <div className="h-full p-4 bg-neutral-50 overflow-y-auto">
+            <IntegratePanel
+              agentId={agentId}
+              inputSchema={agents.find((a) => a.agent_id === agentId)?.input_schema}
+            />
           </div>
         )}
 

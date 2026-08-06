@@ -29,6 +29,11 @@ export interface GeneratedSkillSummary {
   used_fallback: boolean
 }
 
+export interface ApiKeyResult {
+  agent_id: string
+  api_key: string
+}
+
 export interface GenerateAgentResult {
   status: 'ok' | 'saved_with_errors' | 'error'
   agent_id: string

@@ -35,7 +35,7 @@ from agent_platform.explainability import decision_record
 from agent_platform.runtime.executor import invoke_agent
 from agent_platform.runtime.pipeline import STAGE_REGISTRY
 
-from . import agent_builder, agent_templates
+from . import agent_builder, agent_templates, api_keys
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -319,6 +319,7 @@ def create_agent(payload: NewAgentPayload) -> dict:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding="utf-8")
 
+    api_keys.get_or_create_key(agent_id)
     return {"status": "created", "agent_id": agent_id, "skill_id": skill_id, "template_id": template.id}
 
 
@@ -390,6 +391,7 @@ def generate_agent(payload: GenerateAgentPayload) -> dict:
             "used_fallback": used_fallback, "attempts": attempts, "skills": skills_summary,
         }
 
+    api_keys.get_or_create_key(agent_id)
     return {
         "status": "ok", "agent_id": agent_id, "skill_id": skill_id,
         "used_fallback": used_fallback, "attempts": attempts, "skills": skills_summary,
@@ -481,6 +483,7 @@ def _generate_agent_events(agent_id: str, purpose: str):
         }})
         return
 
+    api_keys.get_or_create_key(agent_id)
     yield _sse({"step": "validate", "status": "done"})
     yield _sse({"step": "final", "result": {
         "status": "ok", "agent_id": agent_id, "skill_id": skill_id,
@@ -564,7 +567,29 @@ def delete_agent(agent_id: str) -> dict:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
     shutil.rmtree(agent_dir)
     evict(agent_id)
+    api_keys.delete_key(agent_id)
     return {"status": "deleted", "agent_id": agent_id}
+
+
+@router.get("/agents/{agent_id}/api-key")
+def get_agent_api_key(agent_id: str) -> dict:
+    """Returns the key a client uses to call POST /agents/{agent_id}/invoke
+    (the public, non-admin endpoint). Created on first request if this
+    agent predates API keys.
+    """
+    if not _agent_yaml_path(agent_id).exists():
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+    return {"agent_id": agent_id, "api_key": api_keys.get_or_create_key(agent_id)}
+
+
+@router.post("/agents/{agent_id}/api-key/regenerate")
+def regenerate_agent_api_key(agent_id: str) -> dict:
+    """Invalidates the old key immediately — any site already using it stops
+    working until it's updated with the new one.
+    """
+    if not _agent_yaml_path(agent_id).exists():
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+    return {"agent_id": agent_id, "api_key": api_keys.regenerate_key(agent_id)}
 
 
 def _reload_after_skill_change(agent_id: str, skill_id: str) -> dict:

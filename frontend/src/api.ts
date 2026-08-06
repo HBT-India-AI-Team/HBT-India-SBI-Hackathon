@@ -3,6 +3,7 @@ import type {
   AgentFiles,
   AgentRouterResult,
   AgentSummary,
+  ApiKeyResult,
   Capability,
   GenerateAgentEvent,
   GenerateAgentResult,
@@ -67,6 +68,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ agent_id: agentId, skill_id: skillId, purpose, template_id: templateId }),
     }),
+
+  getApiKey: (agentId: string) => apiFetch<ApiKeyResult>(`/admin/agents/${agentId}/api-key`),
+
+  regenerateApiKey: (agentId: string) =>
+    apiFetch<ApiKeyResult>(`/admin/agents/${agentId}/api-key/regenerate`, { method: 'POST' }),
 
   deleteAgent: (agentId: string) =>
     apiFetch<{ status: string; agent_id: string }>(`/admin/agents/${agentId}`, { method: 'DELETE' }),
