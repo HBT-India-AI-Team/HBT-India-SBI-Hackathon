@@ -264,9 +264,18 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
       const result = await api.refineAgent(agentId, refineFeedback.trim())
       await refetchFiles()
       onSaved()
+      const failed = result.skills?.filter((s) => !s.ok) ?? []
       if (result.status === 'ok') {
         setRefineFeedback('')
-        setSaveMessage({ kind: 'ok', text: 'Applied your feedback — review the updated rules.' })
+        const scope = result.skills && result.skills.length > 1 ? ` across all ${result.skills.length} skills` : ''
+        setSaveMessage({ kind: 'ok', text: `Applied your feedback${scope} — review the updated rules.` })
+      } else if (result.status === 'partial') {
+        setRefineFeedback('')
+        setSaveMessage({
+          kind: 'warn',
+          text: `Applied to ${result.skills!.length - failed.length}/${result.skills!.length} skills. Failed: `
+            + failed.map((s) => `${s.skill_id} (${s.error})`).join('; '),
+        })
       } else {
         setSaveMessage({ kind: 'warn', text: `Correction applied, but the agent failed to load: ${result.error}` })
       }

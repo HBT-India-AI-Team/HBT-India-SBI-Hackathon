@@ -513,3 +513,59 @@ def test_refine_agent_leaves_files_untouched_on_invalid_correction(tmp_agent_dir
 
     after = admin.get_agent_files("built1")["skills"]["built1"]["rules"]["gates"]
     assert before == after
+
+
+def test_refine_agent_applies_feedback_to_every_rule_bearing_skill(tmp_agent_dirs, monkeypatch):
+    from backend.admin import RefineAgentPayload
+
+    monkeypatch.setattr(agent_builder, "_build_decompose_adapter", lambda: FakeSpecAdapter([_decomposed_two_skills()]))
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([_valid_spec(), _valid_spec()]))
+    monkeypatch.setattr(pipeline_stages, "_build_adapter", lambda bundle: FakeAdapter())
+    admin.generate_agent(GenerateAgentPayload(agent_id="loans", purpose="two distinct products"))
+
+    corrected_personal = _valid_spec()
+    corrected_personal["gates"][0]["description"] = "personal loans, fixed"
+    corrected_business = _valid_spec()
+    corrected_business["gates"][0]["description"] = "business loans, fixed"
+    # One shared adapter instance, not a lambda that builds a fresh one per skill —
+    # refine_agent calls _build_adapter() once per rule-bearing skill in the loop,
+    # and FakeSpecAdapter needs its .calls counter to persist across those calls
+    # to serve corrected_personal then corrected_business in order.
+    refine_adapter = FakeSpecAdapter([corrected_personal, corrected_business])
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: refine_adapter)
+
+    result = admin.refine_agent("loans", RefineAgentPayload(feedback="fix both gate descriptions"))
+
+    assert result["status"] == "ok"
+    assert {s["skill_id"]: s["ok"] for s in result["skills"]} == {"personal_loans": True, "business_loans": True}
+    files = admin.get_agent_files("loans")
+    personal_gates = yaml.safe_load(files["skills"]["personal_loans"]["rules"]["gates"])
+    business_gates = yaml.safe_load(files["skills"]["business_loans"]["rules"]["gates"])
+    assert personal_gates["gates"][0]["description"] == "personal loans, fixed"
+    assert business_gates["gates"][0]["description"] == "business loans, fixed"
+
+
+def test_refine_agent_reports_partial_success_when_one_skill_fails(tmp_agent_dirs, monkeypatch):
+    from backend.admin import RefineAgentPayload
+
+    monkeypatch.setattr(agent_builder, "_build_decompose_adapter", lambda: FakeSpecAdapter([_decomposed_two_skills()]))
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([_valid_spec(), _valid_spec()]))
+    monkeypatch.setattr(pipeline_stages, "_build_adapter", lambda bundle: FakeAdapter())
+    admin.generate_agent(GenerateAgentPayload(agent_id="loans", purpose="two distinct products"))
+
+    corrected_personal = _valid_spec()
+    corrected_personal["gates"][0]["description"] = "personal loans, fixed"
+    bad_business = _valid_spec()
+    bad_business["gates"][0]["field"] = "not_declared"
+    refine_adapter = FakeSpecAdapter([corrected_personal, bad_business])
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: refine_adapter)
+
+    result = admin.refine_agent("loans", RefineAgentPayload(feedback="fix both"))
+
+    assert result["status"] == "partial"
+    outcomes = {s["skill_id"]: s["ok"] for s in result["skills"]}
+    assert outcomes == {"personal_loans": True, "business_loans": False}
+    # the skill that succeeded is still saved even though the other failed
+    files = admin.get_agent_files("loans")
+    personal_gates = yaml.safe_load(files["skills"]["personal_loans"]["rules"]["gates"])
+    assert personal_gates["gates"][0]["description"] == "personal loans, fixed"

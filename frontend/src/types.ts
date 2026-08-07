@@ -73,10 +73,17 @@ export interface GenerateAgentEvent {
   result?: GenerateAgentResult
 }
 
+export interface RefineSkillResult {
+  skill_id: string
+  ok: boolean
+  error: string | null
+}
+
 export interface RefineAgentResult {
-  status: 'ok' | 'saved_with_errors'
+  status: 'ok' | 'partial' | 'saved_with_errors'
   agent_id: string
   error?: string
+  skills?: RefineSkillResult[]
 }
 
 export interface TemplateSummary {

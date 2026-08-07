@@ -527,6 +527,15 @@ def refine_agent(agent_id: str, payload: RefineAgentPayload) -> dict:
     wrong in plain language, the LLM corrects the existing rules (given as
     context, not regenerated from scratch). Only for draft agents — a live
     agent's rules get edited directly via the Files tab, not through this.
+
+    Applies the same feedback to every rule-bearing skill on the agent
+    independently (one refine_spec call each, same pattern
+    generate_agent_skills already uses for independent per-skill
+    generation) — a multi-skill agent's "fix everything" shouldn't require
+    repeating the same feedback once per skill. Guidance-only skills have no
+    rules to correct and are skipped. Succeeds as long as at least one
+    skill's correction is valid; skills that fail are reported, not silently
+    dropped.
     """
     try:
         bundle = load_agent(agent_id)
@@ -540,24 +549,36 @@ def refine_agent(agent_id: str, payload: RefineAgentPayload) -> dict:
     if not feedback:
         raise HTTPException(status_code=400, detail="feedback must not be empty")
 
-    skill_id = bundle.definition.skills[0]
-    current_rules = _read_skill_files(skill_id)["rules"]
-    result = agent_builder.refine_spec(current_rules=current_rules, feedback=feedback)
-    if not result.ok:
-        raise HTTPException(status_code=400, detail="Could not produce a valid correction: " + "; ".join(result.errors))
+    rule_bearing_skill_ids = [sid for sid in bundle.definition.skills if bundle.skills[sid].has_rules]
+    if not rule_bearing_skill_ids:
+        raise HTTPException(status_code=400, detail="This agent has no rule-bearing skills to correct")
 
-    skill_dir = _skill_dir(skill_id)
-    for rel_path, content in agent_builder.render_skill_files(skill_id, result.spec).items():
-        file_path = skill_dir / rel_path
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content, encoding="utf-8")
+    skills_summary = []
+    for skill_id in rule_bearing_skill_ids:
+        current_rules = _read_skill_files(skill_id)["rules"]
+        result = agent_builder.refine_spec(current_rules=current_rules, feedback=feedback)
+        if not result.ok:
+            skills_summary.append({"skill_id": skill_id, "ok": False, "error": "; ".join(result.errors)})
+            continue
+
+        skill_dir = _skill_dir(skill_id)
+        for rel_path, content in agent_builder.render_skill_files(skill_id, result.spec).items():
+            file_path = skill_dir / rel_path
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(content, encoding="utf-8")
+        skills_summary.append({"skill_id": skill_id, "ok": True, "error": None})
+
+    if not any(s["ok"] for s in skills_summary):
+        errors = "; ".join(f"{s['skill_id']}: {s['error']}" for s in skills_summary)
+        raise HTTPException(status_code=400, detail=f"Could not produce a valid correction for any skill: {errors}")
 
     try:
         load_agent(agent_id, force_reload=True)
     except Exception as exc:  # noqa: BLE001 - report, don't hide; files are already saved
-        return {"status": "saved_with_errors", "agent_id": agent_id, "error": str(exc)}
+        return {"status": "saved_with_errors", "agent_id": agent_id, "error": str(exc), "skills": skills_summary}
 
-    return {"status": "ok", "agent_id": agent_id}
+    status = "ok" if all(s["ok"] for s in skills_summary) else "partial"
+    return {"status": status, "agent_id": agent_id, "skills": skills_summary}
 
 
 @router.delete("/agents/{agent_id}")

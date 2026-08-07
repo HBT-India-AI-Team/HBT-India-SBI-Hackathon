@@ -1,4 +1,5 @@
 agent_id: Financialagent
+input_mode: chat
 version: "1.0.0"
 purpose: >
   Build a lead qualification agent for SBI's commercial/business banking segment. It qualifies leads from three different signal channels, each with its own separate rules.
