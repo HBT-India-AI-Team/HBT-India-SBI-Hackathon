@@ -9,6 +9,7 @@ import type {
   InputMode,
   GenerateAgentEvent,
   GenerateAgentResult,
+  OllamaCallLog,
   RefineAgentResult,
   SaveResult,
   SkillCatalogEntry,
@@ -35,6 +36,7 @@ export const api = {
   listStages: () => apiFetch<{ stages: string[] }>('/admin/stages'),
   listCapabilities: () => apiFetch<{ capabilities: Capability[] }>('/admin/capabilities'),
   listTemplates: () => apiFetch<{ templates: TemplateSummary[] }>('/admin/templates'),
+  getOllamaLogs: (limit = 100) => apiFetch<{ calls: OllamaCallLog[] }>(`/admin/ollama-logs?limit=${limit}`),
 
   getAgentFiles: (agentId: string) => apiFetch<AgentFiles>(`/admin/agents/${agentId}/files`),
 

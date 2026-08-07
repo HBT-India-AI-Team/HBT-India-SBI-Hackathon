@@ -33,6 +33,7 @@ from agent_platform.composition import evict, list_agents, load_agent
 from agent_platform.composition.loader import AGENTS_DIR, SKILLS_DIR
 from agent_platform.composition.models import AgentDefinition
 from agent_platform.explainability import decision_record
+from agent_platform.llm.ollama_adapter import read_recent_calls
 from agent_platform.runtime import chat
 from agent_platform.runtime.executor import invoke_agent
 from agent_platform.runtime.pipeline import STAGE_REGISTRY
@@ -123,6 +124,15 @@ def get_capabilities() -> dict:
 def get_templates() -> dict:
     """Starter shapes the New Agent flow can scaffold from."""
     return {"templates": agent_templates.list_templates()}
+
+
+@router.get("/ollama-logs")
+def get_ollama_logs(limit: int = 100) -> dict:
+    """Every Ollama call attempt (including failed retries), most recent
+    first — the Logs page's data source. Reads
+    agent_platform.llm.ollama_adapter's logs/ollama_calls.jsonl.
+    """
+    return {"calls": read_recent_calls(limit)}
 
 
 @router.get("/skills")

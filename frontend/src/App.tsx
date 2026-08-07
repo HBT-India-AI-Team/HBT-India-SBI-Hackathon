@@ -4,10 +4,13 @@ import { AgentEditor } from './components/AgentEditor'
 import { NewAgentModal } from './components/NewAgentModal'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { Playground } from './components/Playground'
+import { LogsPage } from './components/LogsPage'
 import { Sidebar } from './components/Sidebar'
 import { Badge } from './components/ui'
 import { api } from './api'
 import type { AgentSummary, Capability, GenerateAgentEvent, TemplateSummary } from './types'
+
+type TopView = 'agents' | 'playground' | 'logs'
 
 function App() {
   const [agents, setAgents] = useState<AgentSummary[]>([])
@@ -18,7 +21,7 @@ function App() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [showNewAgentModal, setShowNewAgentModal] = useState(false)
   const [pendingDeleteAgentId, setPendingDeleteAgentId] = useState<string | null>(null)
-  const [showPlayground, setShowPlayground] = useState(false)
+  const [topView, setTopView] = useState<TopView>('agents')
 
   const refreshAgents = () => {
     setLoadingAgents(true)
@@ -75,22 +78,22 @@ function App() {
   const selectedAgent = agents.find((a) => a.agent_id === selectedAgentId) ?? null
 
   const goToAgents = () => {
-    setShowPlayground(false)
+    setTopView('agents')
     setSelectedAgentId(null)
   }
 
   return (
     <div className="h-screen flex bg-neutral-50 text-neutral-900">
       <Sidebar
-        active={showPlayground && !selectedAgentId ? 'playground' : 'agents'}
+        active={!selectedAgentId ? topView : 'agents'}
         onNavigate={(view) => {
           setSelectedAgentId(null)
-          setShowPlayground(view === 'playground')
+          setTopView(view)
         }}
       />
 
       <div className="flex-1 min-w-0">
-        {showPlayground ? (
+        {!selectedAgentId && topView === 'playground' ? (
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-2 px-6 py-3.5 border-b border-neutral-200 shrink-0 bg-white">
               <button
@@ -106,6 +109,8 @@ function App() {
               <Playground agents={agents} />
             </div>
           </div>
+        ) : !selectedAgentId && topView === 'logs' ? (
+          <LogsPage />
         ) : selectedAgentId ? (
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-2 px-6 py-3.5 border-b border-neutral-200 shrink-0 bg-white">

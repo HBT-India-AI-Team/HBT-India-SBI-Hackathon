@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 
-type SidebarView = 'agents' | 'playground'
+type SidebarView = 'agents' | 'playground' | 'logs'
 
 interface SidebarProps {
   active: SidebarView
@@ -34,9 +34,18 @@ function PlaygroundIcon() {
   )
 }
 
+function LogsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
+    </svg>
+  )
+}
+
 const navItems: { key: SidebarView; label: string; icon: ComponentType }[] = [
   { key: 'agents', label: 'Agents', icon: AgentsIcon },
   { key: 'playground', label: 'Playground', icon: PlaygroundIcon },
+  { key: 'logs', label: 'Logs', icon: LogsIcon },
 ]
 
 export function Sidebar({ active, onNavigate }: SidebarProps) {

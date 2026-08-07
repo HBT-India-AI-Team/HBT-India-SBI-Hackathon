@@ -40,6 +40,23 @@ class OllamaError(RuntimeError):
     pass
 
 
+def read_recent_calls(limit: int = 100) -> list[dict[str, Any]]:
+    """Most-recent-first. Backs the admin UI's Logs page — kept here rather
+    than having admin.py parse the JSONL file itself, so the log format
+    stays encapsulated with the code that writes it.
+    """
+    if not _CALLS_LOG_PATH.exists():
+        return []
+    lines = _CALLS_LOG_PATH.read_text(encoding="utf-8").splitlines()
+    calls = []
+    for line in reversed(lines[-limit:]):
+        try:
+            calls.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return calls
+
+
 class OllamaAdapter:
     def __init__(self, host: str = "http://localhost:11434", model: str = "gemma4:12b",
                  timeout_seconds: int = 120, seed: int = 7,

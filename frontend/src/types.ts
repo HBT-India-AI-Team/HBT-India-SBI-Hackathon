@@ -11,6 +11,24 @@ export interface InputSchema {
   properties?: Record<string, InputSchemaProperty>
 }
 
+export interface OllamaCallLog {
+  timestamp: string
+  host: string
+  model: string
+  attempt: number
+  total_attempts: number
+  duration_ms: number
+  ok: boolean
+  request: {
+    messages?: { role: string; content: string }[]
+    format?: Record<string, unknown> | null
+    tools?: Record<string, unknown>[] | null
+    options?: Record<string, unknown>
+  }
+  response: Record<string, unknown> | null
+  error: string | null
+}
+
 export interface ChatDecision {
   outcome: string
   reason: string
