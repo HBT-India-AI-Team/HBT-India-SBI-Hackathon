@@ -41,18 +41,20 @@ const navItems: { key: SidebarView; label: string; icon: ComponentType }[] = [
 
 export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
-    <nav className="w-56 shrink-0 h-full bg-brand-900 flex flex-col py-5">
-      <div className="px-5 mb-6 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0 ring-1 ring-white/10">
+    <nav className="w-60 shrink-0 h-full bg-brand-900 flex flex-col py-6">
+      <div className="px-6 mb-7 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0 ring-1 ring-white/10 shadow-lg shadow-black/20">
           <MarkIcon />
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-white truncate">Agent Editor</div>
+          <div className="text-sm font-semibold text-white truncate tracking-tight">Agent Editor</div>
           <div className="text-[11px] text-brand-300 truncate">Agentic AI Platform</div>
         </div>
       </div>
 
-      <div className="flex-1 px-3 flex flex-col gap-0.5">
+      <div className="h-px bg-white/10 mx-6 mb-5" />
+
+      <div className="flex-1 px-4 flex flex-col gap-1">
         {navItems.map(({ key, label, icon: Icon }) => {
           const selected = active === key
           return (
@@ -61,11 +63,11 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
               type="button"
               onClick={() => onNavigate(key)}
               aria-current={selected ? 'page' : undefined}
-              className={`relative flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 selected ? 'bg-white/10 text-white' : 'text-brand-200 hover:bg-white/5 hover:text-white'
               }`}
             >
-              {selected && <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-gold-400" />}
+              {selected && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-gold-400" />}
               <Icon />
               {label}
             </button>

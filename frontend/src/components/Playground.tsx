@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { SchemaForm } from './SchemaForm'
 import { DecisionView } from './DecisionView'
 import { CodeEditor } from './CodeEditor'
-import { Button, ChoiceCard } from './ui'
+import { ChatWindow } from './ChatWindow'
+import { Button, ChoiceCard, SegmentedControl } from './ui'
 import { api, ApiRequestError } from '../api'
 import type { AgentSummary } from '../types'
 
@@ -13,6 +14,7 @@ interface PlaygroundProps {
 }
 
 type Mode = 'auto' | 'manual'
+type InteractionMode = 'chat' | 'advanced'
 
 interface RunOutcome {
   kind: 'success' | 'needs_clarification' | 'failed'
@@ -36,6 +38,7 @@ function RunIcon({ running }: { running: boolean }) {
 
 export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
   const [mode, setMode] = useState<Mode>('auto')
+  const [interactionMode, setInteractionMode] = useState<InteractionMode>('chat')
   const [manualAgentId, setManualAgentId] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<Record<string, unknown> | null>({})
   const [autoInputText, setAutoInputText] = useState('{\n  \n}')
@@ -147,52 +150,76 @@ export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
         </select>
       )}
 
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-neutral-700">
-          {effectiveAgentId ? `Input — ${effectiveAgentId}` : 'Input (raw JSON — target agent not yet known)'}
-        </h3>
-        <Button variant="success" size="sm" onClick={run} disabled={running || !canRun}>
-          <RunIcon running={running} />
-          {running ? 'Running… (~10-60s)' : 'Run'}
-        </Button>
-      </div>
+      {effectiveAgentId && effectiveAgent && (
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-neutral-700">{effectiveAgentId}</h3>
+          <SegmentedControl
+            options={[
+              { value: 'chat', label: 'Chat' },
+              { value: 'advanced', label: 'Advanced' },
+            ]}
+            value={interactionMode}
+            onChange={setInteractionMode}
+          />
+        </div>
+      )}
 
-      {effectiveAgentId ? (
-        !effectiveAgent ? (
-          <p className="text-xs text-neutral-400">Select an agent above to see its inputs.</p>
-        ) : (
-          <SchemaForm schema={effectiveAgent.input_schema} onChange={setFormValues} />
-        )
+      {effectiveAgentId && effectiveAgent && interactionMode === 'chat' ? (
+        <div className="flex-1 min-h-[420px]">
+          <ChatWindow agentId={effectiveAgentId} />
+        </div>
       ) : (
-        <div className="h-32 border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
-          <CodeEditor value={autoInputText} language="json" onChange={setAutoInputText} />
-        </div>
-      )}
+        <>
+          <div className="flex items-center justify-between">
+            {!(effectiveAgentId && effectiveAgent) && (
+              <h3 className="text-sm font-medium text-neutral-700">
+                {effectiveAgentId ? `Input — ${effectiveAgentId}` : 'Input (raw JSON — target agent not yet known)'}
+              </h3>
+            )}
+            <Button variant="success" size="sm" onClick={run} disabled={running || !canRun} className="ml-auto">
+              <RunIcon running={running} />
+              {running ? 'Running… (~10-60s)' : 'Run'}
+            </Button>
+          </div>
 
-      {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</div>}
-
-      {outcome?.kind === 'needs_clarification' && (
-        <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          Could not confidently determine which agent to use.
-          {outcome.routingInfo?.reasoning && <div className="text-xs text-amber-700/80 mt-1">{outcome.routingInfo.reasoning}</div>}
-        </div>
-      )}
-
-      {outcome?.kind === 'failed' && (
-        <div className="flex flex-col gap-2">
-          {outcome.routingInfo?.chosenAgentId && (
-            <div className="text-xs text-neutral-500">
-              Routed to <span className="font-mono">{outcome.routingInfo.chosenAgentId}</span>
+          {effectiveAgentId ? (
+            !effectiveAgent ? (
+              <p className="text-xs text-neutral-400">Select an agent above to see its inputs.</p>
+            ) : (
+              <SchemaForm schema={effectiveAgent.input_schema} onChange={setFormValues} />
+            )
+          ) : (
+            <div className="h-32 border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
+              <CodeEditor value={autoInputText} language="json" onChange={setAutoInputText} />
             </div>
           )}
-          <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
-            {outcome.message ?? 'The run failed.'}
-          </div>
-        </div>
-      )}
 
-      {outcome?.kind === 'success' && (
-        <DecisionView decision={outcome.decision} explanation={outcome.explanation} routingInfo={outcome.routingInfo} />
+          {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{error}</div>}
+
+          {outcome?.kind === 'needs_clarification' && (
+            <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              Could not confidently determine which agent to use.
+              {outcome.routingInfo?.reasoning && <div className="text-xs text-amber-700/80 mt-1">{outcome.routingInfo.reasoning}</div>}
+            </div>
+          )}
+
+          {outcome?.kind === 'failed' && (
+            <div className="flex flex-col gap-2">
+              {outcome.routingInfo?.chosenAgentId && (
+                <div className="text-xs text-neutral-500">
+                  Routed to <span className="font-mono">{outcome.routingInfo.chosenAgentId}</span>
+                </div>
+              )}
+              <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                {outcome.message ?? 'The run failed.'}
+              </div>
+            </div>
+          )}
+
+          {outcome?.kind === 'success' && (
+            <DecisionView decision={outcome.decision} explanation={outcome.explanation} routingInfo={outcome.routingInfo} />
+          )}
+        </>
       )}
     </div>
   )

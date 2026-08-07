@@ -278,16 +278,16 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="flex items-center justify-between border-b border-neutral-200 px-4">
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between border-b border-neutral-200 px-5">
+        <div className="flex gap-5">
           {(['files', 'playground', 'integrate', 'reference'] as TopTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setTopTab(tab)}
-              className={`px-3 py-2.5 text-sm capitalize border-b-2 transition-colors cursor-pointer ${
+              className={`py-3.5 text-sm font-medium capitalize border-b-2 transition-colors cursor-pointer ${
                 topTab === tab
                   ? 'border-brand-600 text-neutral-900'
-                  : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-700'
               }`}
             >
               {tab === 'playground' ? 'Playground' : tab === 'integrate' ? 'Integrate' : tab}
@@ -339,10 +339,15 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
 
         {topTab === 'files' && (
           <div className="flex flex-1 min-h-0">
-            <div className="w-56 shrink-0 border-r border-neutral-200 overflow-y-auto py-3 bg-white">
-              {skillGroups.map((group) => (
-                <div key={group.key} className="group mb-4 last:mb-0">
-                  <div className="px-4 flex items-center justify-between gap-1 mb-1.5">
+            <div className="w-60 shrink-0 border-r border-neutral-200 overflow-y-auto py-4 bg-neutral-50/60">
+              {skillGroups.map((group, i) => (
+                <div
+                  key={group.key}
+                  className={`group mb-5 last:mb-0 pb-5 last:pb-0 ${
+                    i < skillGroups.length - 1 ? 'border-b border-neutral-200/70' : ''
+                  }`}
+                >
+                  <div className="px-4 flex items-center justify-between gap-1 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 truncate">
                         {group.label}
@@ -361,7 +366,7 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
                       </DangerIconButton>
                     )}
                   </div>
-                  <div className="px-2">
+                  <div className="px-2.5 flex flex-col gap-0.5">
                     {group.tabs.map((tab) => {
                       const badge = languageBadge[tab.language]
                       const selected = activeTab.key === tab.key
@@ -369,10 +374,10 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
                         <button
                           key={tab.key}
                           onClick={() => setActiveFileKey(tab.key)}
-                          className={`w-full flex items-center gap-2 text-left px-2 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer ${
+                          className={`w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer ${
                             selected
-                              ? 'bg-brand-50 text-brand-700'
-                              : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800'
+                              ? 'bg-white text-brand-700 shadow-sm ring-1 ring-brand-100'
+                              : 'text-neutral-500 hover:bg-white/70 hover:text-neutral-800'
                           }`}
                         >
                           <span
@@ -388,10 +393,10 @@ export function AgentEditor({ agentId, agents, stages, capabilities, templates, 
                 </div>
               ))}
 
-              <div className="px-2 mt-1">
+              <div className="px-2.5 mt-1">
                 <button
                   onClick={() => setShowAddSkillModal(true)}
-                  className="w-full text-left px-2 py-1.5 rounded-md text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 transition-colors cursor-pointer border border-dashed border-neutral-300"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-neutral-500 hover:bg-white hover:text-neutral-800 transition-colors cursor-pointer border border-dashed border-neutral-300"
                 >
                   + Add skill
                 </button>

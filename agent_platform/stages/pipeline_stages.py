@@ -101,6 +101,30 @@ def _skill_referenced_fields(skill) -> set[str]:
     return fields
 
 
+def skill_evidence_fields(skill) -> list[dict]:
+    """Every field a skill's own gates/factors reference, with a
+    human-readable description where one exists — the gate/factor's own
+    `description` (e.g. "Annual turnover exceeds 50 lakh"), since fields
+    themselves carry no separate description in gates.yaml/factors.yaml.
+    Gate fields are marked required (a missing one can't be scored around —
+    the gate just can't be evaluated); factor-only fields are not, since a
+    missing factor field only affects one component of the composite score.
+    Used by agent_platform/runtime/chat.py to know what to ask a user about
+    in a conversation, reusing the exact same walk _skill_referenced_fields
+    does for applicability filtering.
+    """
+    rules = skill.rules or {}
+    fields: dict[str, dict] = {}
+    for gate in (rules.get("gates") or {}).get("gates", []):
+        fields[gate["field"]] = {"field": gate["field"], "description": gate.get("description", ""), "required": True}
+    for category in (rules.get("factors") or {}).get("categories", {}).values():
+        for factor in category.get("factors", []):
+            fields.setdefault(factor["field"], {
+                "field": factor["field"], "description": factor.get("description", ""), "required": False,
+            })
+    return list(fields.values())
+
+
 def _skill_is_applicable(skill, evidence) -> bool:
     """A rule-bearing skill only "applies" to this request if the fields its
     own gates/factors reference are actually present in the evidence — e.g.

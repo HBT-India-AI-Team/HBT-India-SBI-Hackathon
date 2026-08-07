@@ -5,6 +5,7 @@ import type {
   AgentSummary,
   ApiKeyResult,
   Capability,
+  ChatTurnResult,
   GenerateAgentEvent,
   GenerateAgentResult,
   RefineAgentResult,
@@ -130,6 +131,12 @@ export const api = {
     apiFetch<RefineAgentResult>(`/admin/agents/${agentId}/refine`, {
       method: 'POST',
       body: JSON.stringify({ feedback }),
+    }),
+
+  chatWithAgent: (agentId: string, sessionId: string | null, message: string) =>
+    apiFetch<ChatTurnResult>(`/admin/agents/${agentId}/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, message }),
     }),
 
   testRunAgent: (agentId: string, input: Record<string, unknown>) =>

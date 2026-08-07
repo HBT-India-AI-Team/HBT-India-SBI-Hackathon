@@ -32,6 +32,7 @@ from agent_platform.composition import evict, list_agents, load_agent
 from agent_platform.composition.loader import AGENTS_DIR, SKILLS_DIR
 from agent_platform.composition.models import AgentDefinition
 from agent_platform.explainability import decision_record
+from agent_platform.runtime import chat
 from agent_platform.runtime.executor import invoke_agent
 from agent_platform.runtime.pipeline import STAGE_REGISTRY
 
@@ -706,6 +707,27 @@ def test_run_agent(agent_id: str, payload: TestRunPayload) -> dict:
         "decision": ctx.decision,
         "explanation": ctx.explanation,
         "error": ctx.error,
+    }
+
+
+class ChatPayload(BaseModel):
+    session_id: str | None = None
+    message: str
+
+
+@router.post("/agents/{agent_id}/chat")
+def chat_with_agent(agent_id: str, payload: ChatPayload) -> dict:
+    """No API key required — this is the internal Playground's chat mode,
+    same trust level as test-run above. The public, key-gated equivalent for
+    a client's own site is POST /agents/{agent_id}/chat in backend/main.py.
+    """
+    try:
+        result = chat.handle_chat_turn(agent_id, payload.session_id, payload.message)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+    return {
+        "session_id": result.session_id, "reply": result.reply,
+        "evidence": result.evidence, "decision": result.decision, "done": result.done,
     }
 
 

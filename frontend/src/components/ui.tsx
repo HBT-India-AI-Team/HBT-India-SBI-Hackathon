@@ -173,7 +173,7 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-neutral-200 ${className ?? ''}`} />
 }
 
-type BadgeTone = 'brand' | 'gold' | 'success' | 'warning' | 'danger' | 'neutral'
+export type BadgeTone = 'brand' | 'gold' | 'success' | 'warning' | 'danger' | 'neutral'
 
 const badgeToneClasses: Record<BadgeTone, string> = {
   brand: 'text-brand-700 bg-brand-50 border-brand-200',
@@ -204,6 +204,10 @@ export function Badge({ tone = 'neutral', mono, uppercase, children, className }
   )
 }
 
-export function StatusDot({ tone = 'success' }: { tone?: 'success' | 'danger' }) {
-  return <span className={`w-2 h-2 rounded-full shrink-0 ${tone === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+export function StatusDot({ tone = 'success', className }: { tone?: 'success' | 'danger'; className?: string }) {
+  return (
+    <span
+      className={`w-2 h-2 rounded-full shrink-0 ${tone === 'success' ? 'bg-emerald-500' : 'bg-red-500'} ${className ?? ''}`}
+    />
+  )
 }

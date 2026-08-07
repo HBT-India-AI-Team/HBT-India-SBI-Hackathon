@@ -29,6 +29,13 @@ function exampleBody(schema?: InputSchema): Record<string, unknown> {
   return Object.fromEntries(keys.map((key) => [key, exampleValue(properties[key].type)]))
 }
 
+function buildIframeSnippet(agentId: string): string {
+  return `<iframe
+  src="${window.location.origin}/embed/${agentId}"
+  style="width: 100%; height: 520px; border: 0; border-radius: 12px;"
+></iframe>`
+}
+
 function buildSnippet(agentId: string, apiKey: string, schema?: InputSchema): string {
   const body = JSON.stringify(exampleBody(schema), null, 2).split('\n').join('\n  ')
   return `fetch("${window.location.origin}/agents/${agentId}/invoke", {
@@ -48,7 +55,7 @@ export function IntegratePanel({ agentId, inputSchema }: IntegratePanelProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [regenerating, setRegenerating] = useState(false)
-  const [copied, setCopied] = useState<'key' | 'snippet' | null>(null)
+  const [copied, setCopied] = useState<'key' | 'snippet' | 'iframe' | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -60,7 +67,7 @@ export function IntegratePanel({ agentId, inputSchema }: IntegratePanelProps) {
       .finally(() => setLoading(false))
   }, [agentId])
 
-  const copy = (text: string, which: 'key' | 'snippet') => {
+  const copy = (text: string, which: 'key' | 'snippet' | 'iframe') => {
     navigator.clipboard.writeText(text)
     setCopied(which)
     setTimeout(() => setCopied((cur) => (cur === which ? null : cur)), 1500)
@@ -116,11 +123,37 @@ export function IntegratePanel({ agentId, inputSchema }: IntegratePanelProps) {
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-xs text-neutral-400">Sample request</label>
+          <label className="block text-xs text-neutral-400">Chat embed (recommended)</label>
+          <Button size="sm" variant="ghost" onClick={() => copy(buildIframeSnippet(agentId), 'iframe')}>
+            {copied === 'iframe' ? 'Copied' : 'Copy snippet'}
+          </Button>
+        </div>
+        <p className="text-[11px] text-neutral-500 mb-2 leading-relaxed">
+          One tag — paste it anywhere on their site. It's a full chat window: visitors describe their
+          situation in plain language, it asks for whatever's still missing, and it remembers the
+          conversation if the page reloads.
+        </p>
+        <pre className="rounded-md border border-neutral-200 bg-neutral-900 text-neutral-100 text-xs font-mono p-3 overflow-x-auto mb-3">
+          {buildIframeSnippet(agentId)}
+        </pre>
+        <iframe
+          src={`${window.location.origin}/embed/${agentId}`}
+          className="w-full rounded-xl border border-neutral-200"
+          style={{ height: 420 }}
+          title="Chat embed preview"
+        />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs text-neutral-400">Advanced: raw API request</label>
           <Button size="sm" variant="ghost" onClick={() => copy(buildSnippet(agentId, apiKey, inputSchema), 'snippet')}>
             {copied === 'snippet' ? 'Copied' : 'Copy snippet'}
           </Button>
         </div>
+        <p className="text-[11px] text-neutral-500 mb-2 leading-relaxed">
+          For calling from your own backend with structured fields instead of the chat widget.
+        </p>
         <pre className="rounded-md border border-neutral-200 bg-neutral-900 text-neutral-100 text-xs font-mono p-3 overflow-x-auto">
           {buildSnippet(agentId, apiKey, inputSchema)}
         </pre>
@@ -137,8 +170,8 @@ export function IntegratePanel({ agentId, inputSchema }: IntegratePanelProps) {
         <Badge tone="warning" uppercase className="mb-1.5">Demo build</Badge>
         <p className="text-xs text-amber-800 leading-relaxed">
           This key gates access per agent, but the server isn't hardened for production traffic yet —
-          no rate limiting, and cross-origin browser calls need CORS opened up before a real external
-          site can call it directly from client-side JS.
+          no rate limiting, no HTTPS enforced. Fine for a demo on a shared network; tighten before
+          any real deployment.
         </p>
       </div>
     </div>

@@ -11,6 +11,20 @@ export interface InputSchema {
   properties?: Record<string, InputSchemaProperty>
 }
 
+export interface ChatDecision {
+  outcome: string
+  reason: string
+  composite_score: number | null
+}
+
+export interface ChatTurnResult {
+  session_id: string
+  reply: string
+  evidence: Record<string, unknown>
+  decision: ChatDecision | null
+  done: boolean
+}
+
 export interface AgentSummary {
   agent_id: string
   version?: string

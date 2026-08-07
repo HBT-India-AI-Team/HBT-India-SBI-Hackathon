@@ -21,15 +21,17 @@ load_dotenv(Path(__file__).parent / ".env")
 
 import capabilities_impl  # noqa: E402,F401  (registers mock tools)
 from agent_platform.composition import list_agents, load_agent  # noqa: E402
+from agent_platform.runtime import chat  # noqa: E402
 from agent_platform.runtime.executor import invoke_agent  # noqa: E402
 from agent_platform.state import get_run, list_runs  # noqa: E402
 from agent_platform.workflows import list_workflows, run_workflow  # noqa: E402
 
 from fastapi import FastAPI, Header, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import HTMLResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from . import admin, api_keys  # noqa: E402
+from . import admin, api_keys, embed_page  # noqa: E402
 
 app = FastAPI(
     title="Reusable Agent Runtime",
@@ -106,6 +108,45 @@ def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Heade
         "hitl": ctx.hitl,
         "error": ctx.error,
     }
+
+
+@app.post("/agents/{agent_id}/chat")
+def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | None = Header(default=None)) -> dict:
+    """The public, key-gated counterpart to /invoke: same auth, but takes
+    free-text ({"session_id": str | null, "message": str}) instead of a
+    structured evidence dict, and remembers the conversation via session_id
+    — what a client's embedded chat (see /embed/{agent_id} below) calls.
+    """
+    if not api_keys.is_valid(agent_id, x_api_key):
+        raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key for this agent")
+
+    message = (request.get("message") or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="message must not be empty")
+    try:
+        result = chat.handle_chat_turn(agent_id, request.get("session_id"), message)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+
+    return {
+        "session_id": result.session_id, "reply": result.reply,
+        "evidence": result.evidence, "decision": result.decision, "done": result.done,
+    }
+
+
+@app.get("/embed/{agent_id}", response_class=HTMLResponse)
+def embed_chat_page(agent_id: str) -> str:
+    """What a client's site iframes in: a standalone chat page, no build
+    step, that talks to POST /agents/{agent_id}/chat same-origin (no CORS
+    needed) and keeps its session_id in sessionStorage so a reload during
+    the same visit resumes the same conversation.
+    """
+    try:
+        bundle = load_agent(agent_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+    api_key = api_keys.get_or_create_key(agent_id)
+    return embed_page.render_embed_page(agent_id, api_key, bundle.definition.purpose)
 
 
 @app.get("/workflows")

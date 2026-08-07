@@ -38,7 +38,25 @@ html, body, #root {
 }
 
 body {
-  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  /* One deliberate stack, not the bare "system-ui" default: a geometric,
+     slightly condensed grotesque where available (Segoe UI on Windows —
+     this is a Windows-first admin tool), falling back gracefully rather
+     than to whatever serif/sans the OS happens to pick. */
+  font-family: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.012em;
+  font-weight: 600;
+}
+
+/* A quiet, deliberate numeric/mono voice for ids, scores, keys — anywhere
+   digits or code-like tokens appear — distinct from prose so scanning a
+   dense table or a rules file reads as "data" vs "text" at a glance. */
+code, .font-mono, [class*="font-mono"] {
+  font-feature-settings: "tnum" 1, "zero" 1;
 }
 
 /* CodeMirror should fill whatever container it's placed in. The library's
