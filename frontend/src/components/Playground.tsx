@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SchemaForm } from './SchemaForm'
 import { DecisionView } from './DecisionView'
 import { CodeEditor } from './CodeEditor'
 import { ChatWindow } from './ChatWindow'
 import { Button, ChoiceCard, SegmentedControl } from './ui'
 import { api, ApiRequestError } from '../api'
-import type { AgentSummary } from '../types'
+import type { AgentSummary, InputMode } from '../types'
 
 interface PlaygroundProps {
   agents: AgentSummary[]
@@ -14,7 +14,6 @@ interface PlaygroundProps {
 }
 
 type Mode = 'auto' | 'manual'
-type InteractionMode = 'chat' | 'advanced'
 
 interface RunOutcome {
   kind: 'success' | 'needs_clarification' | 'failed'
@@ -23,6 +22,13 @@ interface RunOutcome {
   message?: string
   routingInfo?: { chosenAgentId: string | null; confidence: number | null; reasoning: string | null; status: string }
 }
+
+const INPUT_MODE_OPTIONS: { value: InputMode; label: string }[] = [
+  { value: 'chat', label: 'Chat' },
+  { value: 'form', label: 'Form' },
+  { value: 'json', label: 'JSON' },
+  { value: 'trigger', label: 'Trigger' },
+]
 
 function RunIcon({ running }: { running: boolean }) {
   return running ? (
@@ -38,8 +44,9 @@ function RunIcon({ running }: { running: boolean }) {
 
 export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
   const [mode, setMode] = useState<Mode>('auto')
-  const [interactionMode, setInteractionMode] = useState<InteractionMode>('chat')
   const [manualAgentId, setManualAgentId] = useState<string | null>(null)
+  const [inputMode, setInputModeState] = useState<InputMode>('chat')
+  const [modeSaveError, setModeSaveError] = useState<string | null>(null)
   const [formValues, setFormValues] = useState<Record<string, unknown> | null>({})
   const [autoInputText, setAutoInputText] = useState('{\n  \n}')
   const [running, setRunning] = useState(false)
@@ -50,9 +57,42 @@ export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
   const effectiveAgentId = lockedAgentId ?? (mode === 'manual' ? manualAgentId : null)
   const effectiveAgent = effectiveAgentId ? usableAgents.find((a) => a.agent_id === effectiveAgentId) : undefined
 
+  // Follow the agent's own declared default whenever the selected agent
+  // changes — but once someone picks a different mode for this agent below,
+  // that choice is persisted (see handleInputModeChange) and becomes the
+  // new default on the next visit, not just this session.
+  useEffect(() => {
+    setInputModeState(effectiveAgent?.input_mode ?? 'chat')
+    setModeSaveError(null)
+    setOutcome(null)
+    setError(null)
+  }, [effectiveAgentId, effectiveAgent?.input_mode])
+
+  const handleInputModeChange = (next: InputMode) => {
+    setInputModeState(next)
+    if (!effectiveAgentId) return
+    setModeSaveError(null)
+    api.setInputMode(effectiveAgentId, next).catch((err) => {
+      setModeSaveError(err instanceof ApiRequestError ? err.message : String(err))
+    })
+  }
+
+  const buildPayload = (): Record<string, unknown> | null => {
+    if (inputMode === 'trigger') return {}
+    if (inputMode === 'form') return formValues
+    // 'json' (and 'chat' never reaches here — ChatWindow handles its own calls)
+    try {
+      return autoInputText.trim() === '' ? {} : JSON.parse(autoInputText)
+    } catch (err) {
+      setError(`Input is not valid JSON: ${err instanceof Error ? err.message : String(err)}`)
+      return null
+    }
+  }
+
   const runDirect = async (agentId: string) => {
-    if (formValues === null) return
-    const res = await api.testRunAgent(agentId, formValues)
+    const payload = buildPayload()
+    if (payload === null) return
+    const res = await api.testRunAgent(agentId, payload)
     if (res.error) {
       setOutcome({
         kind: 'failed',
@@ -114,7 +154,8 @@ export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
     }
   }
 
-  const canRun = effectiveAgentId ? formValues !== null : true
+  const canRun = effectiveAgentId ? inputMode !== 'form' || formValues !== null : true
+  const showChat = effectiveAgentId && effectiveAgent && inputMode === 'chat'
 
   return (
     <div className="flex flex-col h-full gap-4 overflow-y-auto">
@@ -151,20 +192,16 @@ export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
       )}
 
       {effectiveAgentId && effectiveAgent && (
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-neutral-700">{effectiveAgentId}</h3>
-          <SegmentedControl
-            options={[
-              { value: 'chat', label: 'Chat' },
-              { value: 'advanced', label: 'Advanced' },
-            ]}
-            value={interactionMode}
-            onChange={setInteractionMode}
-          />
+        <div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-neutral-700">{effectiveAgentId}</h3>
+            <SegmentedControl options={INPUT_MODE_OPTIONS} value={inputMode} onChange={handleInputModeChange} />
+          </div>
+          {modeSaveError && <p className="text-[11px] text-red-600 mt-1">Couldn't save mode: {modeSaveError}</p>}
         </div>
       )}
 
-      {effectiveAgentId && effectiveAgent && interactionMode === 'chat' ? (
+      {showChat ? (
         <div className="flex-1 min-h-[420px]">
           <ChatWindow agentId={effectiveAgentId} />
         </div>
@@ -182,12 +219,20 @@ export function Playground({ agents, lockedAgentId }: PlaygroundProps) {
             </Button>
           </div>
 
-          {effectiveAgentId ? (
-            !effectiveAgent ? (
-              <p className="text-xs text-neutral-400">Select an agent above to see its inputs.</p>
+          {effectiveAgentId && effectiveAgent ? (
+            inputMode === 'trigger' ? (
+              <p className="text-xs text-neutral-400 border border-dashed border-neutral-300 rounded-lg p-4 text-center">
+                No input needed — this agent runs from a trigger. Click Run.
+              </p>
+            ) : inputMode === 'json' ? (
+              <div className="h-32 border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
+                <CodeEditor value={autoInputText} language="json" onChange={setAutoInputText} />
+              </div>
             ) : (
               <SchemaForm schema={effectiveAgent.input_schema} onChange={setFormValues} />
             )
+          ) : effectiveAgentId ? (
+            <p className="text-xs text-neutral-400">Select an agent above to see its inputs.</p>
           ) : (
             <div className="h-32 border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
               <CodeEditor value={autoInputText} language="json" onChange={setAutoInputText} />

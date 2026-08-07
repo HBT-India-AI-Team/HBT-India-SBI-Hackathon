@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import queue
+import re
 import shutil
 import threading
 from pathlib import Path
@@ -157,6 +158,7 @@ def get_agents_summary() -> dict:
                 "routable": bundle.definition.routable,
                 "draft": bundle.definition.draft,
                 "input_schema": bundle.definition.input_schema,
+                "input_mode": bundle.definition.input_mode,
             })
         except Exception as exc:  # noqa: BLE001 - surface a broken agent, don't hide it
             agents.append({"agent_id": agent_id, "error": str(exc)})
@@ -591,6 +593,36 @@ def regenerate_agent_api_key(agent_id: str) -> dict:
     if not _agent_yaml_path(agent_id).exists():
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
     return {"agent_id": agent_id, "api_key": api_keys.regenerate_key(agent_id)}
+
+
+class SetInputModePayload(BaseModel):
+    input_mode: Literal["chat", "form", "json", "trigger"]
+
+
+@router.post("/agents/{agent_id}/input-mode")
+def set_input_mode(agent_id: str, payload: SetInputModePayload) -> dict:
+    """Lets Playground change which interface an agent defaults to without
+    anyone hand-editing agent.yaml — a targeted line replace/insert, same
+    approach the frontend's "Accept draft" button uses for draft/routable.
+    """
+    yaml_path = _agent_yaml_path(agent_id)
+    if not yaml_path.exists():
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+
+    text = yaml_path.read_text(encoding="utf-8")
+    new_line = f"input_mode: {payload.input_mode}"
+    if re.search(r"^input_mode:.*$", text, flags=re.M):
+        text = re.sub(r"^input_mode:.*$", new_line, text, count=1, flags=re.M)
+    else:
+        text = re.sub(r"^(agent_id:.*)$", rf"\1\n{new_line}", text, count=1, flags=re.M)
+    yaml_path.write_text(text, encoding="utf-8")
+
+    evict(agent_id)
+    try:
+        load_agent(agent_id, force_reload=True)
+    except Exception as exc:  # noqa: BLE001 - report, don't hide; the file is already rewritten
+        return {"status": "saved_with_errors", "agent_id": agent_id, "error": str(exc)}
+    return {"status": "ok", "agent_id": agent_id, "input_mode": payload.input_mode}
 
 
 def _reload_after_skill_change(agent_id: str, skill_id: str) -> dict:

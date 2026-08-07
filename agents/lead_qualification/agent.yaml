@@ -1,4 +1,5 @@
 agent_id: lead_qualification
+input_mode: chat
 version: "1.0.0"
 purpose: >
   Qualify SME/business-banking leads: run hard eligibility gates, score

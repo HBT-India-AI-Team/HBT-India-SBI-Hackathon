@@ -35,6 +35,11 @@ llm:
   seed: 7
   timeout_seconds: 120
 
+# Flat scalar search filters, not evidence-fields/gates — a form fits this
+# better than chat (search_leads/rank_leads never reads skill.rules, so
+# chat's field-extraction has nothing to extract against).
+input_mode: form
+
 input_schema:
   type: object
   required: []

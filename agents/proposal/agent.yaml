@@ -30,6 +30,10 @@ llm:
   seed: 7
   timeout_seconds: 120
 
+# Nested objects/arrays (lead, qualification_result, eligible_products) —
+# not flat fields a form can render, not evidence chat can extract into.
+input_mode: json
+
 input_schema:
   type: object
   required: [lead, qualification_result, eligible_products]

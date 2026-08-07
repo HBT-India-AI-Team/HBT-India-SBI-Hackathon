@@ -25,6 +25,8 @@ export interface ChatTurnResult {
   done: boolean
 }
 
+export type InputMode = 'chat' | 'form' | 'json' | 'trigger'
+
 export interface AgentSummary {
   agent_id: string
   version?: string
@@ -34,6 +36,7 @@ export interface AgentSummary {
   routable?: boolean
   draft?: boolean
   input_schema?: InputSchema
+  input_mode?: InputMode
   error?: string
 }
 

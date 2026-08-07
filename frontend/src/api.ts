@@ -6,6 +6,7 @@ import type {
   ApiKeyResult,
   Capability,
   ChatTurnResult,
+  InputMode,
   GenerateAgentEvent,
   GenerateAgentResult,
   RefineAgentResult,
@@ -132,6 +133,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ feedback }),
     }),
+
+  setInputMode: (agentId: string, inputMode: InputMode) =>
+    apiFetch<{ status: string; agent_id: string; input_mode?: InputMode; error?: string }>(
+      `/admin/agents/${agentId}/input-mode`,
+      { method: 'POST', body: JSON.stringify({ input_mode: inputMode }) },
+    ),
 
   chatWithAgent: (agentId: string, sessionId: string | null, message: string) =>
     apiFetch<ChatTurnResult>(`/admin/agents/${agentId}/chat`, {

@@ -7,7 +7,7 @@ means adding new YAML/Markdown, not new Python classes.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -61,6 +61,14 @@ class AgentDefinition(BaseModel):
     output_schema: dict[str, Any] = Field(default_factory=dict)
     routable: bool = True
     draft: bool = False
+    # Which interface the Playground/embed should show by default — purely a
+    # UI hint, nothing in the runtime reads it. "chat": free text, fields
+    # extracted as needed (most agents). "form": a field-by-field form from
+    # input_schema (agents with generic/opaque evidence shapes). "json": raw
+    # payload editor (custom-pipeline agents like proposal/lead_discovery,
+    # whose input doesn't reduce to a flat field list). "trigger": no input
+    # at all — a lookup/check agent where clicking Run is the entire input.
+    input_mode: Literal["chat", "form", "json", "trigger"] = "chat"
 
 
 class Skill(BaseModel):
