@@ -561,11 +561,17 @@ def refine_agent(agent_id: str, payload: RefineAgentPayload) -> dict:
             skills_summary.append({"skill_id": skill_id, "ok": False, "error": "; ".join(result.errors)})
             continue
 
+        # Only the 4 rule files are actually derived from result.spec — render_skill_files
+        # also returns skill.yaml/instructions.md/output_contract.json, but those are always
+        # the same generic template regardless of spec content (see agent_builder.py), so
+        # rewriting them here would silently discard any hand-edit made in the Files tab for
+        # no actual benefit. Correct only what the feedback could have actually changed.
         skill_dir = _skill_dir(skill_id)
-        for rel_path, content in agent_builder.render_skill_files(skill_id, result.spec).items():
+        rendered = agent_builder.render_skill_files(skill_id, result.spec)
+        for rel_path in ("rules/gates.yaml", "rules/factors.yaml", "rules/composite.yaml", "rules/product_fit.yaml"):
             file_path = skill_dir / rel_path
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            file_path.write_text(content, encoding="utf-8")
+            file_path.write_text(rendered[rel_path], encoding="utf-8")
         skills_summary.append({"skill_id": skill_id, "ok": True, "error": None})
 
     if not any(s["ok"] for s in skills_summary):

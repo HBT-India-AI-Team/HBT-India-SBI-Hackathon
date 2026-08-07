@@ -481,6 +481,37 @@ def test_refine_agent_endpoint_applies_correction(tmp_agent_dirs, monkeypatch):
     assert bundle.definition.routable is False
 
 
+def test_refine_agent_preserves_hand_edited_instructions_and_output_contract(tmp_agent_dirs, monkeypatch):
+    """render_skill_files always regenerates skill.yaml/instructions.md/
+    output_contract.json from a fixed generic template regardless of what's
+    in the corrected spec -- refine_agent must not rewrite those, or a human
+    edit made in the Files tab gets silently wiped by the next correction.
+    """
+    from backend.admin import RefineAgentPayload
+
+    _stub_single_skill_decompose(monkeypatch)
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([_valid_spec()]))
+    monkeypatch.setattr(pipeline_stages, "_build_adapter", lambda bundle: FakeAdapter())
+    admin.generate_agent(GenerateAgentPayload(agent_id="built1", purpose="x"))
+
+    custom_instructions = "# built1\n\nHand-edited instructions that must survive a refine.\n"
+    skill_dir = admin._skill_dir("built1")
+    (skill_dir / "instructions.md").write_text(custom_instructions, encoding="utf-8")
+    custom_output_contract = (skill_dir / "output_contract.json").read_text(encoding="utf-8")
+
+    corrected = _valid_spec()
+    corrected["gates"][0]["description"] = "now with a fixed description"
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([corrected]))
+    result = admin.refine_agent("built1", RefineAgentPayload(feedback="fix the gate description"))
+
+    assert result["status"] == "ok"
+    files = admin.get_agent_files("built1")["skills"]["built1"]
+    assert files["instructions_md"] == custom_instructions
+    assert files["output_contract_json"] == custom_output_contract
+    gates = yaml.safe_load(files["rules"]["gates"])
+    assert gates["gates"][0]["description"] == "now with a fixed description"
+
+
 def test_refine_agent_rejects_non_draft_agent(tmp_agent_dirs, monkeypatch):
     from backend.admin import RefineAgentPayload
 
