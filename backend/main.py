@@ -37,14 +37,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Vite dev server runs on a different origin during development; the built
-# frontend (served as static files below) is same-origin and doesn't need this.
+# Wide open by design for the demo: a client's own site (on the same LAN,
+# or wherever it's hosted) needs to call POST /agents/{id}/invoke directly
+# from browser JS, and /admin isn't meant to be reachable outside this
+# network anyway. Tighten this before any real deployment.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", "http://127.0.0.1:5173",
-        "http://localhost:5174", "http://127.0.0.1:5174",
-    ],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
