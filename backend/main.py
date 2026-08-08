@@ -187,6 +187,21 @@ def get_run_explanation(run_id: str) -> dict:
     return record["explanation"]
 
 
+class _HttpOnlyStaticFiles(StaticFiles):
+    """StaticFiles asserts scope["type"] == "http" and raises otherwise, which
+    crashes the whole ASGI connection (with a scary traceback) whenever a
+    browser extension or stray client opens a WebSocket to this catch-all
+    mount. Close those cleanly instead of blowing up.
+    """
+
+    async def __call__(self, scope, receive, send):  # noqa: D102
+        if scope["type"] != "http":
+            if scope["type"] == "websocket":
+                await send({"type": "websocket.close", "code": 1000})
+            return
+        await super().__call__(scope, receive, send)
+
+
 # Serves the built React editor UI (`npm run build` in frontend/) once it
 # exists. Must be mounted last — Starlette tries every route above first,
 # so this only ever catches paths none of the API routes matched. During
@@ -194,4 +209,4 @@ def get_run_explanation(run_id: str) -> dict:
 # this API via CORS) and this mount is simply unused.
 _FRONTEND_DIST = REPO_ROOT / "frontend" / "dist"
 if _FRONTEND_DIST.exists():
-    app.mount("/", StaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")
+    app.mount("/", _HttpOnlyStaticFiles(directory=str(_FRONTEND_DIST), html=True), name="frontend")

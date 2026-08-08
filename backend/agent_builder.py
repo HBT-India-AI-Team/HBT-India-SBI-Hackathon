@@ -308,14 +308,21 @@ def fallback_blank_spec(purpose: str, agent_id: str) -> dict[str, Any]:
 
 # -- generation ----
 
+# The wrapper's own read timeout for /ollama is 300s (raised from a flat 30s
+# that was cutting off large structured-generation calls early). Ours must
+# exceed that, or we'll time out client-side first and report our own
+# generic error instead of whatever the wrapper/Ollama actually did.
+_BUILDER_TIMEOUT_SECONDS = 320
+
+
 def _build_adapter() -> OllamaAdapter:
     host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-    return OllamaAdapter(host=host, model=_BUILDER_MODEL, timeout_seconds=150, seed=7)
+    return OllamaAdapter(host=host, model=_BUILDER_MODEL, timeout_seconds=_BUILDER_TIMEOUT_SECONDS, seed=7)
 
 
 def _build_decompose_adapter() -> OllamaAdapter:
     host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-    return OllamaAdapter(host=host, model=_DECOMPOSE_MODEL, timeout_seconds=150, seed=7)
+    return OllamaAdapter(host=host, model=_DECOMPOSE_MODEL, timeout_seconds=_BUILDER_TIMEOUT_SECONDS, seed=7)
 
 
 def _system_prompt() -> str:
