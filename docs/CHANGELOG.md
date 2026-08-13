@@ -8,6 +8,43 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Stop style rewriting recommendations or adding a sign-off
+
+`29ab6fe` — 2 files, +26/−0
+
+Two failures the earlier guards did not cover, both found by re-running the
+A/B rather than by reading the prompt.
+
+A recommendation survived but changed: "at least 3 months of expenses
+(about Rs 45,000)" came back as "at least 6 months", losing the rupee anchor
+along the way. The instruction said not to DROP a rule; it said nothing
+about adjusting one. It now names the case.
+
+More seriously, an answer closed with "put your money in the right place or
+you'll end up a servant of the bank" -- on an agent that speaks for a bank.
+No passage in the corpus says anything of the sort; only 9 of 380 matched a
+rhetoric scan and those were false positives on नौकरी. The model invented
+it, because the register it is copying ends on a punchy line and that habit
+transfers even when the sentiment does not. Style moves rhetorical habits,
+not just vocabulary, which neither guard anticipated.
+
+Verified after: no sign-off in any of the twelve answers, tools 12/12.
+
+Worth recording what the same run showed about reach. Style changes only 5
+of the 12 questions; the other 7 are byte-identical because nothing clears
+the 0.60 floor. The misses are not marginal for the corpus -- a daughter's
+scheme scores 0.496, senior-citizen income 0.538, pensions 0.542 -- because
+61 videos weighted toward gold loans, app walkthroughs and account opening
+simply do not discuss them. The floor cannot come down to meet them either:
+an off-topic phone-battery question already scores 0.584.
+
+So the lever from here is corpus breadth, not prompt wording. Every further
+edit to this block only reaches the five questions that already work.
+
+## 2026-08-13 · Regenerate CHANGELOG for the previous commit
+
+`c9d369c` — 1 file, +31/−0
+
 ## 2026-08-13 · Drop app screen-narration from the style corpus, and document the system
 
 `cddf9d4` — 7 files, +860/−1
