@@ -8,6 +8,87 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Switch to gemma4:12b and add a spoken-answer mode
+
+`d5e5c61` — 11 files, +380/−77
+
+**Model.** qwen3.6:35b is 23.9 GB resident, gemma4:12b is 7.6 GB. The ~16 GB
+freed goes to the voice agent sharing this host; the two do not co-exist, and
+an assistant that cannot be spoken to is a worse product than one that is a
+few points weaker on text. This is a memory decision, not a quality one, and
+agent.yaml now says so.
+
+Re-measured rather than assumed, because DECISIONS #1 says a model swap must
+be: tool chaining, rate lookup, FD maturity, Tamil and Hindi script
+mirroring. All five called tools correctly including the get_fd_rate ->
+fd_maturity chain, all returned full content under think:false, and the
+recorded Western-digit-grouping failure did not reproduce -- ₹2,40,000,
+₹4,19,973, ₹1,06,398.02.
+
+One new finding worth knowing: Tamil is disproportionately slow, 97s against
+10-21s for everything else and 21s for Devanagari Hindi. That is above
+timeout_seconds: 90 for a single call and it matters most for voice.
+
+**Voice mode.** "voice": true on either chat route appends a brief to the
+answer prompt: two to four sentences, plain prose, no markdown, no image
+payload, say the source rather than spell the URL. Prompting, not a
+post-processor -- the same argument that killed the style rephraser. Anything
+that shortens an answer after the grounded call can drop a caveat or round a
+figure, and it runs after the only step that knows those matter.
+
+The brief goes last, after style, because they contradict each other
+directly: style says "the same length", voice says "two to four sentences".
+Position is how voice wins, and a test pins the order.
+
+Its override is scoped to length and layout, and that scoping is
+load-bearing. An earlier draft said "length or formatting"; the model read
+digit grouping as formatting and returned ₹106,398.02 spoken where it had
+written ₹1,06,398.02 on screen -- which an Indian listener hears as a hundred
+thousand. Narrowed, and re-verified on two figures.
+
+Measured: 30-63% of screen length, 2-3 sentences, markdown clean on 4 of 4,
+and the only figures dropped were as-of dates and percentages restated as
+rupee amounts.
+
+Defaults off, so every existing caller is unaffected. Declared in
+_TEXT_ROUTING_KEYS, which is the trap style already fell into. Playground
+gets a Voice pill beside Colloquial so the output can be checked without
+wiring a voice client.
+
+Tests: +5. Suite is back to its 60 pre-existing failures.
+
+## 2026-08-13 · Make the public chat route safe for clients we do not own
+
+`21df6fe` — 2 files, +80/−3
+
+The style flag on /agents/{id}/chat was read with `is not False`, which is
+correct only if the client sends a real JSON boolean. A mobile or web client
+sending {"style": "false"} -- a stringified bool, which is what form
+encoding and several mobile HTTP libraries produce -- got style ON while
+asking for it OFF. Silently, and disagreeing with the admin route, which has
+Pydantic and coerces the same payload the other way.
+
+That route takes a raw dict, so nothing coerces on its behalf. _bool_field
+now reads bool, int and the usual string spellings, and falls back to the
+default on anything unreadable rather than erroring: a malformed optional
+flag must not cost someone their answer. Omitting the key still means on, so
+a client written before the flag existed is unaffected.
+
+Also adds "style" to the response. The layer has several ways to produce
+nothing -- switched off, a script with no corpus, nothing above the
+retrieval floor -- and they are indistinguishable in the reply itself. A
+client that cannot see which one happened reports "the flag does nothing"
+for the case where the flag worked perfectly and the corpus had no match.
+Additive, so an existing client ignores it.
+
+Verified against the running backend: {"style": "false"} now reports
+{'applied': False, 'reason': 'turned off by the caller'}, and a request with
+no style key at all still answers.
+
+## 2026-08-13 · Regenerate changelog
+
+`389b991` — 1 file, +50/−0
+
 ## 2026-08-13 · Add a colloquial-style toggle and a Tamil register guide
 
 `63bedf2` — 13 files, +600/−97
