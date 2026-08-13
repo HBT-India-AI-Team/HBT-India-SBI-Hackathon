@@ -313,6 +313,54 @@ def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
     return system_prompt, user_prompt
 
 
+def _user_message(raw_input) -> str:
+    """The user's own words, wherever the caller happened to put them.
+
+    Two shapes reach here. /invoke passes fields at the top level; the chat
+    route wraps them, calling invoke_agent(agent_id, {"evidence": {...}}), so
+    the message sits one level down. Reading only the top level looked
+    correct, ran clean, and silently returned no style on every chat turn --
+    which is the whole path that matters.
+    """
+    if not isinstance(raw_input, dict):
+        return ""
+    for candidate in (raw_input, raw_input.get("evidence")):
+        if isinstance(candidate, dict):
+            message = candidate.get("message")
+            if isinstance(message, str) and message.strip():
+                return message.strip()
+    return ""
+
+
+def _style_section(ctx, logger) -> str:
+    """Vernacular passages to match the wording of, or "" to change nothing.
+
+    Imported lazily and inside a try: agent_platform is the generic runtime
+    and capabilities_impl is one app built on it, so the runtime must stay
+    importable without it. Every failure here -- no module, no index, no
+    embedding host -- returns "" and the prompt goes out exactly as it would
+    have. Nothing about grounding is allowed to depend on style.
+    """
+    try:
+        from capabilities_impl import style_examples
+    except ImportError:
+        return ""
+
+    message = _user_message(ctx.raw_input)
+    if not message:
+        return ""
+
+    try:
+        examples = style_examples.for_query(message)
+    except Exception as exc:                # noqa: BLE001 - style is never fatal
+        logger.warning(ctx, f"Style retrieval failed, answering unstyled: {exc}")
+        return ""
+
+    if examples:
+        logger.event(ctx, "style_examples_used", count=len(examples))
+    return style_examples.as_prompt_section(examples)
+
+
 @register_stage("reason_llm_text")
 def reason_llm_text(ctx, bundle, logger) -> None:
     """Text-mode counterpart to reason_llm: for skills whose entire job is
@@ -822,15 +870,21 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
             f"answer, don't recompute or guess them:\n{tool_lines}"
         )
 
+    # Style examples go on THIS call and not the tool loop above. The loop
+    # picks tools and writes English, numeric arguments -- vernacular passages
+    # there are noise against a selection step that is already delicate. This
+    # call is the one that writes prose the user reads.
+    answer_prompt = system_prompt + _style_section(ctx, logger)
+
     adapter = _build_adapter(bundle)
     logger.event(ctx, "ollama_call_started", model=bundle.definition.llm.model)
     try:
         parsed, meta = adapter.generate_structured(
-            system_prompt=system_prompt, user_prompt=user_prompt,
+            system_prompt=answer_prompt, user_prompt=user_prompt,
             schema=output_contract, temperature=bundle.definition.llm.temperature,
         )
         ctx.llm_output = parsed
-        _record_llm_detail(ctx, meta, prompt_chars=len(system_prompt) + len(user_prompt),
+        _record_llm_detail(ctx, meta, prompt_chars=len(answer_prompt) + len(user_prompt),
                            tool_calls=tool_calls_made)
         logger.llm_call(
             ctx, model=meta["model"], duration_ms=meta["duration_ms"],

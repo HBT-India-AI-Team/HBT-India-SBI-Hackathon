@@ -25,3 +25,8 @@ chat_sessions/
 # nobody else. doc_index.json itself IS committed: without it a fresh clone
 # cannot answer a document question until someone rebuilds against Ollama.
 capabilities_impl/fixtures/doc_index.embedcache.json
+capabilities_impl/fixtures/style_index.embedcache.json
+
+# Excel lock files, created while a workbook is open
+~$*.xlsx
+docs/~$*.xlsx

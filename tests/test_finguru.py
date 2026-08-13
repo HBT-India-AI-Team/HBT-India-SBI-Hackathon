@@ -596,10 +596,19 @@ def test_fd_rate_states_the_senior_age_and_denies_a_super_senior_band():
 
 
 def test_instructions_pin_the_colloquial_hindi_register():
-    """Textbook Hindi reads like a circular to the people this is for. The
-    substitutions are the ones that showed up wrong in real answers.
+    """Textbook Hindi reads like a circular to the people this is for.
+
+    The rows asserted here are the counter-intuitive half, measured over
+    1,518 scraped passages: products keep their English names, but the
+    *concepts* stay Hindi. An earlier hand-written version of this table had
+    सेविंग and इन्वेस्ट as the colloquial forms, which the corpus contradicts
+    -- real speakers write बचत and निवेश. Reaching for the English word to
+    sound casual overshoots, and that is the mistake worth pinning.
     """
     text = (Path("skills_library/finguru/instructions.md")).read_text(encoding="utf-8")
-    for spoken in ("सेविंग्स अकाउंट", "सीनियर सिटीजन", "मैच्योरिटी"):
-        assert spoken in text, f"{spoken} missing from the register guidance"
+    for english_product in ("लोन", "टैक्स", "बैलेंस"):
+        assert english_product in text, f"{english_product} missing from the register table"
+    for hindi_concept in ("ब्याज", "निवेश", "बचत"):
+        assert hindi_concept in text, f"{hindi_concept} missing from the register table"
+    assert "इंटरेस्ट" in text, "the overshoot case (इंटरेस्ट) should be named as wrong"
     assert "names" in text and "get_scheme_details" in text
