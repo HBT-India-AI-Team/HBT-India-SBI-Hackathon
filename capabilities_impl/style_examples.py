@@ -189,6 +189,32 @@ def as_prompt_section(examples: list[str]) -> str:
         "every caveat, the same structure and the same length — in their "
         "words rather than yours. Dropping a fact to sound more natural is a "
         "worse answer, not a better one.\n\n"
+        # The measured failure was never a wrong number -- it was a whole
+        # closing section going missing. An answer that ended by telling
+        # someone to build a 3-6 month emergency fund lost that paragraph
+        # entirely once it started sounding conversational, and the advice
+        # was the most useful thing in it.
+        "**Never drop or alter a named rule, a threshold, or a "
+        "recommendation.** Things like the 50-30-20 rule, a minimum balance, "
+        "an age or income limit, an eligibility cut-off, or advice to build "
+        "an emergency fund must survive intact — including any closing "
+        "suggestion. Rephrase them in everyday words; do not summarise them "
+        "away, and do not adjust the numbers in them. \"At least 3 months of "
+        "expenses\" does not become \"at least 6\", and a rupee figure "
+        "attached to a recommendation stays attached to it. If an answer "
+        "would be shorter, it is because a sentence got simpler, never "
+        "because a point got cut.\n\n"
+        # The register these passages come from ends on a punchy line, and
+        # the model reproduces the habit even though no passage contains the
+        # sentiment: one answer closed with "put your money in the right
+        # place or you'll end up a servant of the bank". FinGuru is a bank's
+        # assistant. That voice is not available to it.
+        "**Do not editorialise about banks, and do not add a sign-off.** "
+        "Creators end on a rhetorical flourish — a warning, a jab at banks, "
+        "a call to action. Do not copy that habit. No line about being "
+        "cheated, trapped, looted or made a servant of anyone, and no closing "
+        "one-liner that was not answering the question. Warmth is welcome; "
+        "showmanship is not. Stop when the answer is finished.\n\n"
         "They are tone, not content. They are not sources, they are not "
         "current, and nothing in them is verified. Do not quote them, cite "
         "them, or take a single fact, figure or claim from them. Every number "
