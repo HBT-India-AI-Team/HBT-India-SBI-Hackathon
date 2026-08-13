@@ -100,6 +100,33 @@ export interface ChatTurnResult {
   stage_trace?: StageTraceEntry[] | null
 }
 
+/** One endpoint this backend declares, from its own OpenAPI schema. */
+export interface DeclaredRoute {
+  method: string
+  path: string
+  audience: 'client' | 'admin'
+  keyed: boolean
+  summary: string
+}
+
+/** One path that has actually been requested, from uvicorn's access log.
+ *  `recognised: false` is the wrong-endpoint case — somebody is calling a URL
+ *  this backend does not serve. */
+export interface TrafficRow {
+  method: string
+  path: string
+  count: number
+  errors: number
+  last_status: number
+  recognised: boolean
+}
+
+export interface ApiSurface {
+  declared: DeclaredRoute[]
+  traffic: TrafficRow[]
+  log_note: string
+}
+
 export type InputMode = 'chat' | 'form' | 'json' | 'trigger' | 'file'
 
 export interface AgentSummary {

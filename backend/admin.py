@@ -46,6 +46,91 @@ from .archetypes import get_archetype, list_archetypes
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+_ACCESS_LINE = re.compile(r'"(?P<verb>[A-Z]+) (?P<path>[^ ?]+)[^"]*" (?P<status>\d{3})')
+
+# Path segments that are identifiers, so /agents/finguru/chat and
+# /agents/other/chat collapse into one row instead of flooding the table.
+_ID_SEGMENT = re.compile(r"^(?:run_|chat_)[0-9a-f]+$|^[0-9a-f]{8,}$")
+
+
+def _normalise(path: str) -> str:
+    parts = [("{id}" if _ID_SEGMENT.match(seg) else seg) for seg in path.split("/")]
+    return "/".join(parts)
+
+
+@router.get("/api-surface")
+def api_surface() -> dict:
+    """Every endpoint this backend serves, plus what has actually been called.
+
+    Exists because a client team was calling us with a field name we did not
+    read and a flag nested a level below where we looked, and neither side
+    could see it. The declared list answers "does this endpoint exist"; the
+    traffic list answers "what are they really hitting" — a 404 against a path
+    that is not in the declared list is a wrong URL, and that is the failure
+    this is here to make visible.
+
+    Traffic is parsed from uvicorn's own access log, so it only covers the
+    current process. It resets when the backend restarts.
+    """
+    from backend.main import app
+
+    declared = []
+    for path, operations in app.openapi().get("paths", {}).items():
+        if path.startswith(("/openapi", "/docs", "/redoc")):
+            continue
+        for verb, op in operations.items():
+            if verb.upper() in {"HEAD", "OPTIONS"} or not isinstance(op, dict):
+                continue
+            text = op.get("description") or op.get("summary") or ""
+            declared.append({
+                "method": verb.upper(),
+                "path": path,
+                "audience": "admin" if path.startswith("/admin") else "client",
+                "keyed": any(p.get("name") == "x-api-key"
+                             for p in op.get("parameters", []) if isinstance(p, dict)),
+                "summary": " ".join(text.split())[:160],
+            })
+
+    known = {(r["method"], r["path"]) for r in declared}
+    seen: dict[tuple, dict] = {}
+    log = Path(__file__).resolve().parent.parent / "uvicorn_out.log"
+    try:
+        for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+            m = _ACCESS_LINE.search(line)
+            if not m:
+                continue
+            verb, path, status = m["verb"], _normalise(m["path"]), int(m["status"])
+            row = seen.setdefault((verb, path), {"method": verb, "path": path,
+                                                 "count": 0, "errors": 0, "last_status": status})
+            row["count"] += 1
+            row["last_status"] = status
+            if status >= 400:
+                row["errors"] += 1
+    except OSError:
+        pass
+
+    # Declared paths are templates ("/agents/{agent_id}/chat"), so a real path
+    # never matches by string equality. Compile each into a pattern instead.
+    patterns = [
+        (method, re.compile("^" + re.sub(r"\{[^}]+\}", "[^/]+", re.escape(path)
+                                         .replace(r"\{", "{").replace(r"\}", "}")) + "$"))
+        for method, path in known
+    ]
+
+    traffic = sorted(seen.values(), key=lambda r: r["count"], reverse=True)
+    for row in traffic:
+        # An unrecognised path is the wrong-endpoint case this endpoint exists
+        # to surface. Matched against the un-normalised path, since {id}
+        # substitution would otherwise make a typo'd path look templated.
+        row["recognised"] = row["path"].startswith(("/openapi", "/docs", "/redoc")) or any(
+            row["method"] == method and pattern.match(row["path"].replace("{id}", "x"))
+            for method, pattern in patterns
+        )
+
+    return {"declared": declared, "traffic": traffic,
+            "log_note": "Traffic is from the current backend process only; it resets on restart."}
+
+
 def _agent_yaml_path(agent_id: str) -> Path:
     return AGENTS_DIR / agent_id / "agent.yaml"
 

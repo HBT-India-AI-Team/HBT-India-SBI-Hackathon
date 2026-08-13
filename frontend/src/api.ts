@@ -4,6 +4,7 @@ import type {
   AgentRouterResult,
   AgentSummary,
   ApiKeyResult,
+  ApiSurface,
   ArchetypeSummary,
   Capability,
   ChatTurnResult,
@@ -79,6 +80,12 @@ export const api = {
     }),
 
   getApiKey: (agentId: string) => apiFetch<ApiKeyResult>(`/admin/agents/${agentId}/api-key`),
+
+  /** Every endpoint this backend serves, plus what has actually been called.
+   *  The traffic half is the point: a request against a path we do not serve
+   *  shows up as unrecognised, which is how a client calling the wrong URL
+   *  becomes visible instead of just failing quietly on their side. */
+  getApiSurface: () => apiFetch<ApiSurface>('/admin/api-surface'),
 
   regenerateApiKey: (agentId: string) =>
     apiFetch<ApiKeyResult>(`/admin/agents/${agentId}/api-key/regenerate`, { method: 'POST' }),

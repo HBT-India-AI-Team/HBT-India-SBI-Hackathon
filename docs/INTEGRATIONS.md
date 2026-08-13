@@ -7,6 +7,12 @@ shape we do not control is a thing that changes without telling us.
 
 **Last confirmed:** 13 August 2026, from the client team's own inventory.
 
+For the authoritative list of what *we* expose — generated from the app, so it
+cannot drift — see [API.md](API.md). This file is who calls what and in what
+shape; that one is what exists. The same thing is in the UI under **Integrate →
+Endpoints & live traffic**, which also shows paths that have been called and
+are not ours.
+
 ---
 
 ## The three backends
