@@ -72,8 +72,11 @@ def test_nested_flags_do_not_reach_the_prompt_either():
 
     assert "'voice'" not in user_prompt and "'style'" not in user_prompt
     assert "FD rate" in user_prompt
-    # Not a flag we act on, so it stays visible as ordinary context.
-    assert "'language'" in user_prompt
+    # `language` joined them once it became something we act on rather than
+    # inert context: it is now a prompt directive of its own, and leaving it
+    # in the rendered evidence as well says the same thing twice, in two
+    # voices, one of which reads as the user's.
+    assert "'language'" not in user_prompt
 
 
 def test_the_voice_flag_is_never_shown_to_the_model():

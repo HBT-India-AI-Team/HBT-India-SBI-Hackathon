@@ -341,6 +341,45 @@ model should not be hand-writing.
 
 ---
 
+## 17. Sarvam is an accelerant, never a dependency
+
+**Decided:** `capabilities_impl/sarvam.py` provides Indic language ID and
+translation. Not registered as a tool. Every path returns `None` without a key,
+on a timeout, or on an unrecognised response, and the pipeline proceeds exactly
+as it does today.
+
+**Why it exists:** a Tamil question came back answered in Telugu. Our own
+detection is a Unicode range (`style_examples.language_of`), which can tell
+Devanagari from Tamil and nothing finer — not Hindi from Marathi, not Tamil
+from Malayalam, and nothing at all once ASR partly romanises the text. Sarvam
+is trained on precisely these languages.
+
+**Trust order is caller first, Sarvam second.** The voice client already sends
+`language`, and its ASR knows what it transcribed better than anything
+downstream can infer from the output. Sarvam is the fallback, not the default —
+it is a network round trip on the path to every answer.
+
+**Timeout is 4 seconds.** This runs before the answer, so a slow third party
+would be felt on every turn. It is skipped rather than waited for.
+
+**`translate` is written and deliberately not wired in.** The intended use is
+giving `docs.search` a real English query instead of refusing Indic ones
+(#4 above). That overturns a deliberate decision and wants measuring first: a
+translator subtly wrong on financial vocabulary degrades retrieval silently,
+which is the exact failure #4 exists to avoid.
+
+**Unverified.** The header name, two endpoint paths, and the response field
+names are written from Sarvam's public API and have not been checked against a
+live key. All four are environment-overridable and
+`python -m capabilities_impl.sarvam` probes all four in one call, naming
+whichever is wrong.
+
+**Would overturn it:** Sarvam becoming load-bearing for grounding rather than
+for wording. It must stay on the side of the system where being absent costs
+nothing.
+
+---
+
 ## Things deliberately NOT done
 
 **A second model to rephrase answers into colloquial Hindi.** Proposed and

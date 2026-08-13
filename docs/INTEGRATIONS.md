@@ -70,10 +70,12 @@ grows every turn. `/agents/finguru/chat` would handle this server-side via
 `session_id`, but they are on `/invoke` and that is fine — just know the
 prompt carries the whole transcript.
 
-**`language` is sent and we do not act on it.** It reaches the prompt as
-ordinary context and nothing reads it as a directive. Wiring it would pin the
-reply language instead of inferring it from ASR text — worth doing after a
-Tamil question came back answered in Telugu — but it is not built.
+**`language` is now acted on.** It pins the reply language rather than letting
+the model infer it from ASR text, after a Tamil question came back answered in
+Telugu. Send a BCP-47-ish code (`ta-IN`, `hi-IN`, `en-IN`); it is resolved to a
+name before it reaches the prompt. If you omit it we fall back to Sarvam
+language ID when a key is configured, and to the model's own guess otherwise —
+but you have the ASR's own answer and we do not, so please keep sending it.
 
 ### What they get back
 
@@ -88,6 +90,40 @@ Tamil question came back answered in Telugu — but it is not built.
 
 `/agents/finguru/chat` (which they do not use) returns `reply` directly plus a
 `style` diagnostic saying whether the vernacular layer actually fired.
+
+---
+
+## 1b. Sarvam AI — outbound, ours
+
+The one third party this backend calls for language work. Optional: with no
+key configured, nothing here runs and nothing changes.
+
+```
+POST {SARVAM_API_BASE}/text-lid      language + script identification   USED
+POST {SARVAM_API_BASE}/translate     Indic <-> English                  built, not wired
+Header: api-subscription-key: $SARVAM_API_KEY
+```
+
+Config, all environment-overridable so a wrong guess is not a code change:
+
+| var | default |
+|---|---|
+| `SARVAM_API_KEY` | *(unset — the whole integration no-ops)* |
+| `SARVAM_API_BASE` | `https://api.sarvam.ai` |
+| `SARVAM_KEY_HEADER` | `api-subscription-key` |
+| `SARVAM_PATH_DETECT` | `/text-lid` |
+| `SARVAM_PATH_TRANSLATE` | `/translate` |
+| `SARVAM_TRANSLATE_MODEL` | `mayura:v1` |
+
+**The header name, both paths and the response field names are unverified
+against a live key.** Check them first:
+
+```bash
+SARVAM_API_KEY=… python -m capabilities_impl.sarvam
+```
+
+That probes all four and names whichever is wrong. Fix it with the env var
+above rather than by editing the module.
 
 ---
 

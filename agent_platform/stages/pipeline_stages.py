@@ -231,7 +231,8 @@ def _governing_output_contract(ctx, bundle) -> dict:
 
 def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
                        tool_calls: list[dict] | None = None,
-                       style: dict | None = None, voice: bool = False) -> None:
+                       style: dict | None = None, voice: bool = False,
+                       language: str | None = None) -> None:
     """Attaches what this LLM call actually did to the stage's detail, for
     the Playground's AI Observation panel.
 
@@ -258,6 +259,8 @@ def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
         detail["style"] = style
     if voice:
         detail["voice"] = True
+    if language:
+        detail["reply_language"] = language
     # This assignment replaces the slot rather than updating it, so anything a
     # stage wants in its detail has to arrive through this call.
     ctx.pending_stage_detail = {k: v for k, v in detail.items() if v is not None}
@@ -306,7 +309,7 @@ def reason_llm(ctx, bundle, logger) -> None:
 # had typed it. "style" was: the prompt carried a literal "style: True" line,
 # and the tool loop -- which style is not even supposed to reach -- started
 # picking different tools because of it. Reproducibly, 3 runs out of 3.
-_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id", "style", "voice"}
+_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id", "style", "voice", "language"}
 
 
 def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
@@ -493,6 +496,69 @@ _VOICE_BRIEF = (
     "whatever the user asked for. A JSON object read aloud is unusable — say "
     "what the chart would have shown instead.\n"
 )
+
+
+def _language_section(ctx, logger) -> tuple[str, str | None]:
+    """Tell the model what language to answer in, rather than let it guess.
+
+    Two sources, in order of trust:
+
+      1. what the caller declared -- the voice client already sends
+         `language`, and its ASR knows what it transcribed better than we can
+         infer from the output
+      2. Sarvam's language ID, if a key is configured
+
+    Neither is required. With no declared language and no Sarvam key this
+    returns "" and behaviour is exactly what it is today: the model infers
+    from the text, which is right most of the time.
+
+    It is the "most of the time" that this is for. A Tamil question came back
+    answered in Telugu -- both Indic, the ASR transcript was garbled, and our
+    own detection is a Unicode range, which cannot separate Tamil from
+    Malayalam or Hindi from Marathi. A wrong language is not a bad answer, it
+    is a useless one.
+    """
+    try:
+        from capabilities_impl import sarvam
+    except ImportError:
+        sarvam = None
+
+    declared = _request_flag(ctx.raw_input, "language")
+    code = declared.strip() if isinstance(declared, str) and declared.strip() else None
+    source = "declared by the caller"
+    if code and sarvam is not None:
+        # "ta-IN" asks the model to know a BCP-47 table; "Tamil" does not.
+        code = sarvam.language_name(code)
+
+    if not code:
+        if sarvam is None or not sarvam.available():
+            return "", None
+        message = _user_message(ctx.raw_input)
+        if not message:
+            return "", None
+        try:
+            detected = sarvam.identify_language(message)
+        except Exception as exc:               # noqa: BLE001 - never fatal
+            logger.warning(ctx, f"Language detection failed, letting the model infer: {exc}")
+            return "", None
+        if not detected:
+            return "", None
+        code, source = detected.get("name") or detected.get("code"), "detected"
+
+    if not code:
+        return "", None
+
+    logger.event(ctx, "reply_language_pinned", language=code, source=source)
+    return (
+        "\n\n## Answer in this language\n\n"
+        f"The user is writing in **{code}**. Reply in that language and its "
+        "script, whatever the text below looks like — it may be a speech "
+        "transcript, and transcripts of Indian languages are frequently "
+        "garbled or partly romanized. Do not switch to a different language "
+        "because the input looks unclear. If a transcript is too broken to "
+        "answer, say so in that language and ask them to repeat.\n",
+        code,
+    )
 
 
 def _voice_enabled(raw_input) -> bool:
@@ -1025,7 +1091,8 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
     # the answer is going to be spoken. Last word in the prompt is how that
     # is expressed.
     voice = _voice_enabled(ctx.raw_input)
-    answer_prompt = system_prompt + style_text + (_VOICE_BRIEF if voice else "")
+    language_text, language = _language_section(ctx, logger)
+    answer_prompt = system_prompt + language_text + style_text + (_VOICE_BRIEF if voice else "")
 
     adapter = _build_adapter(bundle)
     logger.event(ctx, "ollama_call_started", model=bundle.definition.llm.model)
@@ -1036,7 +1103,8 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
         )
         ctx.llm_output = parsed
         _record_llm_detail(ctx, meta, prompt_chars=len(answer_prompt) + len(user_prompt),
-                           tool_calls=tool_calls_made, style=style_detail, voice=voice)
+                           tool_calls=tool_calls_made, style=style_detail, voice=voice,
+                           language=language)
         logger.llm_call(
             ctx, model=meta["model"], duration_ms=meta["duration_ms"],
             prompt_tokens=meta.get("prompt_tokens"), completion_tokens=meta.get("completion_tokens"),
