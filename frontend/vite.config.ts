@@ -9,6 +9,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: true,
+    // Vite rejects requests whose Host header it doesn't recognize (guards
+    // against DNS-rebinding attacks). ngrok's tunnel domain isn't localhost
+    // or the LAN IP, so without this every request gets a 403 "Blocked
+    // request. This host is not allowed." True is fine for a demo tunnel
+    // that changes URL every run; pin it to a specific hostname instead if
+    // you get a reserved ngrok domain.
+    allowedHosts: true,
     proxy: {
       '/admin': 'http://127.0.0.1:8080',
       '/agents': 'http://127.0.0.1:8080',

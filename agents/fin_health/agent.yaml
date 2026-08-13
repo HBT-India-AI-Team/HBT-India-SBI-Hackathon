@@ -1,0 +1,99 @@
+agent_id: fin_health
+version: 1.0.0
+purpose: Scores a company's financial health from an MCA due-diligence Excel report
+  for tender eligibility.
+skills:
+- fin_health
+pipeline:
+- load_input
+- gather_evidence
+- evaluate_rules
+- reason_llm
+- validate_output
+- decide
+- hitl_gate
+- explain
+capabilities: []
+governance:
+  hitl_conditions:
+  - low_confidence
+  - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+llm:
+  model: gemma4:12b
+  temperature: 0.0
+  seed: 7
+  timeout_seconds: 120
+draft: false
+routable: false
+input_mode: file
+demo_sample_input:
+  evidence:
+    business_name: JAPTECH ENGICORP PRIVATE LIMITED
+    company_status: Active
+    gst_status: Active
+    ebitda_margin_pct: 9.7
+    net_margin_pct: 0.5
+    revenue_growth_pct: 135.8
+    debt_to_equity: 8.2
+    interest_coverage_ratio: 1.2
+    current_ratio: 2.0
+    epfo_late_payment_flag: true
+    charges_to_capital_ratio: 6.99
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: Evidence dict evaluated against this agent's generated rules.
+      properties:
+        company_status:
+          type: string
+          description: MCA company status (must be Active)
+        gst_status:
+          type: string
+          description: GST registration status (must be Active)
+        ebitda_margin_pct:
+          type: number
+          description: Latest-year EBITDA margin, percent
+        net_margin_pct:
+          type: number
+          description: Latest-year net margin, percent
+        revenue_growth_pct:
+          type: number
+          description: Latest-year revenue growth, percent
+        debt_to_equity:
+          type: number
+          description: Latest-year debt-to-equity ratio
+        interest_coverage_ratio:
+          type: number
+          description: Latest-year interest coverage ratio
+        current_ratio:
+          type: number
+          description: Latest-year current ratio
+        epfo_late_payment_flag:
+          type: boolean
+          description: True if EPFO shows a late-payment flag in the last 12 months
+        charges_to_capital_ratio:
+          type: number
+          description: Total secured charges divided by paid-up capital
+output_schema:
+  type: object
+  required:
+  - outcome
+  - reason
+  - composite_score
+  properties:
+    outcome:
+      type: string
+      enum:
+      - QUALIFIED
+      - CONDITIONALLY_QUALIFIED
+      - NEEDS_HUMAN_REVIEW
+      - NOT_QUALIFIED
+    reason:
+      type: string
+    composite_score:
+      type: number

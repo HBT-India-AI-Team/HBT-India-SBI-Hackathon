@@ -1,96 +1,45 @@
 import { useMemo, useState } from 'react'
 import { Button, ChoiceCard, FieldLabel, Modal, TextArea, TextInput } from './ui'
-import type { AgentSummary, GenerateAgentEvent, TemplateSummary } from '../types'
+import { ProgressChecklist, upsertStep, type ProgressStep } from './ProgressChecklist'
+import type { ArchetypeSummary, AgentSummary, GenerateAgentEvent, TemplateSummary } from '../types'
 
 interface NewAgentModalProps {
   agents: AgentSummary[]
   templates: TemplateSummary[]
+  archetypes: ArchetypeSummary[]
   onClose: () => void
   onCreate: (agentId: string, skillId: string, purpose: string, templateId: string) => Promise<void>
-  onGenerate: (agentId: string, purpose: string, onEvent: (event: GenerateAgentEvent) => void) => Promise<void>
+  onGenerate: (
+    agentId: string,
+    purpose: string,
+    archetypeId: string,
+    onEvent: (event: GenerateAgentEvent) => void,
+  ) => Promise<void>
 }
 
 type SkillMode = 'new' | 'existing'
 type BuildMode = 'template' | 'describe'
-type StepStatus = 'pending' | 'active' | 'done' | 'error'
-interface ProgressStep {
-  id: string
-  label: string
-  status: StepStatus
-}
 
 function stepsFromEvent(prev: ProgressStep[], event: GenerateAgentEvent): ProgressStep[] {
-  let id: string
-  let label: string
-  let status: StepStatus
-
   if (event.step === 'decompose') {
-    id = 'decompose'
-    label = 'Reading your description'
-    status = event.status === 'done' ? 'done' : 'active'
-  } else if (event.step === 'generate_skill') {
-    id = `skill:${event.skill_id}`
-    label = event.total && event.total > 1
+    return upsertStep(prev, 'decompose', 'Reading your description', event.status === 'done' ? 'done' : 'active')
+  }
+  if (event.step === 'generate_skill') {
+    const label = event.total && event.total > 1
       ? `Drafting rules for "${event.skill_id}" (${event.index}/${event.total})`
       : 'Drafting the rules'
-    status = event.status === 'done' ? 'done' : 'active'
-  } else if (event.step === 'save') {
-    id = 'save'
-    label = 'Saving the agent'
-    status = event.status === 'done' ? 'done' : 'active'
-  } else if (event.step === 'validate') {
-    id = 'validate'
-    label = 'Checking it loads cleanly'
-    status = event.status === 'error' ? 'error' : event.status === 'done' ? 'done' : 'active'
-  } else {
-    return prev
+    return upsertStep(prev, `skill:${event.skill_id}`, label, event.status === 'done' ? 'done' : 'active')
   }
-
-  const idx = prev.findIndex((s) => s.id === id)
-  if (idx === -1) return [...prev, { id, label, status }]
-  const next = [...prev]
-  next[idx] = { ...next[idx], label, status }
-  return next
+  if (event.step === 'save') {
+    return upsertStep(prev, 'save', 'Saving the agent', event.status === 'done' ? 'done' : 'active')
+  }
+  if (event.step === 'validate') {
+    return upsertStep(prev, 'validate', 'Checking it loads cleanly', event.status === 'error' ? 'error' : event.status === 'done' ? 'done' : 'active')
+  }
+  return prev
 }
 
-function ProgressChecklist({ steps }: { steps: ProgressStep[] }) {
-  return (
-    <ul className="mb-4 flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50 p-3">
-      {steps.map((step) => (
-        <li key={step.id} className="flex items-center gap-2.5 text-sm">
-          {step.status === 'done' ? (
-            <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 text-brand-600" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          ) : step.status === 'error' ? (
-            <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 text-red-600" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : step.status === 'active' ? (
-            <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand-300 border-t-brand-600 animate-spin" />
-          ) : (
-            <span className="w-4 h-4 shrink-0 rounded-full border-2 border-neutral-300" />
-          )}
-          <span
-            className={
-              step.status === 'done'
-                ? 'text-neutral-500 line-through decoration-neutral-300'
-                : step.status === 'error'
-                  ? 'text-red-700'
-                  : step.status === 'active'
-                    ? 'text-neutral-900 font-medium'
-                    : 'text-neutral-400'
-            }
-          >
-            {step.label}
-          </span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-export function NewAgentModal({ agents, templates, onClose, onCreate, onGenerate }: NewAgentModalProps) {
+export function NewAgentModal({ agents, templates, archetypes, onClose, onCreate, onGenerate }: NewAgentModalProps) {
   const existingSkills = useMemo(() => {
     const byId = new Map<string, string[]>()
     for (const agent of agents) {
@@ -107,6 +56,7 @@ export function NewAgentModal({ agents, templates, onClose, onCreate, onGenerate
   const [agentId, setAgentId] = useState('')
   const [purpose, setPurpose] = useState('')
   const [templateId, setTemplateId] = useState('blank')
+  const [archetypeId, setArchetypeId] = useState('qualification')
   const [skillMode, setSkillMode] = useState<SkillMode>('new')
   const [newSkillId, setNewSkillId] = useState('')
   const [existingSkillId, setExistingSkillId] = useState<string | null>(null)
@@ -115,6 +65,7 @@ export function NewAgentModal({ agents, templates, onClose, onCreate, onGenerate
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([])
 
   const selectedTemplate = templates.find((t) => t.id === templateId) ?? null
+  const selectedArchetype = archetypes.find((a) => a.id === archetypeId) ?? null
 
   const resolvedSkillId =
     skillMode === 'existing' ? existingSkillId : newSkillId.trim() || agentId.trim()
@@ -129,7 +80,7 @@ export function NewAgentModal({ agents, templates, onClose, onCreate, onGenerate
     try {
       if (buildMode === 'describe') {
         setProgressSteps([])
-        await onGenerate(agentId.trim(), purpose.trim(), (event) => {
+        await onGenerate(agentId.trim(), purpose.trim(), archetypeId, (event) => {
           setProgressSteps((prev) => stepsFromEvent(prev, event))
         })
       } else {
@@ -148,7 +99,9 @@ export function NewAgentModal({ agents, templates, onClose, onCreate, onGenerate
         <h2 className="text-neutral-900 font-semibold mb-1">New Agent</h2>
         <p className="text-xs text-neutral-500 mb-4 leading-relaxed">
           {buildMode === 'describe'
-            ? 'An AI drafts real gates, scoring, and product rules from your description. It always lands as a draft — review it in the editor before it\'s trusted or routable.'
+            ? <>An AI drafts a real {selectedArchetype ? selectedArchetype.label.toLowerCase() : 'agent'} from
+              your description{selectedArchetype ? ` — ${selectedArchetype.description}` : ''} It always lands as
+              a draft — review it in the editor before it's trusted or routable.</>
             : <>Scaffolds agents/&lt;id&gt;/agent.yaml with a starter pipeline
               {selectedTemplate ? ` (${selectedTemplate.pipeline.join(' → ')})` : ''}, plus a skill
               package it runs against.</>}
@@ -250,11 +203,33 @@ export function NewAgentModal({ agents, templates, onClose, onCreate, onGenerate
           </>
         ) : (
           <>
+            {archetypes.length > 0 && (
+              <>
+                <label className="block text-xs text-neutral-400 mb-2">What kind of agent is this?</label>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {archetypes.map((archetype) => (
+                    <ChoiceCard
+                      key={archetype.id}
+                      selected={archetypeId === archetype.id}
+                      onClick={() => setArchetypeId(archetype.id)}
+                      title={archetype.label}
+                      subtitle={archetype.description}
+                      disabled={submitting}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
             <FieldLabel>Describe what this agent should do</FieldLabel>
             <TextArea
               className="mb-4"
               rows={6}
-              placeholder="e.g. Qualify SME loan applicants based on debt ratio and credit score. Reject anyone with an active default. Recommend a working capital loan for strong applicants."
+              placeholder={
+                archetypeId === 'conversational'
+                  ? 'e.g. Answer employee questions about the bank\'s leave policy, given a short policy document as context. Escalate to HR if the question is about a personal dispute.'
+                  : 'e.g. Qualify SME loan applicants based on debt ratio and credit score. Reject anyone with an active default. Recommend a working capital loan for strong applicants.'
+              }
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               disabled={submitting}

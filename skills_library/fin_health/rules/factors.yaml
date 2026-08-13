@@ -1,0 +1,159 @@
+# FIN HEALTH — FACTORS (the actual scoring)
+# ---------------------------------------------------------------------------
+# Only companies that pass every gate in gates.yaml reach this file. Each
+# factor scores ONE evidence field on a 0-100 scale using "bands": a band
+# says "if the value is at least this much, give it this score."
+#
+# HOW BANDS WORK (read this before editing):
+#   Bands are checked from the HIGHEST "min" downward, and the first one
+#   the real value clears wins. So for:
+#     bands:
+#       - min: 15, score: 100
+#       - min: 8,  score: 70
+#       - min: 3,  score: 40
+#       - min: -1000, score: 15
+#   a value of 9.7 clears "min: 8" (but not "min: 15"), so it scores 70.
+#   The last band (very negative min) is a safety net so any value scores
+#   *something* rather than nothing.
+#
+#   For a metric where LOWER is better (e.g. debt-to-equity, or a risk
+#   flag), the bands are just written in reverse: a HIGH value clears a
+#   HIGH "min" threshold that maps to a LOW score. That's why
+#   debt_to_equity's bands look "backwards" below — it's intentional.
+#
+# HOW WEIGHTS WORK:
+#   Within one category (e.g. "Profitability"), each factor's `weight` is
+#   its share of that category's own score — weights in a category don't
+#   need to sum to 1, they're normalized automatically. Separately,
+#   composite.yaml's `weights:` decide how much each whole CATEGORY counts
+#   toward the final 0-100 score.
+#
+# TO ADD A NEW FACTOR:
+#   1. Pick (or create) a category below.
+#   2. Add a new item under that category's `factors:` list, following the
+#      same shape: id, description, field (must be a real evidence field —
+#      see README.md), weight, and 2-4 bands covering the realistic range
+#      of that field.
+#   3. If you added a brand-new category, also add it to composite.yaml's
+#      `weights:` block, or it will never count toward the final score.
+#
+# NOTE: "Fix with AI" (per-file or whole-skill) regenerates this file from
+# scratch and will strip these comments — see README.md in this folder.
+# Re-add them by hand if that happens (your rule *values* are preserved,
+# just not this documentation).
+# ---------------------------------------------------------------------------
+rule_group: factors
+description: Weighted scoring bands, grouped into categories — see the comments above for how to read/edit these.
+categories:
+  Profitability:
+    factors:
+    - id: ebitda_margin
+      description: EBITDA margin (higher is better)
+      field: ebitda_margin_pct
+      weight: 0.5
+      bands:
+      - min: 15
+        score: 100
+      - min: 8
+        score: 70
+      - min: 3
+        score: 40
+      - min: -1000
+        score: 15
+    - id: net_margin
+      description: Net margin (higher is better)
+      field: net_margin_pct
+      weight: 0.5
+      bands:
+      - min: 8
+        score: 100
+      - min: 4
+        score: 70
+      - min: 1
+        score: 40
+      - min: -1000
+        score: 10
+  Growth:
+    factors:
+    - id: revenue_growth
+      description: Year-on-year revenue growth (higher is better)
+      field: revenue_growth_pct
+      weight: 1.0
+      bands:
+      - min: 30
+        score: 100
+      - min: 10
+        score: 70
+      - min: 0
+        score: 40
+      - min: -1000
+        score: 10
+  Leverage and Liquidity:
+    factors:
+    - id: debt_to_equity
+      description: Debt-to-equity ratio (LOWER is better — bands run in reverse, see note above)
+      field: debt_to_equity
+      weight: 0.4
+      bands:
+      - min: 6
+        score: 20
+      - min: 3
+        score: 50
+      - min: 1
+        score: 80
+      - min: -1000
+        score: 100
+    - id: interest_coverage
+      description: Interest coverage ratio (higher is better — how many times over profit covers interest costs)
+      field: interest_coverage_ratio
+      weight: 0.35
+      bands:
+      - min: 3
+        score: 100
+      - min: 1.5
+        score: 60
+      - min: 1
+        score: 30
+      - min: -1000
+        score: 0
+    - id: current_ratio
+      description: Current ratio (higher is better — ability to cover short-term liabilities)
+      field: current_ratio
+      weight: 0.25
+      bands:
+      - min: 1.5
+        score: 100
+      - min: 1
+        score: 60
+      - min: 0.5
+        score: 30
+      - min: -1000
+        score: 0
+  Compliance and Collateral Risk:
+    factors:
+    - id: epfo_compliance
+      description: >-
+        EPFO late-payment flag (LOWER is better — this is a true/false field where
+        true counts as 1 and false as 0, so "min: 1" below means "flagged")
+      field: epfo_late_payment_flag
+      weight: 0.5
+      bands:
+      - min: 1
+        score: 30
+      - min: 0
+        score: 100
+    - id: collateral_load
+      description: >-
+        Secured charges divided by paid-up capital (LOWER is better — how many
+        times over the company's own capital is already pledged as collateral)
+      field: charges_to_capital_ratio
+      weight: 0.5
+      bands:
+      - min: 5
+        score: 20
+      - min: 2
+        score: 50
+      - min: 0.5
+        score: 80
+      - min: -1000
+        score: 100

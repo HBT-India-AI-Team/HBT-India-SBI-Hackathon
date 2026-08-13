@@ -16,6 +16,7 @@ new banking agent like the ones already built actually needs.
 from __future__ import annotations
 
 import json
+import os
 import queue
 import re
 import shutil
@@ -24,7 +25,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ValidationError
 
@@ -33,12 +34,14 @@ from agent_platform.composition import evict, list_agents, load_agent
 from agent_platform.composition.loader import AGENTS_DIR, SKILLS_DIR
 from agent_platform.composition.models import AgentDefinition
 from agent_platform.explainability import decision_record
-from agent_platform.llm.ollama_adapter import read_recent_calls
+from agent_platform.llm import OllamaAdapter, OllamaContentError, OllamaError
+from agent_platform.llm.ollama_adapter import read_call, read_recent_calls
 from agent_platform.runtime import chat
 from agent_platform.runtime.executor import invoke_agent
 from agent_platform.runtime.pipeline import STAGE_REGISTRY
 
-from . import agent_builder, agent_templates, api_keys
+from . import agent_builder, agent_templates, api_keys, excel_ingest
+from .archetypes import get_archetype, list_archetypes
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -126,13 +129,37 @@ def get_templates() -> dict:
     return {"templates": agent_templates.list_templates()}
 
 
+@router.get("/archetypes")
+def get_archetypes() -> dict:
+    """Agent shapes the "describe it" AI generator can produce — the picker
+    shown before generation, so adding a new backend/archetypes/*.py module
+    surfaces in the UI automatically without a frontend change.
+    """
+    return {"archetypes": list_archetypes()}
+
+
 @router.get("/ollama-logs")
 def get_ollama_logs(limit: int = 100) -> dict:
     """Every Ollama call attempt (including failed retries), most recent
     first — the Logs page's data source. Reads
     agent_platform.llm.ollama_adapter's logs/ollama_calls.jsonl.
+
+    Summaries only. The request/response bodies come from the sibling route
+    below when a row is expanded, so opening the page doesn't transfer every
+    prompt and completion ever sent.
     """
     return {"calls": read_recent_calls(limit)}
+
+
+@router.get("/ollama-logs/{offset}")
+def get_ollama_log_detail(offset: int) -> dict:
+    """The full record — request and response bodies included — behind one
+    row of the list above, keyed by the `offset` that route handed out.
+    """
+    record = read_call(offset)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No logged call at offset {offset}")
+    return record
 
 
 @router.get("/skills")
@@ -169,6 +196,7 @@ def get_agents_summary() -> dict:
                 "draft": bundle.definition.draft,
                 "input_schema": bundle.definition.input_schema,
                 "input_mode": bundle.definition.input_mode,
+                "demo_sample_input": bundle.definition.demo_sample_input,
             })
         except Exception as exc:  # noqa: BLE001 - surface a broken agent, don't hide it
             agents.append({"agent_id": agent_id, "error": str(exc)})
@@ -339,16 +367,43 @@ def create_agent(payload: NewAgentPayload) -> dict:
 class GenerateAgentPayload(BaseModel):
     agent_id: str
     purpose: str
+    archetype_id: str = "qualification"
+
+
+def _combine_top_level_spec(purpose: str, archetype, skills: list) -> dict:
+    """The top-level agent.yaml's declared-fields block should describe the
+    whole request, not just one skill's own scoped spec — matters once a
+    description splits into multiple skills. Which field to merge
+    (evidence_fields, input_fields, ...) is archetype-specific.
+    """
+    seen_paths: set[str] = set()
+    combined_fields = []
+    for skill in skills:
+        for field in skill.result.spec.get(archetype.merge_field, []):
+            if field["path"] not in seen_paths:
+                seen_paths.add(field["path"])
+                combined_fields.append(field)
+    top_level_spec = {"purpose": purpose, archetype.merge_field: combined_fields}
+
+    # Not merged (unlike merge_field) — copied verbatim from the primary
+    # skill's own spec, since these describe one skill's own output shape,
+    # not something that makes sense combined across skills.
+    primary_spec = skills[0].result.spec
+    for key in archetype.primary_only_fields:
+        top_level_spec[key] = primary_spec.get(key, [])
+
+    return top_level_spec
 
 
 @router.post("/agents/generate")
 def generate_agent(payload: GenerateAgentPayload) -> dict:
-    """Describe-it flow: an LLM authors real gates/factors/thresholds/
-    products from a plain-language description (agent_builder.generate_spec
-    never writes anything invalid — see that module's docstring), and the
-    result always lands as draft: true, routable: false for a human to
-    review before it's trusted, exactly like create_agent but LLM-authored
-    instead of template-placeholder content.
+    """Describe-it flow: an LLM authors a real spec (gates/factors/
+    thresholds/products, or input/output fields + guidance, depending on
+    archetype_id — agent_builder.generate_spec never writes anything
+    invalid, see that module's docstring), and the result always lands as
+    draft: true, routable: false for a human to review before it's trusted,
+    exactly like create_agent but LLM-authored instead of
+    template-placeholder content.
     """
     agent_id = payload.agent_id.strip()
     if not agent_id or not agent_id.replace("_", "").isalnum():
@@ -360,31 +415,22 @@ def generate_agent(payload: GenerateAgentPayload) -> dict:
     if not purpose:
         raise HTTPException(status_code=400, detail="purpose (the description) must not be empty")
 
-    generation = agent_builder.generate_agent_skills(purpose=purpose, agent_id=agent_id)
+    try:
+        archetype = get_archetype(payload.archetype_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    generation = agent_builder.generate_agent_skills(purpose=purpose, agent_id=agent_id, archetype_id=archetype.id)
     skill_id = generation.skills[0].skill_id  # primary — matches agent_id for the (common) single-skill case
 
-    # Top-level agent.yaml purpose/evidence should describe the whole request, not just the
-    # primary skill's own scoped spec — matters once a description splits into multiple skills.
-    seen_paths: set[str] = set()
-    combined_evidence_fields = []
-    for skill in generation.skills:
-        for field in skill.result.spec.get("evidence_fields", []):
-            if field["path"] not in seen_paths:
-                seen_paths.add(field["path"])
-                combined_evidence_fields.append(field)
-    top_level_spec = {"purpose": purpose, "evidence_fields": combined_evidence_fields}
-
-    agent_yaml = agent_builder.render_agent_yaml(
-        agent_id, [s.skill_id for s in generation.skills], top_level_spec,
-    )
+    top_level_spec = _combine_top_level_spec(purpose, archetype, generation.skills)
+    agent_yaml = archetype.render_agent_yaml(agent_id, [s.skill_id for s in generation.skills], top_level_spec)
     (AGENTS_DIR / agent_id).mkdir(parents=True, exist_ok=True)
     _agent_yaml_path(agent_id).write_text(agent_yaml, encoding="utf-8")
 
     for skill in generation.skills:
         skill_dir = _skill_dir(skill.skill_id)
         skill_dir.mkdir(parents=True, exist_ok=True)
-        (skill_dir / "rules").mkdir(exist_ok=True)
-        for rel_path, content in agent_builder.render_skill_files(skill.skill_id, skill.result.spec).items():
+        for rel_path, content in archetype.render_skill_files(skill.skill_id, skill.result.spec).items():
             file_path = skill_dir / rel_path
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding="utf-8")
@@ -415,7 +461,7 @@ def _sse(event: dict[str, Any]) -> str:
     return f"data: {json.dumps(event)}\n\n"
 
 
-def _generate_agent_events(agent_id: str, purpose: str):
+def _generate_agent_events(agent_id: str, purpose: str, archetype_id: str):
     """Same work as generate_agent, but reported step-by-step over SSE as it
     actually happens (decompose → each skill's LLM call → save → validate),
     instead of leaving the client to guess at timing for a call that can
@@ -425,13 +471,14 @@ def _generate_agent_events(agent_id: str, purpose: str):
     validate steps generate_agent already does, each bracketed by its own
     start/done event.
     """
+    archetype = get_archetype(archetype_id)
     events: queue.Queue = queue.Queue()
     outcome: dict[str, Any] = {}
 
     def worker() -> None:
         try:
             outcome["generation"] = agent_builder.generate_agent_skills(
-                purpose=purpose, agent_id=agent_id, on_progress=events.put,
+                purpose=purpose, agent_id=agent_id, archetype_id=archetype.id, on_progress=events.put,
             )
         except Exception as exc:  # noqa: BLE001 - reported to the client, not swallowed
             outcome["error"] = exc
@@ -453,26 +500,15 @@ def _generate_agent_events(agent_id: str, purpose: str):
     skill_id = generation.skills[0].skill_id
 
     yield _sse({"step": "save", "status": "start"})
-    seen_paths: set[str] = set()
-    combined_evidence_fields = []
-    for skill in generation.skills:
-        for field in skill.result.spec.get("evidence_fields", []):
-            if field["path"] not in seen_paths:
-                seen_paths.add(field["path"])
-                combined_evidence_fields.append(field)
-    top_level_spec = {"purpose": purpose, "evidence_fields": combined_evidence_fields}
-
-    agent_yaml = agent_builder.render_agent_yaml(
-        agent_id, [s.skill_id for s in generation.skills], top_level_spec,
-    )
+    top_level_spec = _combine_top_level_spec(purpose, archetype, generation.skills)
+    agent_yaml = archetype.render_agent_yaml(agent_id, [s.skill_id for s in generation.skills], top_level_spec)
     (AGENTS_DIR / agent_id).mkdir(parents=True, exist_ok=True)
     _agent_yaml_path(agent_id).write_text(agent_yaml, encoding="utf-8")
 
     for skill in generation.skills:
         skill_dir = _skill_dir(skill.skill_id)
         skill_dir.mkdir(parents=True, exist_ok=True)
-        (skill_dir / "rules").mkdir(exist_ok=True)
-        for rel_path, content in agent_builder.render_skill_files(skill.skill_id, skill.result.spec).items():
+        for rel_path, content in archetype.render_skill_files(skill.skill_id, skill.result.spec).items():
             file_path = skill_dir / rel_path
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(content, encoding="utf-8")
@@ -520,8 +556,13 @@ def generate_agent_stream(payload: GenerateAgentPayload) -> StreamingResponse:
     if not purpose:
         raise HTTPException(status_code=400, detail="purpose (the description) must not be empty")
 
+    try:
+        archetype = get_archetype(payload.archetype_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
     return StreamingResponse(
-        _generate_agent_events(agent_id, purpose),
+        _generate_agent_events(agent_id, purpose, archetype.id),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -559,26 +600,45 @@ def refine_agent(agent_id: str, payload: RefineAgentPayload) -> dict:
     if not feedback:
         raise HTTPException(status_code=400, detail="feedback must not be empty")
 
-    rule_bearing_skill_ids = [sid for sid in bundle.definition.skills if bundle.skills[sid].has_rules]
-    if not rule_bearing_skill_ids:
-        raise HTTPException(status_code=400, detail="This agent has no rule-bearing skills to correct")
+    # has_rules covers qualification-shaped skills generated before the archetype
+    # tag existed (their skill.yaml has no archetype: line); archetype is not None
+    # covers every archetype-tagged skill, rule-bearing or not (e.g. conversational).
+    refinable_skill_ids = [
+        sid for sid in bundle.definition.skills
+        if bundle.skills[sid].has_rules or bundle.skills[sid].archetype is not None
+    ]
+    if not refinable_skill_ids:
+        raise HTTPException(status_code=400, detail="This agent has no skills this generator can correct")
 
     skills_summary = []
-    for skill_id in rule_bearing_skill_ids:
-        current_rules = _read_skill_files(skill_id)["rules"]
-        result = agent_builder.refine_spec(current_rules=current_rules, feedback=feedback)
+    for skill_id in refinable_skill_ids:
+        skill = bundle.skills[skill_id]
+        try:
+            archetype = get_archetype(skill.archetype or "qualification")
+        except KeyError as exc:
+            skills_summary.append({"skill_id": skill_id, "ok": False, "error": str(exc)})
+            continue
+
+        skill_dir = _skill_dir(skill_id)
+        current_content = archetype.read_refine_context(skill_dir)
+        result = agent_builder.refine_spec(
+            archetype_id=archetype.id,
+            current_content=current_content,
+            feedback=feedback,
+            skill_id=skill_id,
+            skill_description=skill.description,
+        )
         if not result.ok:
             skills_summary.append({"skill_id": skill_id, "ok": False, "error": "; ".join(result.errors)})
             continue
 
-        # Only the 4 rule files are actually derived from result.spec — render_skill_files
-        # also returns skill.yaml/instructions.md/output_contract.json, but those are always
-        # the same generic template regardless of spec content (see agent_builder.py), so
-        # rewriting them here would silently discard any hand-edit made in the Files tab for
-        # no actual benefit. Correct only what the feedback could have actually changed.
-        skill_dir = _skill_dir(skill_id)
-        rendered = agent_builder.render_skill_files(skill_id, result.spec)
-        for rel_path in ("rules/gates.yaml", "rules/factors.yaml", "rules/composite.yaml", "rules/product_fit.yaml"):
+        # Only refine_write_keys are actually derived from result.spec — render_skill_files
+        # also returns skill.yaml (and, for conversational, instructions.md/output_contract.json
+        # are themselves the writable set) but everything outside that set is left untouched, so
+        # rewriting it here would silently discard any hand-edit made in the Files tab for no
+        # actual benefit. Correct only what the feedback could have actually changed.
+        rendered = archetype.render_skill_files(skill_id, result.spec)
+        for rel_path in archetype.refine_write_keys:
             file_path = skill_dir / rel_path
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(rendered[rel_path], encoding="utf-8")
@@ -595,6 +655,271 @@ def refine_agent(agent_id: str, payload: RefineAgentPayload) -> dict:
 
     status = "ok" if all(s["ok"] for s in skills_summary) else "partial"
     return {"status": status, "agent_id": agent_id, "skills": skills_summary}
+
+
+def _refine_agent_events(agent_id: str, feedback: str, bundle, refinable_skill_ids: list[str]):
+    """Same correction loop as refine_agent, reported step-by-step over SSE
+    as each skill is actually corrected — a multi-skill refine over a slow
+    shared Ollama host can take minutes, and a bare "Fixing..." spinner
+    gives no sense of whether it's stuck or just on skill 2 of 3. This adds
+    no extra LLM calls versus the non-streaming endpoint — it's the exact
+    same one refine_spec call per skill, just narrated as it happens instead
+    of reported all at once at the end.
+    """
+    total = len(refinable_skill_ids)
+    skills_summary = []
+    for idx, skill_id in enumerate(refinable_skill_ids, start=1):
+        yield _sse({"step": "refine_skill", "status": "start", "skill_id": skill_id, "index": idx, "total": total})
+        skill = bundle.skills[skill_id]
+        try:
+            archetype = get_archetype(skill.archetype or "qualification")
+        except KeyError as exc:
+            error = str(exc)
+            skills_summary.append({"skill_id": skill_id, "ok": False, "error": error})
+            yield _sse({
+                "step": "refine_skill", "status": "error", "skill_id": skill_id,
+                "index": idx, "total": total, "error": error,
+            })
+            continue
+
+        skill_dir = _skill_dir(skill_id)
+        current_content = archetype.read_refine_context(skill_dir)
+        result = agent_builder.refine_spec(
+            archetype_id=archetype.id,
+            current_content=current_content,
+            feedback=feedback,
+            skill_id=skill_id,
+            skill_description=skill.description,
+        )
+        if not result.ok:
+            error = "; ".join(result.errors)
+            skills_summary.append({"skill_id": skill_id, "ok": False, "error": error})
+            yield _sse({
+                "step": "refine_skill", "status": "error", "skill_id": skill_id,
+                "index": idx, "total": total, "error": error,
+            })
+            continue
+
+        rendered = archetype.render_skill_files(skill_id, result.spec)
+        for rel_path in archetype.refine_write_keys:
+            file_path = skill_dir / rel_path
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(rendered[rel_path], encoding="utf-8")
+        skills_summary.append({"skill_id": skill_id, "ok": True, "error": None})
+        yield _sse({"step": "refine_skill", "status": "done", "skill_id": skill_id, "index": idx, "total": total})
+
+    if not any(s["ok"] for s in skills_summary):
+        errors = "; ".join(f"{s['skill_id']}: {s['error']}" for s in skills_summary)
+        yield _sse({"step": "final", "result": {
+            "status": "error", "agent_id": agent_id,
+            "error": f"Could not produce a valid correction for any skill: {errors}",
+        }})
+        return
+
+    yield _sse({"step": "validate", "status": "start"})
+    try:
+        load_agent(agent_id, force_reload=True)
+    except Exception as exc:  # noqa: BLE001 - report, don't hide; files are already saved
+        yield _sse({"step": "validate", "status": "error", "error": str(exc)})
+        yield _sse({"step": "final", "result": {
+            "status": "saved_with_errors", "agent_id": agent_id, "error": str(exc), "skills": skills_summary,
+        }})
+        return
+    yield _sse({"step": "validate", "status": "done"})
+
+    status = "ok" if all(s["ok"] for s in skills_summary) else "partial"
+    yield _sse({"step": "final", "result": {"status": status, "agent_id": agent_id, "skills": skills_summary}})
+
+
+@router.post("/agents/{agent_id}/refine/stream")
+def refine_agent_stream(agent_id: str, payload: RefineAgentPayload) -> StreamingResponse:
+    """Same as POST /agents/{agent_id}/refine, but streamed over SSE — see
+    _refine_agent_events. Validation happens here, synchronously, before the
+    stream opens, so a bad request still gets a normal 4xx instead of an
+    SSE error event.
+    """
+    try:
+        bundle = load_agent(agent_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+
+    if not bundle.definition.draft:
+        raise HTTPException(status_code=400, detail="refine is only for draft agents — edit files directly for a live agent")
+
+    feedback = payload.feedback.strip()
+    if not feedback:
+        raise HTTPException(status_code=400, detail="feedback must not be empty")
+
+    refinable_skill_ids = [
+        sid for sid in bundle.definition.skills
+        if bundle.skills[sid].has_rules or bundle.skills[sid].archetype is not None
+    ]
+    if not refinable_skill_ids:
+        raise HTTPException(status_code=400, detail="This agent has no skills this generator can correct")
+
+    return StreamingResponse(
+        _refine_agent_events(agent_id, feedback, bundle, refinable_skill_ids),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+_EDIT_FILE_SYSTEM_PROMPT = (
+    "You are editing ONE file inside a larger agent configuration, exactly the way a careful "
+    "human engineer applies a targeted change. You are given the file's current, complete "
+    "content and an instruction describing what to change.\n\n"
+    "Output the COMPLETE corrected file, from the very first line to the very last — never a "
+    "diff, never a partial snippet, never just the changed lines. Preserve everything the "
+    "instruction doesn't mention EXACTLY as it currently is: the same values, wording, comments, "
+    "structure, and key order. Do not reformat, reword, delete, or \"improve\" anything you "
+    "weren't asked to change — make only the change the instruction actually asks for.\n\n"
+    "Output ONLY the raw file content. No code fences, no explanation, no commentary before or "
+    "after it."
+)
+
+
+def _build_edit_adapter() -> OllamaAdapter:
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    # Generous like agent_builder's own generation timeout — the shared Ollama host is
+    # sometimes slow even for a short file, and this is an admin-only, human-in-the-loop
+    # action (not a live end-user request), so it can afford to wait.
+    return OllamaAdapter(host=host, model="gemma4:12b", timeout_seconds=400, seed=7)
+
+
+def _strip_wrapping_fence(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```") and text.endswith("```"):
+        text = text[3:-3].strip()
+        first_line, _, rest = text.partition("\n")
+        if first_line and " " not in first_line and len(first_line) < 20:
+            text = rest.strip()
+    return text
+
+
+def _resolve_file_key(agent_id: str, file_key: str) -> tuple[Path, str]:
+    """Maps a frontend file-tab key (the same scheme AgentEditor.tsx's
+    buildSkillGroups already uses — no separate key vocabulary to keep in
+    sync) to an actual path plus its syntax kind ("yaml" | "json" |
+    "markdown"), the way _read_skill_files resolves them for display: a
+    skill's instructions/task_prompt/output_contract filenames come from
+    its own skill.yaml manifest, not a hardcoded name.
+    """
+    if file_key == "agent_yaml":
+        return _agent_yaml_path(agent_id), "yaml"
+
+    match = re.match(r"^skill:([^:]+):(.+)$", file_key)
+    if not match:
+        raise HTTPException(status_code=400, detail=f"Unrecognized file_key '{file_key}'")
+    skill_id, rest = match.group(1), match.group(2)
+    skill_dir = _skill_dir(skill_id)
+
+    if rest == "skill_yaml":
+        return skill_dir / "skill.yaml", "yaml"
+
+    manifest_text = _read_if_exists(skill_dir / "skill.yaml")
+    manifest = yaml.safe_load(manifest_text) or {} if manifest_text else {}
+
+    if rest == "instructions_md":
+        return skill_dir / manifest.get("instructions", "instructions.md"), "markdown"
+    if rest == "task_prompt_md":
+        if not manifest.get("task_prompt"):
+            raise HTTPException(status_code=400, detail=f"Skill '{skill_id}' has no task_prompt file")
+        return skill_dir / manifest["task_prompt"], "markdown"
+    if rest == "output_contract_json":
+        if not manifest.get("output_contract"):
+            raise HTTPException(status_code=400, detail=f"Skill '{skill_id}' has no output_contract file")
+        return skill_dir / manifest["output_contract"], "json"
+    if rest.startswith("rule:"):
+        rule_name = rest[len("rule:"):]
+        rel_path = (manifest.get("rules") or {}).get(rule_name)
+        if not rel_path:
+            raise HTTPException(status_code=400, detail=f"Unknown rule '{rule_name}' for skill '{skill_id}'")
+        return skill_dir / rel_path, "yaml"
+
+    raise HTTPException(status_code=400, detail=f"Unrecognized file_key '{file_key}'")
+
+
+class EditFilePayload(BaseModel):
+    file_key: str
+    feedback: str
+
+
+@router.post("/agents/{agent_id}/edit-file")
+def edit_file_with_ai(agent_id: str, payload: EditFilePayload) -> dict:
+    """The one "Fix with AI" mechanism — edits exactly the file you have
+    open, the way a careful human applies a targeted change: the model
+    sees that file's full current content and your instruction, and must
+    output the complete corrected file, preserving everything it wasn't
+    asked to touch. Works on every file (agent.yaml, skill.yaml,
+    instructions.md, output_contract.json, every rules/*.yaml) and on
+    live agents as much as drafts — there is no separate whole-agent
+    regeneration path.
+
+    Unlike the archetype-driven generate/refine flow elsewhere in this
+    module, the LLM writes this file's raw text directly rather than
+    filling a schema that Python renders deterministically. Two safety
+    nets stand in for that constraint: the result must parse as valid
+    YAML/JSON (skipped for Markdown, which has no syntax to violate), and
+    the agent must still load cleanly afterward — if either fails,
+    nothing is silently left broken; the caller is told.
+    """
+    try:
+        load_agent(agent_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+
+    feedback = payload.feedback.strip()
+    if not feedback:
+        raise HTTPException(status_code=400, detail="feedback must not be empty")
+
+    file_path, kind = _resolve_file_key(agent_id, payload.file_key)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {file_path.name}")
+    current_text = file_path.read_text(encoding="utf-8")
+
+    adapter = _build_edit_adapter()
+    user_prompt = f"Current content of {file_path.name}:\n\n{current_text}\n\nInstruction: {feedback}"
+    try:
+        new_text, _meta = adapter.generate_text(
+            system_prompt=_EDIT_FILE_SYSTEM_PROMPT, user_prompt=user_prompt, temperature=0.1,
+        )
+    except OllamaContentError:
+        # The HTTP call succeeded but the model burned its whole output budget on internal
+        # reasoning and never emitted content (seen in practice with gemma4:12b) — not a
+        # transport failure, so worth one retry rather than failing outright.
+        try:
+            new_text, _meta = adapter.generate_text(
+                system_prompt=_EDIT_FILE_SYSTEM_PROMPT, user_prompt=user_prompt, temperature=0.1,
+            )
+        except OllamaError as exc:
+            raise HTTPException(status_code=502, detail=f"LLM call failed: {exc}")
+    except OllamaError as exc:
+        raise HTTPException(status_code=502, detail=f"LLM call failed: {exc}")
+
+    new_text = _strip_wrapping_fence(new_text)
+    if not new_text:
+        raise HTTPException(status_code=400, detail="The correction came back empty — nothing was saved.")
+    new_text = new_text + ("\n" if not new_text.endswith("\n") else "")
+
+    if kind == "yaml":
+        try:
+            yaml.safe_load(new_text)
+        except yaml.YAMLError as exc:
+            raise HTTPException(status_code=400, detail=f"Correction produced invalid YAML, not saved: {exc}")
+    elif kind == "json":
+        try:
+            json.loads(new_text)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail=f"Correction produced invalid JSON, not saved: {exc}")
+
+    file_path.write_text(new_text, encoding="utf-8")
+
+    try:
+        load_agent(agent_id, force_reload=True)
+    except Exception as exc:  # noqa: BLE001 - report, don't hide; the file is already saved
+        return {"status": "saved_with_errors", "agent_id": agent_id, "file_key": payload.file_key, "error": str(exc)}
+
+    return {"status": "ok", "agent_id": agent_id, "file_key": payload.file_key}
 
 
 @router.delete("/agents/{agent_id}")
@@ -765,6 +1090,23 @@ class TestRunPayload(BaseModel):
     input: dict[str, Any] = {}
 
 
+def _stage_trace(ctx) -> list[dict[str, Any]]:
+    """Every stage this run actually went through, in order — the Playground's
+    "AI Observation" column source, same shape as the chat layer's stage_trace.
+
+    `detail` carries what an LLM stage actually did: the model, token counts,
+    its tool calls, and the model's own reasoning trace. Non-LLM stages set
+    nothing and get an empty dict.
+    """
+    return [
+        {
+            "stage": r.stage, "status": r.status, "summary": r.summary,
+            "duration_ms": r.duration_ms, "detail": r.detail,
+        }
+        for r in ctx.stage_results
+    ]
+
+
 @router.post("/agents/{agent_id}/test-run")
 def test_run_agent(agent_id: str, payload: TestRunPayload) -> dict:
     try:
@@ -776,6 +1118,36 @@ def test_run_agent(agent_id: str, payload: TestRunPayload) -> dict:
         "decision": ctx.decision,
         "explanation": ctx.explanation,
         "error": ctx.error,
+        "stage_trace": _stage_trace(ctx),
+    }
+
+
+@router.post("/agents/{agent_id}/test-run-file")
+async def test_run_agent_file(agent_id: str, file: UploadFile = File(...)) -> dict:
+    """The file-upload counterpart to /test-run — for input_mode: "file"
+    agents (currently just fin_health). Parses the uploaded report into an
+    evidence dict via excel_ingest, then runs the exact same pipeline any
+    other input path would. Only understands the one due-diligence report
+    format excel_ingest.py targets; a differently-shaped spreadsheet will
+    fail here with whatever ValueError parsing it raises.
+    """
+    try:
+        raw_bytes = await file.read()
+        evidence = excel_ingest.parse_fin_health_excel(raw_bytes, file.filename or "")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    try:
+        ctx = invoke_agent(agent_id, {"evidence": evidence})
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
+    return {
+        "run_id": ctx.run_id,
+        "parsed_evidence": evidence,
+        "decision": ctx.decision,
+        "explanation": ctx.explanation,
+        "error": ctx.error,
+        "stage_trace": _stage_trace(ctx),
     }
 
 
@@ -797,6 +1169,7 @@ def chat_with_agent(agent_id: str, payload: ChatPayload) -> dict:
     return {
         "session_id": result.session_id, "reply": result.reply,
         "evidence": result.evidence, "decision": result.decision, "done": result.done,
+        "content_type": result.content_type, "stage_trace": result.stage_trace,
     }
 
 

@@ -8,7 +8,7 @@ import { LogsPage } from './components/LogsPage'
 import { Sidebar } from './components/Sidebar'
 import { Badge } from './components/ui'
 import { api } from './api'
-import type { AgentSummary, Capability, GenerateAgentEvent, TemplateSummary } from './types'
+import type { AgentSummary, ArchetypeSummary, Capability, GenerateAgentEvent, TemplateSummary } from './types'
 
 type TopView = 'agents' | 'playground' | 'logs'
 
@@ -17,6 +17,7 @@ function App() {
   const [stages, setStages] = useState<string[]>([])
   const [capabilities, setCapabilities] = useState<Capability[]>([])
   const [templates, setTemplates] = useState<TemplateSummary[]>([])
+  const [archetypes, setArchetypes] = useState<ArchetypeSummary[]>([])
   const [loadingAgents, setLoadingAgents] = useState(true)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [showNewAgentModal, setShowNewAgentModal] = useState(false)
@@ -36,6 +37,7 @@ function App() {
     api.listStages().then((res) => setStages(res.stages))
     api.listCapabilities().then((res) => setCapabilities(res.capabilities))
     api.listTemplates().then((res) => setTemplates(res.templates))
+    api.listArchetypes().then((res) => setArchetypes(res.archetypes))
   }, [])
 
   const handleCreateAgent = async (agentId: string, skillId: string, purpose: string, templateId: string) => {
@@ -48,9 +50,10 @@ function App() {
   const handleGenerateAgent = async (
     agentId: string,
     purpose: string,
+    archetypeId: string,
     onEvent: (event: GenerateAgentEvent) => void,
   ) => {
-    const result = await api.generateAgentStream(agentId, purpose, onEvent)
+    const result = await api.generateAgentStream(agentId, purpose, archetypeId, onEvent)
     await refreshAgents()
     if (result.status === 'error') {
       throw new Error(result.error ?? 'Agent generation failed.')
@@ -159,6 +162,7 @@ function App() {
         <NewAgentModal
           agents={agents}
           templates={templates}
+          archetypes={archetypes}
           onClose={() => setShowNewAgentModal(false)}
           onCreate={handleCreateAgent}
           onGenerate={handleGenerateAgent}

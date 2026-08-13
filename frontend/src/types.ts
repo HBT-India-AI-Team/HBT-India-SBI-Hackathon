@@ -1,8 +1,16 @@
 // Mirrors backend/admin.py and backend/main.py response shapes.
 
 export interface InputSchemaProperty {
-  type: 'string' | 'number' | 'integer' | 'object' | 'array'
+  // `boolean` is real — several agent.yaml input schemas declare it (e.g.
+  // demo_sme_loan_quickcheck's gst_registered), and SchemaForm renders it as
+  // a true/false <select>. Leaving it out of this union made those branches
+  // look like dead comparisons and broke `tsc -b`, which is why dist/ went stale.
+  type: 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array'
   description?: string
+  /** Only present on `object` properties whose own sub-fields are known (e.g. qualification's
+   *  nested `evidence` object) — lets the Playground render them as their own col/val rows
+   *  instead of falling back to a raw JSON box. */
+  properties?: Record<string, InputSchemaProperty>
 }
 
 export interface InputSchema {
@@ -11,7 +19,10 @@ export interface InputSchema {
   properties?: Record<string, InputSchemaProperty>
 }
 
-export interface OllamaCallLog {
+// What a Logs row shows collapsed. The bodies are excluded on purpose —
+// they're fetched per-row via getOllamaLogDetail(offset) on expand, since a
+// single call's prompt + completion can run to six figures of characters.
+export interface OllamaCallLogSummary {
   timestamp: string
   host: string
   model: string
@@ -19,6 +30,12 @@ export interface OllamaCallLog {
   total_attempts: number
   duration_ms: number
   ok: boolean
+  error: string | null
+  /** Byte offset in ollama_calls.jsonl — the record's stable ID. */
+  offset: number
+}
+
+export interface OllamaCallLog extends OllamaCallLogSummary {
   request: {
     messages?: { role: string; content: string }[]
     format?: Record<string, unknown> | null
@@ -26,7 +43,6 @@ export interface OllamaCallLog {
     options?: Record<string, unknown>
   }
   response: Record<string, unknown> | null
-  error: string | null
 }
 
 export interface ChatDecision {
@@ -35,15 +51,44 @@ export interface ChatDecision {
   composite_score: number | null
 }
 
+/** What an LLM stage actually did, straight from the model's own response —
+ *  never a narrated reconstruction. `thinking` is the model's real reasoning
+ *  trace (reasoning-capable models return it alongside their answer); it's
+ *  absent for models that don't reason, and the UI then shows the call stats
+ *  alone rather than inventing a story. Non-LLM stages carry an empty detail. */
+export interface StageDetail {
+  model?: string
+  duration_ms?: number
+  prompt_tokens?: number
+  completion_tokens?: number
+  prompt_chars?: number
+  done_reason?: string
+  thinking?: string
+  llm_error?: string
+  tool_calls?: { name: string; arguments: Record<string, unknown>; result: unknown }[]
+}
+
+export interface StageTraceEntry {
+  stage: string
+  status: 'ok' | 'error' | 'skipped'
+  summary: string
+  duration_ms: number
+  detail?: StageDetail
+}
+
+export type ChatContentType = 'text' | 'code' | 'image' | 'video' | 'audio'
+
 export interface ChatTurnResult {
   session_id: string
   reply: string
   evidence: Record<string, unknown>
   decision: ChatDecision | null
   done: boolean
+  content_type?: ChatContentType | null
+  stage_trace?: StageTraceEntry[] | null
 }
 
-export type InputMode = 'chat' | 'form' | 'json' | 'trigger'
+export type InputMode = 'chat' | 'form' | 'json' | 'trigger' | 'file'
 
 export interface AgentSummary {
   agent_id: string
@@ -55,6 +100,7 @@ export interface AgentSummary {
   draft?: boolean
   input_schema?: InputSchema
   input_mode?: InputMode
+  demo_sample_input?: Record<string, unknown> | null
   error?: string
 }
 
@@ -91,17 +137,17 @@ export interface GenerateAgentEvent {
   result?: GenerateAgentResult
 }
 
-export interface RefineSkillResult {
-  skill_id: string
-  ok: boolean
-  error: string | null
+export interface EditFileResult {
+  status: 'ok' | 'saved_with_errors'
+  agent_id: string
+  file_key: string
+  error?: string
 }
 
-export interface RefineAgentResult {
-  status: 'ok' | 'partial' | 'saved_with_errors'
-  agent_id: string
-  error?: string
-  skills?: RefineSkillResult[]
+export interface ArchetypeSummary {
+  id: string
+  label: string
+  description: string
 }
 
 export interface TemplateSummary {
@@ -153,6 +199,13 @@ export interface TestRunResult {
   decision: Record<string, unknown> | null
   explanation: Record<string, unknown> | null
   error: { stage: string; type: string; message: string } | null
+  stage_trace?: StageTraceEntry[]
+}
+
+export interface TestRunFileResult extends TestRunResult {
+  /** The evidence dict actually extracted from the uploaded file — shown so a
+   *  tester can see what was read, not just the resulting decision. */
+  parsed_evidence: Record<string, unknown>
 }
 
 export interface AgentRouterResult {

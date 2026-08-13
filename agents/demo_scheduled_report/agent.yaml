@@ -1,0 +1,68 @@
+agent_id: demo_scheduled_report
+version: "1.0.0"
+purpose: >
+  A daily SME lead-pipeline digest, run as a trigger (fixed context, not a
+  live conversation) -- pulls real, computed statistics from the actual
+  lead pool (lead count, total requested amount, average turnover,
+  business-need breakdown) via a real capability call, then narrates them.
+  No number in the output is invented -- every figure comes from a real
+  tool call over real fixture data. Only the scheduler itself is not
+  real (no cron job actually fires this).
+
+skills:
+  - demo_scheduled_report
+
+pipeline:
+  - load_input
+  - gather_evidence
+  - reason_llm_with_tools
+  - validate_output
+  - hitl_gate
+  - explain
+
+capabilities:
+  - name: reports.lead_pipeline_digest
+
+governance:
+  hitl_conditions:
+    - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+
+llm:
+  model: gemma4:12b
+  temperature: 0.2
+  seed: 7
+  timeout_seconds: 60
+
+draft: false
+routable: false
+input_mode: trigger
+
+demo_sample_input:
+  evidence:
+    location: "Chennai"
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: Which slice of the real lead pool this digest covers.
+      properties:
+        location:
+          type: string
+          description: "City to filter the lead pool by, e.g. \"Chennai\"."
+        industry:
+          type: string
+          description: "Optional industry filter, e.g. \"manufacturing\"."
+
+output_schema:
+  type: object
+  required: [report_summary]
+  properties:
+    report_summary:
+      type: string
+    confidence:
+      type: number

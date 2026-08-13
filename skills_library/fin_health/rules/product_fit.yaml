@@ -1,0 +1,20 @@
+# FIN HEALTH — PRODUCT FIT
+# ---------------------------------------------------------------------------
+# Which "track" an eligible company gets routed to. Today there's only one
+# (everyone accepted/reviewed goes to the tender proposal track), but this
+# is the same pattern every product-matching rule file in this platform
+# uses — `when: []` is a catch-all fallback that always matches; add more
+# products above it with real `when:` conditions (same field/operator/value
+# shape as gates.yaml) to route different company profiles differently.
+#
+# NOTE: "Fix with AI" (per-file or whole-skill) regenerates this file from
+# scratch and will strip these comments even if it doesn't touch product
+# fit — see README.md in this folder. Re-add them by hand if that happens.
+# ---------------------------------------------------------------------------
+rule_group: product_fit
+description: Which track an eligible company is routed to.
+products:
+- id: tender_proposal_track
+  name: Tender Proposal Track
+  reason: Eligible profile to proceed to proposal generation
+  when: []

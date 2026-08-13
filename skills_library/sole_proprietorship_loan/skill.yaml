@@ -1,0 +1,17 @@
+skill_id: sole_proprietorship_loan
+version: "1.0.0"
+kind: deterministic
+description: >
+  Determine if a sole proprietorship qualifies based on annual turnover (>25 lakh), age (>=2 years), and credit score (>700); reject if score <600 or there is an active default; recommend a working capital loan requiring human review before contact.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

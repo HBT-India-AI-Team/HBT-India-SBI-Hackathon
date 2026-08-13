@@ -307,7 +307,10 @@ def test_refine_spec_accepts_a_valid_correction(monkeypatch):
     adapter = FakeSpecAdapter([corrected])
     monkeypatch.setattr(agent_builder, "_build_adapter", lambda: adapter)
 
-    result = agent_builder.refine_spec(current_rules=_current_rules_text(), feedback="fix the gate description")
+    result = agent_builder.refine_spec(
+        archetype_id="qualification", current_content=_current_rules_text(), feedback="fix the gate description",
+        skill_id="a1", skill_description="test skill",
+    )
 
     assert result.ok is True
     assert result.spec["gates"][0]["description"] == "corrected description"
@@ -319,7 +322,10 @@ def test_refine_spec_never_falls_back_on_invalid_correction(monkeypatch):
     adapter = FakeSpecAdapter([bad_spec])
     monkeypatch.setattr(agent_builder, "_build_adapter", lambda: adapter)
 
-    result = agent_builder.refine_spec(current_rules=_current_rules_text(), feedback="something")
+    result = agent_builder.refine_spec(
+        archetype_id="qualification", current_content=_current_rules_text(), feedback="something",
+        skill_id="a1", skill_description="test skill",
+    )
 
     assert result.ok is False
     assert result.spec is None
@@ -329,7 +335,10 @@ def test_refine_spec_never_falls_back_on_invalid_correction(monkeypatch):
 def test_refine_spec_reports_llm_outage_without_raising(monkeypatch):
     monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FailingSpecAdapter())
 
-    result = agent_builder.refine_spec(current_rules=_current_rules_text(), feedback="something")
+    result = agent_builder.refine_spec(
+        archetype_id="qualification", current_content=_current_rules_text(), feedback="something",
+        skill_id="a1", skill_description="test skill",
+    )
 
     assert result.ok is False
     assert result.spec is None
@@ -424,6 +433,59 @@ def test_generate_agent_endpoint_round_trip(tmp_agent_dirs, monkeypatch):
     assert ctx_gated.decision["outcome"] == "NOT_QUALIFIED"
 
 
+def test_get_archetypes_lists_all_registered_archetypes():
+    result = admin.get_archetypes()
+    ids = {a["id"] for a in result["archetypes"]}
+    assert ids == {"qualification", "conversational", "dialogue"}
+    for entry in result["archetypes"]:
+        assert entry["label"] and entry["description"]
+
+
+def test_generate_agent_endpoint_round_trip_conversational_archetype(tmp_agent_dirs, monkeypatch):
+    """Same shape of test as the qualification round trip above, proving the
+    archetype dispatch actually works end to end for a second archetype:
+    generate -> real files on disk -> load_agent -> invoke_agent, with no
+    outcome/gates/composite_score anywhere (this archetype never produces
+    one), just a narrative answer.
+    """
+    _stub_single_skill_decompose(monkeypatch)
+    conversational_spec = {
+        "purpose": "Answer employee questions about the leave policy.",
+        "input_fields": [
+            {"path": "question", "type": "string", "description": "The employee's question.", "required": True},
+        ],
+        "output_fields": [{"path": "answer", "type": "string", "description": "The answer."}],
+        "guidance": "Answer directly using only the provided policy text.",
+    }
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([conversational_spec]))
+    monkeypatch.setattr(pipeline_stages, "_build_adapter", lambda bundle: FakeAdapter())
+
+    result = admin.generate_agent(
+        GenerateAgentPayload(agent_id="advisor1", purpose="answer leave policy questions", archetype_id="conversational"),
+    )
+
+    assert result["status"] == "ok"
+    assert result["used_fallback"] is False
+
+    bundle = load_agent("advisor1")
+    assert bundle.definition.pipeline == ["load_input", "reason_llm", "validate_output", "explain"]
+    assert bundle.skills["advisor1"].archetype == "conversational"
+    assert bundle.skills["advisor1"].has_rules is False
+
+    ctx = invoke_agent("advisor1", {"question": "How many leave days do I get?"})
+    assert ctx.error is None
+    assert ctx.decision is None  # this archetype never runs decide/hitl_gate
+    assert ctx.validated_output["answer"]
+
+
+def test_generate_agent_rejects_unknown_archetype_id(tmp_agent_dirs, monkeypatch):
+    _stub_single_skill_decompose(monkeypatch)
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc_info:
+        admin.generate_agent(GenerateAgentPayload(agent_id="built1", purpose="x", archetype_id="not_a_real_archetype"))
+    assert exc_info.value.status_code == 400
+
+
 def test_generate_agent_rejects_duplicate_agent_id(tmp_agent_dirs, monkeypatch):
     _stub_single_skill_decompose(monkeypatch)
     monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([_valid_spec()]))
@@ -479,6 +541,39 @@ def test_refine_agent_endpoint_applies_correction(tmp_agent_dirs, monkeypatch):
     bundle = load_agent("built1", force_reload=True)
     assert bundle.definition.draft is True
     assert bundle.definition.routable is False
+
+
+def test_refine_agent_endpoint_applies_correction_to_conversational_skill(tmp_agent_dirs, monkeypatch):
+    """Same correction flow as the qualification refine test above, proving
+    refine dispatches to the right archetype per skill: this agent has no
+    rules/*.yaml at all, so a successful correction must rewrite
+    instructions.md (not touch a rules/ directory that doesn't exist).
+    """
+    from backend.admin import RefineAgentPayload
+
+    _stub_single_skill_decompose(monkeypatch)
+    conversational_spec = {
+        "purpose": "Answer employee questions about the leave policy.",
+        "input_fields": [
+            {"path": "question", "type": "string", "description": "The employee's question.", "required": True},
+        ],
+        "output_fields": [{"path": "answer", "type": "string", "description": "The answer."}],
+        "guidance": "Answer directly using only the provided policy text.",
+    }
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([conversational_spec]))
+    admin.generate_agent(
+        GenerateAgentPayload(agent_id="advisor1", purpose="answer leave policy questions", archetype_id="conversational"),
+    )
+
+    corrected = dict(conversational_spec, guidance="Always mention the escalation email for edge cases.")
+    monkeypatch.setattr(agent_builder, "_build_adapter", lambda: FakeSpecAdapter([corrected]))
+
+    result = admin.refine_agent("advisor1", RefineAgentPayload(feedback="mention the escalation email"))
+
+    assert result["status"] == "ok"
+    files = admin.get_agent_files("advisor1")
+    assert "Always mention the escalation email for edge cases." in files["skills"]["advisor1"]["instructions_md"]
+    assert files["skills"]["advisor1"]["rules"] == {}  # nothing to rewrite for this archetype
 
 
 def test_refine_agent_preserves_hand_edited_instructions_and_output_contract(tmp_agent_dirs, monkeypatch):

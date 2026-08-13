@@ -23,6 +23,11 @@ from agent_platform.stages.pipeline_stages import skill_evidence_fields
 from . import chat_store
 from .executor import invoke_agent
 
+# Output contracts that declare this field opt this agent into the "rich content" chat
+# path (_content_reply) instead of the plain {reply} guidance path — additive, never
+# changes behavior for any agent that doesn't declare it.
+_CONTENT_TYPE_FIELD = "content_type"
+
 _EXTRACT_SCHEMA = {
     "type": "object",
     "required": ["extracted_fields", "reply"],
@@ -59,6 +64,9 @@ class ChatTurnResult:
     evidence: dict[str, Any]
     decision: dict[str, Any] | None
     done: bool
+    # Only set on the rich-content path (_content_reply) — None for every other agent.
+    content_type: str | None = None
+    stage_trace: list[dict[str, Any]] | None = None
 
 
 def _rule_bearing_fields(skills) -> list[dict]:
@@ -151,6 +159,49 @@ def _extract(adapter: OllamaAdapter, agent_purpose: str, fields: list[dict], evi
     return (extracted if isinstance(extracted, dict) else {}), (reply or "Could you tell me more?")
 
 
+def _has_content_type_contract(skills) -> bool:
+    return any(
+        s.output_contract and _CONTENT_TYPE_FIELD in (s.output_contract.get("required") or [])
+        for s in skills
+    )
+
+
+def _content_reply(agent_id: str, session: dict) -> tuple[str, str, list[dict[str, Any]], dict | None]:
+    """Runs this agent's own real pipeline for one turn (not a bespoke LLM
+    call) — the "rich content" chat path: content_type-aware output plus a
+    genuine stage-by-stage trace (RunContext.stage_results, populated by
+    every pipeline run regardless of agent) surfaced as the chat UI's
+    "thinking" log, rather than a fabricated one.
+    """
+    evidence = {
+        "message": session["messages"][-1]["content"],
+        "conversation_history": session["messages"][:-1][-6:],
+        # No customer_id is injected. It used to default to a demo customer so
+        # the account-lookup capabilities had someone to resolve, but any agent
+        # holding those tools then preferred the fixture over what the user
+        # actually typed -- answering a question about a ₹3,00,000 loan with
+        # figures from a ₹3,18,500 one. Restoring this means restoring a real
+        # authenticated identity from the session, never a default.
+    }
+    ctx = invoke_agent(agent_id, {"evidence": evidence})
+    stage_trace = [
+        {
+            "stage": r.stage, "status": r.status, "summary": r.summary,
+            "duration_ms": r.duration_ms, "detail": r.detail,
+        }
+        for r in ctx.stage_results
+    ]
+    if ctx.error:
+        return "text", f"Something went wrong: {ctx.error['message']}", stage_trace, None
+
+    output = ctx.validated_output or {}
+    content_type = output.get(_CONTENT_TYPE_FIELD) or "text"
+    content = output.get("content")
+    if not content:
+        content = "(no content produced)"
+    return content_type, content, stage_trace, ctx.decision
+
+
 def _guidance_reply(adapter: OllamaAdapter, skills, messages: list[dict]) -> str:
     guidance = "\n\n".join(s.instructions_text for s in skills if s.instructions_text)
     transcript = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
@@ -182,6 +233,14 @@ def handle_chat_turn(agent_id: str, session_id: str | None, message: str) -> Cha
     adapter = _build_adapter()
 
     if not fields:
+        if _has_content_type_contract(all_skills):
+            content_type, content, stage_trace, decision = _content_reply(agent_id, session)
+            session["messages"].append({"role": "assistant", "content": content})
+            chat_store.save_session(session)
+            return ChatTurnResult(
+                session_id, content, session["evidence"], decision, False,
+                content_type=content_type, stage_trace=stage_trace,
+            )
         reply = _guidance_reply(adapter, all_skills, session["messages"])
         session["messages"].append({"role": "assistant", "content": reply})
         chat_store.save_session(session)

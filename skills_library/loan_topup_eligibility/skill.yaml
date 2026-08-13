@@ -1,0 +1,17 @@
+skill_id: loan_topup_eligibility
+version: "1.0.0"
+kind: deterministic
+description: >
+  Evaluate a customer's eligibility for a personal loan top-up. Approve if the customer has been with the bank for more than 1 year, has a credit score above 700, and no missed payments in the last 6 months. Flag for human review if credit score is between 650 and 700. Reject if there are any missed payments in the last 6 months or the customer has been with the bank less than 1 year. Recommend a higher loan amount for customers with a credit score above 750 and a standard top-up otherwise.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

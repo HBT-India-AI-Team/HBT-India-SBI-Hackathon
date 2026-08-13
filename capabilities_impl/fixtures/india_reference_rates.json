@@ -1,0 +1,155 @@
+{
+  "_note": "Curated reference rates for FinGuru. There is no free official JSON API for Indian bank deposit/lending rates -- RBI and the banks publish HTML pages, not machine-readable feeds. So these are hand-maintained. Two dates ride with every entry and they mean different things: `effective_from` is the date the BANK's own rate card says the rate took effect (this is what FinGuru quotes to the user), and `as_of` is the date a human last opened source_url and confirmed the value (this is what staleness is measured from). Conflating them was a real bug: an entry that merely got re-checked used to read to the user as though the rate had just changed. india_rates.py flags an entry stale past its max_age_days so a forgotten re-check surfaces in the answer instead of silently passing as current. To refresh: open the source_url, update `value`, set `effective_from` to whatever the page's own w.e.f. date says, set `as_of` to today, leave everything else alone.",
+  "policy": {
+    "repo_rate_percent": {
+      "value": 5.25,
+      "effective_from": "2026-08-05",
+      "as_of": "2026-08-12",
+      "source_url": "https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx",
+      "source_name": "Reserve Bank of India — Monetary Policy Statement",
+      "max_age_days": 75,
+      "note": "RBI's policy repo rate. Held unchanged at the 5 August 2026 MPC, which last cut it to this level in February 2026. Revised at bi-monthly MPC meetings, so a value older than one meeting cycle is suspect. Next review: 5-7 October 2026."
+    }
+  },
+  "deposits": {
+    "savings_account_percent": {
+      "value": 2.5,
+      "effective_from": "2025-06-15",
+      "as_of": "2026-08-12",
+      "source_url": "https://sbi.bank.in/web/interest-rates/savings-bank-deposits",
+      "source_name": "State Bank of India — savings bank rate",
+      "max_age_days": 180,
+      "note": "This one RATE applies to every balance: SBI no longer pays a higher rate above Rs 10 lakh. It says nothing about how many kinds of savings account exist -- SBI offers several (regular, BSBD, small, minors, savings plus) and they differ in balance rules, withdrawal limits and eligibility while sharing this rate. Do not infer product structure from this field; for which account someone should open, search the documents. Representative large-public-sector-bank rate: small finance banks pay considerably more, so treat this as a floor, not the market."
+    },
+    "fixed_deposit_general": {
+      "effective_from": "2025-12-15",
+      "as_of": "2026-08-12",
+      "source_url": "https://sbi.bank.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits",
+      "source_name": "State Bank of India — retail domestic term deposits",
+      "max_age_days": 120,
+      "note": "Rates for deposits below Rs 3 crore. SBI publishes its short brackets in DAYS (7-45, 46-179, 180-210, 211 days to under 1 year) and this table is in months, so the sub-year boundaries are approximate to within a few days -- exact for anything from 1 year up, which is where nearly every real question lands. The 444-day Amrit Vrishti special (6.45%) is deliberately not modelled: it is a single fixed tenure, not a bracket, and interpolating it would let a 15-month deposit pick up a rate it cannot get.",
+      "senior_citizen_bonus_percent": 0.5,
+      "senior_citizen_min_age_years": 60,
+      "senior_citizen_note": "SBI has exactly ONE deposit age category: 60 and over. There is no 'super senior' deposit rate. Super senior (80+) is an income-tax classification and has no bearing on deposit rates, so a 62-year-old is an ordinary senior citizen and nothing more. The extra 1.0% on the 5-10 year bracket is the SBI We-care bonus, open to every senior, not to a higher age band -- observed failure: a Hindi answer told a 62-year-old they were in the 'सुपर सीनियर सिटीजन' category and attributed the We-care bonus to it.",
+      "brackets": [
+        { "min_months": 1, "max_months": 1, "rate_percent": 3.05 },
+        { "min_months": 2, "max_months": 5, "rate_percent": 4.9 },
+        { "min_months": 6, "max_months": 6, "rate_percent": 5.65 },
+        { "min_months": 7, "max_months": 11, "rate_percent": 5.9 },
+        { "min_months": 12, "max_months": 23, "rate_percent": 6.25 },
+        { "min_months": 24, "max_months": 35, "rate_percent": 6.4 },
+        { "min_months": 36, "max_months": 59, "rate_percent": 6.3 },
+        { "min_months": 60, "max_months": 120, "rate_percent": 6.05, "senior_citizen_bonus_percent": 1.0 }
+      ]
+    }
+  },
+  "lending_indicative": {
+    "effective_from": "2026-04-01",
+    "as_of": "2026-08-12",
+    "source_url": "https://sbi.bank.in/web/interest-rates/interest-rates/loan-schemes-interest-rates",
+    "source_name": "State Bank of India — loan interest rates",
+    "max_age_days": 120,
+    "note": "Indicative starting rates only. Actual offers are credit-score and profile dependent and are frequently higher than the advertised floor -- FinGuru must present these as 'starting from', never as the rate a given person will get. `from_percent` is SBI's own published 'onwards' rate. `to_percent` is null wherever SBI publishes no ceiling: the two ceilings present here come from rate-aggregator coverage rather than SBI's card, which is why they are labelled separately in the tool result. Never invent a ceiling to fill the gap -- an unpublished upper bound is a fact about the disclosure, and saying so is more useful than a made-up range.",
+    "products": {
+      "home_loan": { "from_percent": 7.25, "to_percent": 8.45, "ceiling_source": "aggregator" },
+      "personal_loan": { "from_percent": 10.0, "to_percent": 15.0, "ceiling_source": "aggregator" },
+      "car_loan": { "from_percent": 8.7, "to_percent": null },
+      "education_loan": { "from_percent": 6.9, "to_percent": null },
+      "gold_loan": { "from_percent": 9.15, "to_percent": null }
+    }
+  },
+  "government_schemes": {
+    "effective_from": "2026-07-01",
+    "as_of": "2026-08-12",
+    "source_url": "https://www.nsiindia.gov.in/",
+    "source_name": "Ministry of Finance (Department of Economic Affairs) — small savings rates; Department of Financial Services — Jan Suraksha schemes",
+    "max_age_days": 100,
+    "note": "These live here rather than in the document corpus for two reasons. Small savings rates are reviewed EVERY QUARTER by the Department of Economic Affairs, and the document corpus carries only one corpus-wide retrieved_on with a 180-day window -- a quarterly rate would go stale in it invisibly. max_age_days is 100 so an entry flags itself roughly one quarter after it was checked. And the official pages are not machine-readable: nsiindia.gov.in and jansuraksha.gov.in render as navigation with no extractable text, and financialservices.gov.in blocks automated fetches, so there is no primary text to index even if the freshness worked. Rates here were unchanged for the 10th consecutive quarter (last revised for Jan-Mar 2024), which makes them low-risk but NOT no-risk: re-check on 1 October 2026, 1 January 2027, and every quarter start after.",
+    "names": {
+      "_note": "Scheme names are proper nouns and must be quoted, not recalled. Left to itself the model invents Hindi expansions -- observed: PPF glossed as 'सामान्य जनता विकास खाता' and as 'प्रगतिशील सेविंग्स स्कीम', neither of which exists, and 'सुकनी समृद्धि' for सुकन्या समृद्धि. `hi` is the name Indians actually use when speaking, which is why the English-acronym schemes stay acronyms in Hindi too: nobody says the Hindi expansion of PPF or NSC out loud. Only the PM- schemes and किसान विकास पत्र are genuinely spoken in Hindi.",
+      "ppf": { "en": "Public Provident Fund (PPF)", "hi": "PPF" },
+      "sukanya_samriddhi": { "en": "Sukanya Samriddhi Yojana (SSY)", "hi": "सुकन्या समृद्धि योजना" },
+      "senior_citizens_savings": { "en": "Senior Citizens' Savings Scheme (SCSS)", "hi": "सीनियर सिटीजन सेविंग्स स्कीम (SCSS)" },
+      "nsc": { "en": "National Savings Certificate (NSC)", "hi": "NSC" },
+      "kisan_vikas_patra": { "en": "Kisan Vikas Patra (KVP)", "hi": "किसान विकास पत्र" },
+      "post_office_monthly_income": { "en": "Post Office Monthly Income Scheme (POMIS)", "hi": "पोस्ट ऑफिस मंथली इनकम स्कीम" },
+      "pmjjby": { "en": "Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY)", "hi": "प्रधानमंत्री जीवन ज्योति बीमा योजना" },
+      "pmsby": { "en": "Pradhan Mantri Suraksha Bima Yojana (PMSBY)", "hi": "प्रधानमंत्री सुरक्षा बीमा योजना" },
+      "apy": { "en": "Atal Pension Yojana (APY)", "hi": "अटल पेंशन योजना" },
+      "pmjdy": { "en": "Pradhan Mantri Jan Dhan Yojana (PMJDY)", "hi": "प्रधानमंत्री जन धन योजना" },
+      "mudra_pmmy": { "en": "Pradhan Mantri MUDRA Yojana (PMMY)", "hi": "मुद्रा लोन (PMMY)" }
+    },
+    "small_savings": {
+      "ppf_percent": 7.1,
+      "sukanya_samriddhi_percent": 8.2,
+      "senior_citizens_savings_percent": 8.2,
+      "nsc_percent": 7.7,
+      "kisan_vikas_patra_percent": 7.5,
+      "kisan_vikas_patra_maturity_months": 115,
+      "post_office_monthly_income_percent": 7.4
+    },
+    "jan_suraksha": {
+      "note": "The three Jan Suraksha social-security schemes. Premiums are auto-debited annually from the linked bank account; cover lapses if the debit fails.",
+      "pmjjby": {
+        "full_name": "Pradhan Mantri Jeevan Jyoti Bima Yojana",
+        "cover": "life cover for death by any cause",
+        "sum_assured_rupees": 200000,
+        "annual_premium_rupees": 436,
+        "entry_age_years": "18-50",
+        "renewable_until_age": 55,
+        "pro_rata_premium_rupees": {
+          "june_july_august": 436, "september_october_november": 342,
+          "december_january_february": 228, "march_april_may": 114
+        }
+      },
+      "pmsby": {
+        "full_name": "Pradhan Mantri Suraksha Bima Yojana",
+        "cover": "accidental death and disability only — NOT death by illness",
+        "sum_assured_rupees": 200000,
+        "partial_disability_rupees": 100000,
+        "annual_premium_rupees": 20,
+        "entry_age_years": "18-70"
+      },
+      "apy": {
+        "full_name": "Atal Pension Yojana",
+        "cover": "guaranteed monthly pension from age 60",
+        "monthly_pension_options_rupees": [1000, 2000, 3000, 4000, 5000],
+        "note": "Contribution depends on entry age and chosen pension -- do not quote a contribution figure, tell the user it is age-dependent and to check with the bank."
+      }
+    },
+    "financial_inclusion": {
+      "pmjdy": {
+        "full_name": "Pradhan Mantri Jan-Dhan Yojana",
+        "minimum_balance_rupees": 0,
+        "overdraft_limit_rupees": 10000,
+        "rupay_accident_cover_rupees": 200000,
+        "rupay_accident_cover_note": "Rs 2,00,000 for accounts opened after 28 August 2018; Rs 1,00,000 for older accounts."
+      },
+      "mudra_pmmy": {
+        "full_name": "Pradhan Mantri MUDRA Yojana",
+        "purpose": "loans to non-corporate, non-farm small and micro enterprises",
+        "categories": {
+          "shishu": "up to Rs 50,000",
+          "kishor": "Rs 50,001 to Rs 5,00,000",
+          "tarun": "Rs 5,00,001 to Rs 10,00,000",
+          "tarun_plus": "Rs 10,00,001 to Rs 20,00,000 — only for borrowers who have taken and fully repaid a previous Tarun loan"
+        }
+      }
+    }
+  },
+  "tax_saving_limits": {
+    "effective_from": "2026-04-01",
+    "as_of": "2026-08-12",
+    "source_url": "https://incometaxindia.gov.in",
+    "source_name": "Income Tax Department, India",
+    "max_age_days": 400,
+    "note": "Old-regime deduction ceilings. The new regime is the default and does not allow most of these -- FinGuru must say which regime a figure applies to. Section numbering changes ahead: AY 2026-27 is the last year governed by the Income Tax Act 1961's Section 80C; from tax year 2026-27 the Income Tax Act 2025 renumbers it as Section 123 read with Schedule XV. The amounts are unchanged, so quote the amount and avoid leaning on the section number.",
+    "limits": {
+      "section_80c_rupees": 150000,
+      "section_80d_self_family_rupees": 25000,
+      "section_80d_senior_parents_rupees": 50000,
+      "nps_80ccd_1b_rupees": 50000,
+      "home_loan_interest_24b_rupees": 200000
+    }
+  }
+}

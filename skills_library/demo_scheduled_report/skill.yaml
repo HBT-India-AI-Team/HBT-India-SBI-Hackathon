@@ -1,0 +1,9 @@
+skill_id: demo_scheduled_report
+version: "1.0.0"
+kind: procedural
+description: >
+  Produces a mock scheduled ops report: a text summary, a mock audio
+  narration note, and a mock database write description.
+instructions: instructions.md
+output_contract: output_contract.json
+rules: {}

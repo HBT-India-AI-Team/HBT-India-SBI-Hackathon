@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "language": {
+      "type": "string",
+      "description": "The language AND script you are replying in, matching the user's latest message -- e.g. 'English', 'Hindi (Devanagari)', 'Hindi (Roman)', 'Tamil', 'Tamil (Roman)', 'Telugu', 'Bengali', 'Marathi', 'Kannada'. Declared first on purpose: decide the language before writing, then write the whole of `content` in it."
+    },
+    "content_type": {
+      "type": "string",
+      "enum": ["text", "image"],
+      "description": "Almost always 'text'. Use 'image' only when the user explicitly asked for a visual, chart or infographic."
+    },
+    "content": {
+      "type": "string",
+      "description": "The reply the user sees. For content_type 'text', the written answer -- every specific figure in it must have come from a tool result, with its as-of date or source mentioned naturally. For content_type 'image', a single JSON-encoded object string and nothing else, exactly {\"title\": string, \"points\": [{\"label\": string, \"detail\": string}, ...2-5 items]}."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How well-grounded this answer is. Below 0.5 when a figure you wanted was unavailable or came back stale, or when you answered a numeric question without a tool result."
+    }
+  },
+  "required": ["language", "content_type", "content", "confidence"]
+}

@@ -1,0 +1,12 @@
+skill_id: companion_line
+version: "1.0.0"
+kind: procedural
+archetype: dialogue
+description: >
+  Voice 2 -- COMPANION_LINE. The player's companion character reacting to
+  something specific that just happened, in one to three plain sentences.
+instructions: instructions.md
+shared_includes:
+  - shared/moneyverse_dialogue_style.md
+  - shared/moneyverse_companion_persona.md
+rules: {}

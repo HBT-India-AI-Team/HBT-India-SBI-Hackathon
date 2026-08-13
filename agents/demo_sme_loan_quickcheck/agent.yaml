@@ -1,0 +1,73 @@
+agent_id: demo_sme_loan_quickcheck
+version: 1.0.0
+purpose: A quick eligibility check for an SME working capital loan.
+skills:
+- demo_sme_loan_quickcheck
+pipeline:
+- load_input
+- gather_evidence
+- evaluate_rules
+- reason_llm
+- validate_output
+- decide
+- hitl_gate
+- explain
+capabilities: []
+governance:
+  hitl_conditions:
+  - low_confidence
+  - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+llm:
+  model: gemma4:12b
+  temperature: 0.0
+  seed: 7
+  timeout_seconds: 120
+draft: false
+routable: false
+input_mode: form
+demo_sample_input:
+  evidence:
+    annual_turnover: 6500000
+    years_in_business: 4
+    active_loan_defaults: 0
+    gst_registered: true
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: Evidence dict evaluated against this agent's generated rules.
+      properties:
+        annual_turnover:
+          type: number
+          description: Annual turnover in local currency
+        years_in_business:
+          type: number
+          description: Number of years the business has been operating
+        active_loan_defaults:
+          type: number
+          description: Number of currently active loan defaults
+        gst_registered:
+          type: boolean
+          description: Whether the business is GST registered
+output_schema:
+  type: object
+  required:
+  - outcome
+  - reason
+  - composite_score
+  properties:
+    outcome:
+      type: string
+      enum:
+      - QUALIFIED
+      - CONDITIONALLY_QUALIFIED
+      - NEEDS_HUMAN_REVIEW
+      - NOT_QUALIFIED
+    reason:
+      type: string
+    composite_score:
+      type: number

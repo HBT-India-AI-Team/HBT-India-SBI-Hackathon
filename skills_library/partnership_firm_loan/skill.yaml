@@ -1,0 +1,17 @@
+skill_id: partnership_firm_loan
+version: "1.0.0"
+kind: deterministic
+description: >
+  Determine if a partnership firm qualifies based on annual turnover (>50 lakh), combined credit score (>650), and registered deed; recommend a business expansion loan requiring human review before contact.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

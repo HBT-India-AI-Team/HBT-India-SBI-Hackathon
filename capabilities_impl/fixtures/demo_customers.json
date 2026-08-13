@@ -1,0 +1,96 @@
+{
+  "_note": "Mock core-banking data for demos. Stands in for what would be a read-only call to the bank's CBS/API in production. Names and numbers are invented; account numbers are deliberately non-conformant (SBIDEMO*) so they can never be mistaken for real ones.",
+  "customers": {
+    "SBIDEMO001": {
+      "customer_id": "SBIDEMO001",
+      "name": "Ravi Kumar",
+      "home_branch": "Koramangala, Bengaluru",
+      "relationship_since": "2019-07-11",
+      "monthly_credit": 78000,
+      "monthly_credit_label": "salary credited on the 1st",
+      "accounts": [
+        {
+          "type": "savings",
+          "account_ref": "SBIDEMO001-SB",
+          "balance": 82400.5,
+          "interest_rate_percent": 2.7
+        },
+        {
+          "type": "fixed_deposit",
+          "account_ref": "SBIDEMO001-FD1",
+          "principal": 150000,
+          "interest_rate_percent": 6.6,
+          "tenure_months": 12,
+          "opened_on": "2026-02-14",
+          "matures_on": "2027-02-14"
+        }
+      ],
+      "loans": [
+        {
+          "type": "personal_loan",
+          "account_ref": "SBIDEMO001-PL",
+          "outstanding_principal": 318500,
+          "annual_rate_percent": 14.25,
+          "emi": 10480,
+          "remaining_tenure_months": 39,
+          "emi_due_day": 5,
+          "prepayment_charge_percent": 3.0,
+          "disbursed_on": "2024-11-20"
+        },
+        {
+          "type": "home_loan",
+          "account_ref": "SBIDEMO001-HL",
+          "outstanding_principal": 2840000,
+          "annual_rate_percent": 8.5,
+          "rate_type": "floating",
+          "emi": 26350,
+          "remaining_tenure_months": 178,
+          "emi_due_day": 5,
+          "prepayment_charge_percent": 0.0,
+          "prepayment_note": "Floating-rate home loan to an individual borrower — RBI bars foreclosure charges.",
+          "disbursed_on": "2021-03-08"
+        }
+      ],
+      "cards": [
+        {
+          "type": "credit_card",
+          "account_ref": "SBIDEMO001-CC",
+          "outstanding": 46200,
+          "annual_rate_percent": 42.0,
+          "minimum_due": 2310,
+          "due_day": 18
+        }
+      ]
+    },
+    "SBIDEMO002": {
+      "customer_id": "SBIDEMO002",
+      "name": "Lakshmi Narayanan",
+      "home_branch": "T. Nagar, Chennai",
+      "relationship_since": "2015-01-23",
+      "monthly_credit": 41000,
+      "monthly_credit_label": "salary credited on the 30th",
+      "accounts": [
+        {
+          "type": "savings",
+          "account_ref": "SBIDEMO002-SB",
+          "balance": 21750.0,
+          "interest_rate_percent": 2.7
+        }
+      ],
+      "loans": [
+        {
+          "type": "gold_loan",
+          "account_ref": "SBIDEMO002-GL",
+          "outstanding_principal": 95000,
+          "annual_rate_percent": 9.75,
+          "emi": 8300,
+          "remaining_tenure_months": 12,
+          "emi_due_day": 10,
+          "prepayment_charge_percent": 1.0,
+          "disbursed_on": "2026-01-15"
+        }
+      ],
+      "cards": []
+    }
+  }
+}

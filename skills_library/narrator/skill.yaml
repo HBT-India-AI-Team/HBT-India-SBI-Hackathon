@@ -1,0 +1,11 @@
+skill_id: narrator
+version: "1.0.0"
+kind: procedural
+archetype: dialogue
+description: >
+  Voice 3 -- NARRATOR. Flat, clear, instructional. Rephrases a given game
+  mechanic fact -- never invents, adds, removes, or guesses at any detail.
+instructions: instructions.md
+shared_includes:
+  - shared/moneyverse_dialogue_style.md
+rules: {}

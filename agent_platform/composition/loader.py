@@ -64,6 +64,7 @@ def _load_skill(skill_id: str) -> Skill:
         task_prompt_text=task_prompt_text,
         output_contract=output_contract,
         rules=rules,
+        archetype=manifest.get("archetype"),
     )
 
 

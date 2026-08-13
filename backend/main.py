@@ -105,6 +105,10 @@ def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Heade
         "run_id": ctx.run_id,
         "outcome": (ctx.decision or {}).get("outcome"),
         "decision": ctx.decision,
+        # The narrated/generated payload — the only place a text-output (or any
+        # non-decision) skill's actual result lives, since `decision` stays null
+        # when the pipeline never runs decide (e.g. dialogue/conversational skills).
+        "output": ctx.validated_output,
         "hitl": ctx.hitl,
         "error": ctx.error,
     }
@@ -131,6 +135,7 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
     return {
         "session_id": result.session_id, "reply": result.reply,
         "evidence": result.evidence, "decision": result.decision, "done": result.done,
+        "content_type": result.content_type,
     }
 
 

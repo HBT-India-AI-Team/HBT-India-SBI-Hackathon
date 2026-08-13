@@ -44,6 +44,13 @@ class LLMConfig(BaseModel):
     temperature: float = 0.0
     seed: int = 7
     timeout_seconds: int = 120
+    # Ollama's thinking switch, sent only when set. None means "don't send it",
+    # so every agent keeps its model's default behaviour unless it opts in.
+    # Worth setting to False for a reasoning model behind a long system prompt:
+    # qwen3.6:35b under FinGuru's 18k-character instructions produced 3,457
+    # characters of `thinking` and then 81 characters of actual answer before
+    # stopping. Not portable across models -- test the agent's own model first.
+    think: bool | None = None
 
 
 class AgentDefinition(BaseModel):
@@ -68,7 +75,14 @@ class AgentDefinition(BaseModel):
     # payload editor (custom-pipeline agents like proposal/lead_discovery,
     # whose input doesn't reduce to a flat field list). "trigger": no input
     # at all — a lookup/check agent where clicking Run is the entire input.
-    input_mode: Literal["chat", "form", "json", "trigger"] = "chat"
+    # "file": a document upload (e.g. fin_health's Excel report) parsed server-side into
+    # evidence before the pipeline runs — see backend/excel_ingest.py and the admin
+    # /test-run-file endpoint.
+    input_mode: Literal["chat", "form", "json", "trigger", "file"] = "chat"
+    # Optional canned input for the admin Playground's "Fill sample data" button — purely a
+    # demo/UX convenience, never read by the runtime. Shape matches whatever this agent's own
+    # input_mode expects: {"evidence": {...}} for form/json, {"message": "..."} for chat.
+    demo_sample_input: dict[str, Any] | None = None
 
 
 class Skill(BaseModel):
@@ -89,6 +103,11 @@ class Skill(BaseModel):
     task_prompt_text: str = ""
     output_contract: dict[str, Any] | None = None
     rules: dict[str, Any] | None = None
+    # Which backend/archetypes/*.py archetype produced this skill, if it was
+    # AI-generated — None for hand-written skills that predate the
+    # archetype system (lead_discovery, proposal, etc.) or that aren't
+    # managed by the "describe it"/"Fix with AI" generator at all.
+    archetype: str | None = None
 
     @property
     def has_rules(self) -> bool:

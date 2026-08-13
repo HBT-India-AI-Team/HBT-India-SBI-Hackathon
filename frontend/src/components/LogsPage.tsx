@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ApiRequestError } from '../api'
 import { Badge, Button, Skeleton } from './ui'
-import type { OllamaCallLog } from '../types'
+import type { OllamaCallLog, OllamaCallLogSummary } from '../types'
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
@@ -14,13 +14,32 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleString()
 }
 
-function CallRow({ call }: { call: OllamaCallLog }) {
+function CallRow({ call }: { call: OllamaCallLogSummary }) {
   const [expanded, setExpanded] = useState(false)
+  const [detail, setDetail] = useState<OllamaCallLog | null>(null)
+  const [detailError, setDetailError] = useState<string | null>(null)
+
+  // Bodies are fetched on first expand, not with the list — see types.ts.
+  // Once loaded they're kept, so collapsing and reopening is free.
+  const toggle = () => {
+    const opening = !expanded
+    setExpanded(opening)
+    if (!opening || detail) return
+    setDetailError(null)
+    api
+      .getOllamaLogDetail(call.offset)
+      .then(setDetail)
+      .catch((err) => setDetailError(err instanceof ApiRequestError ? err.message : String(err)))
+  }
 
   return (
-    <div className="border border-neutral-200 rounded-lg bg-white overflow-hidden">
+    // shrink-0 is load-bearing: the parent is `flex flex-col` and `overflow-hidden`
+    // here sets this item's automatic minimum size to 0 instead of min-content, so
+    // with enough rows to overflow, flex-shrink squashed every row to its border —
+    // the whole list rendered as hairlines with the text clipped inside.
+    <div className="border border-neutral-200 rounded-lg bg-white overflow-hidden shrink-0">
       <button
-        onClick={() => setExpanded((v) => !v)}
+        onClick={toggle}
         className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer hover:bg-neutral-50 transition-colors"
       >
         <Badge tone={call.ok ? 'success' : 'danger'} uppercase className="shrink-0">
@@ -37,22 +56,32 @@ function CallRow({ call }: { call: OllamaCallLog }) {
 
       {expanded && (
         <div className="border-t border-neutral-200 p-4 flex flex-col gap-3 bg-neutral-50">
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-1.5">
-              Request
-            </label>
-            <pre className="rounded-md border border-neutral-200 bg-neutral-900 text-neutral-100 text-xs font-mono p-3 overflow-x-auto max-h-72 overflow-y-auto">
-              {JSON.stringify(call.request, null, 2)}
-            </pre>
-          </div>
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-1.5">
-              {call.ok ? 'Response' : 'Error'}
-            </label>
-            <pre className="rounded-md border border-neutral-200 bg-neutral-900 text-neutral-100 text-xs font-mono p-3 overflow-x-auto max-h-72 overflow-y-auto">
-              {call.ok ? JSON.stringify(call.response, null, 2) : call.error}
-            </pre>
-          </div>
+          {detailError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{detailError}</p>
+          )}
+
+          {!detail && !detailError && <Skeleton className="h-24 w-full rounded-md" />}
+
+          {detail && (
+            <>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-1.5">
+                  Request
+                </label>
+                <pre className="rounded-md border border-neutral-200 bg-neutral-900 text-neutral-100 text-xs font-mono p-3 overflow-x-auto max-h-72 overflow-y-auto">
+                  {JSON.stringify(detail.request, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-wide text-neutral-400 mb-1.5">
+                  {call.ok ? 'Response' : 'Error'}
+                </label>
+                <pre className="rounded-md border border-neutral-200 bg-neutral-900 text-neutral-100 text-xs font-mono p-3 overflow-x-auto max-h-72 overflow-y-auto">
+                  {call.ok ? JSON.stringify(detail.response, null, 2) : detail.error}
+                </pre>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -60,7 +89,7 @@ function CallRow({ call }: { call: OllamaCallLog }) {
 }
 
 export function LogsPage() {
-  const [calls, setCalls] = useState<OllamaCallLog[] | null>(null)
+  const [calls, setCalls] = useState<OllamaCallLogSummary[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [failuresOnly, setFailuresOnly] = useState(false)
@@ -124,8 +153,10 @@ export function LogsPage() {
           <p className="text-sm text-neutral-400 text-center py-12">No failures in the last {calls.length} calls.</p>
         )}
 
-        {visible.map((call, i) => (
-          <CallRow key={`${call.timestamp}-${i}`} call={call} />
+        {/* Keyed by offset, not index — each row now owns fetched body state,
+            and an index key would hand it to a different call after a refresh. */}
+        {visible.map((call) => (
+          <CallRow key={call.offset} call={call} />
         ))}
       </div>
     </div>

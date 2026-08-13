@@ -1,0 +1,67 @@
+agent_id: demo_chat_assistant
+version: "1.0.0"
+purpose: >
+  A "financial guru" chat assistant: answers savings/FD/loan questions
+  with real numbers, calling real tools (fixed-deposit rate lookup,
+  savings rate lookup, EMI calculator) instead of guessing figures.
+  Answers in whichever content type best fits the request -- plain text,
+  a code snippet, a real generated infographic (structured content
+  rendered as an actual graphic, not a static image), or -- for video/
+  audio, where no generation model is connected -- a labeled placeholder
+  caption. Demonstrates a chat agent with real tool use and a visible
+  step-by-step "thinking" trace in the Playground.
+
+skills:
+  - demo_chat_assistant
+
+pipeline:
+  - load_input
+  - gather_evidence
+  - reason_llm_with_tools
+  - validate_output
+  - hitl_gate
+  - explain
+
+capabilities:
+  - name: finance.get_fd_rate
+  - name: finance.get_savings_rate
+  - name: finance.calculate_emi
+
+governance:
+  hitl_conditions:
+    - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+
+llm:
+  model: gemma4:12b
+  temperature: 0.5
+  seed: 7
+  timeout_seconds: 90
+
+draft: false
+routable: false
+input_mode: chat
+
+demo_sample_input:
+  message: "I'm thinking of a personal loan of Rs 5,00,000 for 3 years -- what would my EMI be? And what FD rate would I get if I locked that same amount away for a year instead?"
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: The chat message and recent conversation history — populated by the chat layer, not entered directly.
+
+output_schema:
+  type: object
+  required: [content_type, content]
+  properties:
+    content_type:
+      type: string
+      enum: [text, code, image, video, audio]
+    content:
+      type: string
+    confidence:
+      type: number

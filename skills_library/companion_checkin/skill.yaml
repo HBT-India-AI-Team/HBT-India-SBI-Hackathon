@@ -1,0 +1,13 @@
+skill_id: companion_checkin
+version: "1.0.0"
+kind: procedural
+archetype: dialogue
+description: >
+  Voice 2 -- COMPANION_CHECKIN. A periodic "what's actually been bothering
+  you" check-in: the companion asks a question, the player picks from
+  short generated options -- never free text.
+instructions: instructions.md
+shared_includes:
+  - shared/moneyverse_dialogue_style.md
+  - shared/moneyverse_companion_persona.md
+rules: {}

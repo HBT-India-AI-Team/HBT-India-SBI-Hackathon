@@ -18,3 +18,10 @@ frontend/dist/
 logs/
 runs/
 chat_sessions/
+*.log
+
+# Build cache for the document index. Keyed by sha256(model + text) so a
+# re-run only re-embeds what changed -- worth keeping locally, worth 8 MB to
+# nobody else. doc_index.json itself IS committed: without it a fresh clone
+# cannot answer a document question until someone rebuilds against Ollama.
+capabilities_impl/fixtures/doc_index.embedcache.json

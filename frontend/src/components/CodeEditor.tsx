@@ -22,9 +22,10 @@ interface CodeEditorProps {
   language: Language
   onChange: (value: string) => void
   height?: string
+  readOnly?: boolean
 }
 
-export function CodeEditor({ value, language, onChange, height = '100%' }: CodeEditorProps) {
+export function CodeEditor({ value, language, onChange, height = '100%', readOnly = false }: CodeEditorProps) {
   return (
     <CodeMirror
       value={value}
@@ -32,6 +33,7 @@ export function CodeEditor({ value, language, onChange, height = '100%' }: CodeE
       theme="light"
       extensions={[...extensionsFor(language), EditorView.lineWrapping]}
       onChange={onChange}
+      editable={!readOnly}
       basicSetup={{ foldGutter: true, lineNumbers: true }}
     />
   )

@@ -1,0 +1,123 @@
+agent_id: finguru
+version: "1.0.0"
+purpose: >
+  FinGuru — a grounded personal-finance chat guide for India. Answers
+  questions about deposits and loans (FD and savings rates, the RBI repo
+  rate, indicative loan rate bands, tax-saving limits) and about personal
+  money management (budgeting, emergency funds, SIP goals, debt payoff),
+  using real tool calls for every figure it states. Rate lookups carry their
+  source and as-of date through into the answer, exchange rates come live
+  from the ECB, and all arithmetic runs in Python rather than in the model,
+  so FinGuru never quotes a number it made up. Replies in the user's own
+  language and script — English, Hindi, Tamil, Telugu, Bengali, Marathi,
+  Kannada and other Indian languages, including romanized Hinglish — while
+  the tool calls behind the answer stay identical in every language.
+
+skills:
+  - finguru
+
+pipeline:
+  - load_input
+  - gather_evidence
+  - reason_llm_with_tools
+  - validate_output
+  - hitl_gate
+  - explain
+
+capabilities:
+  # India retail banking reference rates — each returns as_of/source_url/stale
+  - name: india.get_policy_rate
+  - name: india.get_savings_rate
+  - name: india.get_fd_rate
+  - name: india.get_loan_rate
+  - name: india.get_tax_saving_limits
+  # Government schemes — the numbers that change quarterly live here rather
+  # than in the document corpus, which has no per-fact staleness.
+  - name: india.get_scheme_details
+  # Live market data (ECB reference rates via Frankfurter)
+  - name: fx.get_rate
+  # Deterministic personal-finance math
+  - name: money.fd_maturity
+  - name: money.sip_projection
+  - name: money.sip_required_for_goal
+  - name: money.debt_payoff_time
+  - name: money.prepayment_savings
+  - name: money.budget_split
+  - name: money.emergency_fund_target
+  # Reducing-balance EMI, already registered for the demo assistant
+  - name: finance.calculate_emi
+  # NOTE: accounts.get_profile / accounts.get_borrowings were deliberately
+  # removed. FinGuru has no per-customer account data, so the only records
+  # those tools could return were a demo fixture — and the model reached for
+  # them ahead of what the user actually said. Asked about a ₹3,00,000 loan
+  # at ₹10,000/month, it silently answered about the fixture's ₹3,18,500 at
+  # ₹10,480 instead. Every figure was internally consistent and every one was
+  # about someone else's loan, which is worse than refusing to answer.
+  # Published RBI guidance — for questions whose answer is a rule, not a number
+  - name: docs.search
+  - name: docs.list_sources
+
+governance:
+  hitl_conditions:
+    - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+
+llm:
+  # Benchmarked against gemma4:12b, gemma4:31b and gpt-oss:20b on this agent's
+  # own hard cases — tool chaining, Indian digit grouping, script mirroring,
+  # and citing a rule without drifting to the wrong product. qwen won on all
+  # three axes at once: quality (29/33 vs 23/33), reliability (0 broken cases
+  # vs 1), and wall time (136s vs 190s for the same three questions).
+  # The incumbent's specific failures: Western digit grouping (₹212,796.03
+  # where an Indian reader expects ₹2,12,796.03) and run-to-run variance --
+  # it passed all three cases on one run and broke one on the next, same
+  # temperature, same seed. gemma4:31b timed out on every case; gpt-oss:20b
+  # returned an empty reply and wrote rupees with spaces for separators.
+  model: qwen3.6:35b
+  # qwen3.6 is a reasoning model, and behind this skill's ~18,000-character
+  # instructions it reasons instead of answering: measured on "which SBI
+  # savings account should I open", 3,457 characters of `thinking` followed by
+  # 81 characters of content, then stop. Three of four account-opening
+  # questions came back empty. With thinking off the same prompt returns a
+  # full answer. Do not copy this to an agent on a different model without
+  # testing it -- gpt-oss:20b returns empty content when given think=false.
+  think: false
+  # Low but not zero: this is conversational, so some warmth in the wording
+  # is wanted — but every number comes from a tool, so there is nothing for
+  # sampling variance to get creative with.
+  temperature: 0.3
+  seed: 7
+  timeout_seconds: 90
+
+draft: false
+# Routable: unlike demo_chat_assistant, FinGuru is a real destination the
+# agent_router should be able to pick for personal-finance questions.
+routable: true
+input_mode: chat
+
+demo_sample_input:
+  message: "I take home about ₹85,000 a month and I've got ₹2,40,000 sitting on a credit card at 42%. I'm paying ₹12,000 a month against it. How long until it's gone, and how should I be splitting the rest?"
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: The chat message and recent conversation history — populated by the chat layer, not entered directly.
+
+output_schema:
+  type: object
+  required: [language, content_type, content]
+  properties:
+    language:
+      type: string
+      description: Language and script of the reply, mirroring the user's own — e.g. "Tamil", "Hindi (Roman)".
+    content_type:
+      type: string
+      enum: [text, image]
+    content:
+      type: string
+    confidence:
+      type: number

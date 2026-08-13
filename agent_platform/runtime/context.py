@@ -53,6 +53,15 @@ class RunContext:
     explanation: dict[str, Any] | None = None
 
     stage_results: list[StageResult] = field(default_factory=list)
+
+    # Scratch slot a stage can fill to attach evidence about what it actually
+    # did — model name, token counts, the model's own reasoning trace, tool
+    # calls. run_pipeline drains this into the StageResult it builds and
+    # clears it, so a stage never has to know how StageResults are made and
+    # one stage's detail can't leak into the next. Stages that set nothing
+    # produce an empty detail, which is what every non-LLM stage does.
+    pending_stage_detail: dict[str, Any] = field(default_factory=dict)
+
     error: dict[str, Any] | None = None
     started_at: str = field(default_factory=_now_iso)
     finished_at: str | None = None

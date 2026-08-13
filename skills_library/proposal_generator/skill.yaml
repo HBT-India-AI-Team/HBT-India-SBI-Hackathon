@@ -1,0 +1,9 @@
+skill_id: proposal_generator
+version: "1.0.0"
+kind: procedural
+description: >
+  Drafts a grounded tender-eligibility proposal recommendation from a real
+  fin_health screening result.
+instructions: instructions.md
+output_contract: output_contract.json
+rules: {}

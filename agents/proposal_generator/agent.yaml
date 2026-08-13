@@ -1,0 +1,81 @@
+agent_id: proposal_generator
+version: "1.0.0"
+purpose: >
+  Drafts an actual tender-proposal letter, addressed to a company that
+  has already been screened by fin_health -- takes that real screening
+  result (outcome and the real financial signals behind it) as fixed
+  trigger context and writes a client-facing letter, not an internal
+  memo: never discloses the screening process, a score, or internal risk
+  language, and never invents a figure that wasn't in the context it was
+  given. In the real production workflow this would fire off a database
+  write (fin_health's result being persisted) rather than a manual click
+  -- see agent_platform/workflows/db_trigger_stub.py for where that real
+  trigger would plug in.
+
+skills:
+  - proposal_generator
+
+pipeline:
+  - load_input
+  - gather_evidence
+  - reason_llm
+  - validate_output
+  - hitl_gate
+  - explain
+
+capabilities: []
+
+governance:
+  hitl_conditions:
+    - validation_degraded
+  confidence_threshold: 0.6
+  max_llm_retries: 1
+
+llm:
+  model: gemma4:12b
+  temperature: 0.3
+  seed: 7
+  timeout_seconds: 120
+
+draft: false
+routable: false
+input_mode: trigger
+
+demo_sample_input:
+  evidence:
+    business_name: JAPTECH ENGICORP PRIVATE LIMITED
+    fin_health_outcome: CONDITIONALLY_QUALIFIED
+    fin_health_score: 47.23
+    ebitda_margin_pct: 9.7
+    net_margin_pct: 0.5
+    revenue_growth_pct: 135.8
+    debt_to_equity: 8.2
+    interest_coverage_ratio: 1.2
+    current_ratio: 2.0
+    epfo_late_payment_flag: true
+    charges_to_capital_ratio: 6.99
+
+input_schema:
+  type: object
+  required: []
+  properties:
+    evidence:
+      type: object
+      description: The real Fin Health screening result being handed forward -- not typed by a user.
+      properties:
+        business_name:
+          type: string
+        fin_health_outcome:
+          type: string
+          description: "QUALIFIED (Accepted) or CONDITIONALLY_QUALIFIED (Review, human-approved)."
+        fin_health_score:
+          type: number
+
+output_schema:
+  type: object
+  required: [proposal_text]
+  properties:
+    proposal_text:
+      type: string
+    confidence:
+      type: number

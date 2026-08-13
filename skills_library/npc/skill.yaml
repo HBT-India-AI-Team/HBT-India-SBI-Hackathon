@@ -1,0 +1,12 @@
+skill_id: npc
+
+version: "1.0.0"
+kind: procedural
+archetype: dialogue
+description: >
+  Voice 1 -- NPC. A city citizen describing their own real financial
+  problem, in one or two plain sentences.
+instructions: instructions.md
+shared_includes:
+  - shared/moneyverse_dialogue_style.md
+rules: {}

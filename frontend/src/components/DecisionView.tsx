@@ -45,7 +45,18 @@ interface Rationale {
   next_best_action?: string
   confidence?: number
   product_rationale?: Record<string, string>
+  // Archetypes outside qualification/lead_discovery/proposal (e.g.
+  // conversational's `answer`) declare their own output_contract field
+  // names — not enumerable here, so KNOWN_RATIONALE_KEYS below is what
+  // decides which of this object's OTHER string fields still need a
+  // generic fallback card so they're not silently invisible.
+  [key: string]: unknown
 }
+
+const KNOWN_RATIONALE_KEYS = new Set([
+  'summary', 'selection_reason', 'customer_proposal', 'degraded',
+  'strengths', 'risks', 'next_best_action', 'confidence', 'product_rationale',
+])
 
 interface ErrorInfo {
   stage: string
@@ -67,6 +78,18 @@ const OUTCOME_STYLES: Record<string, string> = {
   CONDITIONALLY_QUALIFIED: 'bg-brand-50 border-brand-300 text-brand-700',
 }
 const DEFAULT_OUTCOME_STYLE = 'bg-neutral-100 border-neutral-300 text-neutral-700'
+
+// Display-only relabeling — every agent's own decision/rules still speak the underlying
+// QUALIFIED/CONDITIONALLY_QUALIFIED/NOT_QUALIFIED vocabulary (unchanged everywhere else in
+// the platform); this only affects what a human reads in the Playground, e.g. fin_health's
+// "Accepted / Review / Rejected" framing for a tender-eligibility screen.
+const OUTCOME_LABELS: Record<string, string> = {
+  QUALIFIED: 'Accepted',
+  CONDITIONALLY_QUALIFIED: 'Review',
+  NEEDS_HUMAN_REVIEW: 'Review',
+  NOT_QUALIFIED: 'Rejected',
+}
+const outcomeLabel = (outcome: string): string => OUTCOME_LABELS[outcome] ?? outcome
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -216,8 +239,9 @@ export function DecisionView({ decision, explanation, routingInfo }: DecisionVie
                 <span className="font-mono text-neutral-700">{entry.skill_id}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded border ${OUTCOME_STYLES[entry.outcome] ?? DEFAULT_OUTCOME_STYLE}`}
+                  title={entry.outcome}
                 >
-                  {entry.outcome}
+                  {outcomeLabel(entry.outcome)}
                 </span>
                 {entry.composite_score !== null && (
                   <span className="text-neutral-400">score {entry.composite_score}</span>
@@ -235,8 +259,9 @@ export function DecisionView({ decision, explanation, routingInfo }: DecisionVie
               className={`inline-flex items-center gap-2 text-sm font-semibold rounded-lg border px-3 py-1.5 ${
                 OUTCOME_STYLES[String(dec.outcome)] ?? DEFAULT_OUTCOME_STYLE
               }`}
+              title={String(dec.outcome)}
             >
-              {String(dec.outcome)}
+              {outcomeLabel(String(dec.outcome))}
             </div>
           ) : (
             <div className="flex flex-col gap-1 text-sm">
@@ -352,6 +377,20 @@ export function DecisionView({ decision, explanation, routingInfo }: DecisionVie
           {rationale.confidence !== undefined && (
             <p className="text-xs text-neutral-500 mt-1">Confidence: {rationale.confidence}</p>
           )}
+        </Card>
+      )}
+
+      {rationale && Object.entries(rationale).some(
+        ([key, value]) => !KNOWN_RATIONALE_KEYS.has(key) && typeof value === 'string' && value.trim(),
+      ) && (
+        <Card title="Answer">
+          {Object.entries(rationale)
+            .filter(([key, value]) => !KNOWN_RATIONALE_KEYS.has(key) && typeof value === 'string' && (value as string).trim())
+            .map(([key, value]) => (
+              <p key={key} className="text-xs text-neutral-700 leading-relaxed whitespace-pre-wrap">
+                {String(value)}
+              </p>
+            ))}
         </Card>
       )}
 

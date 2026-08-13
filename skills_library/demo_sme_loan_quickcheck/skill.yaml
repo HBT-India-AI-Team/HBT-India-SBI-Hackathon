@@ -1,0 +1,14 @@
+skill_id: demo_sme_loan_quickcheck
+version: 1.0.0
+kind: deterministic
+archetype: qualification
+description: A quick eligibility check for an SME working capital loan.
+instructions: instructions.md
+output_contract: output_contract.json
+shared_includes:
+- shared/compliance_guardrails.md
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

@@ -1,0 +1,31 @@
+# FIN HEALTH — COMPOSITE (combines the categories into one final score)
+# ---------------------------------------------------------------------------
+# `weights` decides how much each category from factors.yaml counts toward
+# the final 0-100 score. They must exactly match the category names used
+# there. They don't need to sum to 1 — they're normalized automatically —
+# but keeping them summing to 1 makes them easy to read as percentages.
+#
+# `thresholds` decides the outcome from the final score:
+#   score >= qualified_min    -> Accepted (auto-eligible for a proposal)
+#   score >= conditional_min  -> Review (a human looks at it; if approved,
+#                                 it can still be sent to a proposal)
+#   score <  conditional_min  -> Rejected
+#
+# TO CHANGE HOW STRICT/LENIENT SCORING IS: edit thresholds below. TO CHANGE
+# WHICH ASPECTS MATTER MOST: edit the weights below (e.g. raise
+# "Leverage and Liquidity" if debt risk should matter more than growth).
+#
+# NOTE: "Fix with AI" (per-file or whole-skill) regenerates this file from
+# scratch and will strip these comments even if it doesn't touch composite
+# — see README.md in this folder. Re-add them by hand if that happens.
+# ---------------------------------------------------------------------------
+rule_group: composite
+description: Category weights and the Accepted/Review/Rejected score thresholds.
+weights:
+  Profitability: 0.3
+  Growth: 0.15
+  Leverage and Liquidity: 0.35
+  Compliance and Collateral Risk: 0.2
+thresholds:
+  qualified_min: 80    # score at or above this -> Accepted
+  conditional_min: 40  # score at or above this (but below qualified_min) -> Review; below this -> Rejected

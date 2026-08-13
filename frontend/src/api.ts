@@ -4,16 +4,19 @@ import type {
   AgentRouterResult,
   AgentSummary,
   ApiKeyResult,
+  ArchetypeSummary,
   Capability,
   ChatTurnResult,
   InputMode,
+  EditFileResult,
   GenerateAgentEvent,
   GenerateAgentResult,
   OllamaCallLog,
-  RefineAgentResult,
+  OllamaCallLogSummary,
   SaveResult,
   SkillCatalogEntry,
   TemplateSummary,
+  TestRunFileResult,
   TestRunResult,
 } from './types'
 
@@ -36,7 +39,9 @@ export const api = {
   listStages: () => apiFetch<{ stages: string[] }>('/admin/stages'),
   listCapabilities: () => apiFetch<{ capabilities: Capability[] }>('/admin/capabilities'),
   listTemplates: () => apiFetch<{ templates: TemplateSummary[] }>('/admin/templates'),
-  getOllamaLogs: (limit = 100) => apiFetch<{ calls: OllamaCallLog[] }>(`/admin/ollama-logs?limit=${limit}`),
+  listArchetypes: () => apiFetch<{ archetypes: ArchetypeSummary[] }>('/admin/archetypes'),
+  getOllamaLogs: (limit = 100) => apiFetch<{ calls: OllamaCallLogSummary[] }>(`/admin/ollama-logs?limit=${limit}`),
+  getOllamaLogDetail: (offset: number) => apiFetch<OllamaCallLog>(`/admin/ollama-logs/${offset}`),
 
   getAgentFiles: (agentId: string) => apiFetch<AgentFiles>(`/admin/agents/${agentId}/files`),
 
@@ -93,12 +98,13 @@ export const api = {
   generateAgentStream: async (
     agentId: string,
     purpose: string,
+    archetypeId: string,
     onEvent: (event: GenerateAgentEvent) => void,
   ): Promise<GenerateAgentResult> => {
     const response = await fetch('/admin/agents/generate/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent_id: agentId, purpose }),
+      body: JSON.stringify({ agent_id: agentId, purpose, archetype_id: archetypeId }),
     })
     if (!response.ok || !response.body) {
       const body = await response.json().catch(() => ({ detail: response.statusText }))
@@ -130,10 +136,15 @@ export const api = {
     return finalResult
   },
 
-  refineAgent: (agentId: string, feedback: string) =>
-    apiFetch<RefineAgentResult>(`/admin/agents/${agentId}/refine`, {
+  // The one "Fix with AI" mechanism — edits exactly the file identified by fileKey (the
+  // same tab-key scheme AgentEditor.tsx's buildSkillGroups already uses, e.g. "agent_yaml",
+  // "skill:fin_health:rule:factors"), the way a careful human applies a targeted change:
+  // full file content in, full corrected file content out, everything untouched preserved.
+  // Works on any file, on live agents as much as drafts.
+  editFileWithAI: (agentId: string, fileKey: string, feedback: string) =>
+    apiFetch<EditFileResult>(`/admin/agents/${agentId}/edit-file`, {
       method: 'POST',
-      body: JSON.stringify({ feedback }),
+      body: JSON.stringify({ file_key: fileKey, feedback }),
     }),
 
   setInputMode: (agentId: string, inputMode: InputMode) =>
@@ -142,10 +153,14 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ input_mode: inputMode }) },
     ),
 
-  chatWithAgent: (agentId: string, sessionId: string | null, message: string) =>
+  /** `signal` backs the composer's stop button. Note this aborts the client's
+   *  wait, not the run: the backend has no cancellation hook, so the model
+   *  call finishes server-side regardless. */
+  chatWithAgent: (agentId: string, sessionId: string | null, message: string, signal?: AbortSignal) =>
     apiFetch<ChatTurnResult>(`/admin/agents/${agentId}/chat`, {
       method: 'POST',
       body: JSON.stringify({ session_id: sessionId, message }),
+      signal,
     }),
 
   testRunAgent: (agentId: string, input: Record<string, unknown>) =>
@@ -153,6 +168,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ input }),
     }),
+
+  testRunAgentFile: async (agentId: string, file: File): Promise<TestRunFileResult> => {
+    const body = new FormData()
+    body.append('file', file)
+    // No Content-Type header here — the browser sets multipart/form-data with the right
+    // boundary itself; apiFetch always forces application/json, so this can't reuse it.
+    const response = await fetch(`/admin/agents/${agentId}/test-run-file`, { method: 'POST', body })
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({ detail: response.statusText }))
+      throw new ApiRequestError(errBody.detail ?? `Request failed (${response.status})`)
+    }
+    return response.json() as Promise<TestRunFileResult>
+  },
 
   runAgentRouter: (input: Record<string, unknown>) =>
     apiFetch<AgentRouterResult>('/workflows/agent_router/invoke', {

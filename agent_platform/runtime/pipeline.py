@@ -29,6 +29,16 @@ def register_stage(name: str) -> Callable[[StageFn], StageFn]:
     return _decorator
 
 
+def _drain_stage_detail(ctx: RunContext) -> dict:
+    """Takes whatever the stage that just ran attached to
+    ctx.pending_stage_detail and clears the slot, so the next stage starts
+    empty and detail is always attributed to the stage that produced it.
+    """
+    detail = ctx.pending_stage_detail
+    ctx.pending_stage_detail = {}
+    return detail
+
+
 def run_pipeline(bundle, ctx: RunContext, logger) -> RunContext:
     """Runs each declared stage in order. Stops at the first stage that
     raises, but always leaves ctx in a state the caller can persist and
@@ -65,6 +75,7 @@ def run_pipeline(bundle, ctx: RunContext, logger) -> RunContext:
                 started_at=started_at,
                 duration_ms=round(duration_ms, 2),
                 summary=f"{stage_name} completed",
+                detail=_drain_stage_detail(ctx),
             )
             ctx.stage_results.append(result)
             logger.stage_end(ctx, result)
@@ -83,6 +94,11 @@ def run_pipeline(bundle, ctx: RunContext, logger) -> RunContext:
                 started_at=started_at,
                 duration_ms=round(duration_ms, 2),
                 summary=str(exc),
+                # Drained on the failure path too: a stage that got a model
+                # response and then failed downstream still has reasoning
+                # worth showing, and it's exactly the case you most want to
+                # inspect.
+                detail=_drain_stage_detail(ctx),
             )
             ctx.stage_results.append(result)
             logger.stage_error(ctx, result, exc)

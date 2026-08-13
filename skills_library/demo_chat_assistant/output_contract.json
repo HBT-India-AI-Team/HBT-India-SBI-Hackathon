@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "content_type": {
+      "type": "string",
+      "enum": ["text", "code", "image", "video", "audio"],
+      "description": "Pick the type that best matches what the user asked for."
+    },
+    "content": {
+      "type": "string",
+      "description": "For text/code: the real answer, using any real tool results you gathered. For image: a single JSON-encoded object string, exactly {\"title\": string, \"points\": [{\"label\": string, \"detail\": string}, ...2-5 items]} -- this is rendered as a real graphic, so it must be valid JSON with no extra text around it. For video/audio: a vivid caption describing what that media would show, since no generation model is connected yet."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": ["content_type", "content", "confidence"]
+}

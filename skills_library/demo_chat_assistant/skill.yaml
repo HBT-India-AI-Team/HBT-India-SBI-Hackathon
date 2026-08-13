@@ -1,0 +1,9 @@
+skill_id: demo_chat_assistant
+version: "1.0.0"
+kind: procedural
+description: >
+  General chat assistant that picks the right content type per request and
+  answers accordingly.
+instructions: instructions.md
+output_contract: output_contract.json
+rules: {}

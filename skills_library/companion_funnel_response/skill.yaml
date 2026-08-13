@@ -1,0 +1,12 @@
+skill_id: companion_funnel_response
+version: "1.0.0"
+kind: procedural
+archetype: dialogue
+description: >
+  Voice 2 -- COMPANION_FUNNEL_RESPONSE. The companion's reaction to
+  whichever check-in option the player just selected.
+instructions: instructions.md
+shared_includes:
+  - shared/moneyverse_dialogue_style.md
+  - shared/moneyverse_companion_persona.md
+rules: {}

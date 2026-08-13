@@ -1,0 +1,11 @@
+skill_id: finguru
+version: "1.0.0"
+kind: procedural
+description: >
+  Grounded India personal-finance chat: answers questions on deposits, loans,
+  budgeting, goals and debt using real tool results only, and passes each
+  figure's source and as-of date through to the user rather than stating bare
+  numbers.
+instructions: instructions.md
+output_contract: output_contract.json
+rules: {}

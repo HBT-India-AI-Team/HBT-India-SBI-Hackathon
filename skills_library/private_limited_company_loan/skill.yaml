@@ -1,0 +1,17 @@
+skill_id: private_limited_company_loan
+version: "1.0.0"
+kind: deterministic
+description: >
+  Determine if a private limited company qualifies for a term loan based on turnover, audit history, and compliance.
+
+instructions: instructions.md
+output_contract: output_contract.json
+
+shared_includes:
+  - shared/compliance_guardrails.md
+
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

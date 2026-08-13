@@ -1,0 +1,15 @@
+skill_id: fin_health
+version: 1.0.0
+kind: deterministic
+archetype: qualification
+description: Scores a company's financial health from an MCA due-diligence Excel report
+  for tender eligibility.
+instructions: instructions.md
+output_contract: output_contract.json
+shared_includes:
+- shared/compliance_guardrails.md
+rules:
+  gates: rules/gates.yaml
+  factors: rules/factors.yaml
+  composite: rules/composite.yaml
+  product_fit: rules/product_fit.yaml

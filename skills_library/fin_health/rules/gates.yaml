@@ -1,0 +1,41 @@
+# FIN HEALTH — GATES
+# ---------------------------------------------------------------------------
+# Hard pass/fail checks, evaluated first. If ANY gate fails, the company is
+# rejected outright (NOT_QUALIFIED) and none of the factor scoring in
+# factors.yaml runs at all — a gate is a disqualifier, not a scored input.
+#
+# How to add a new gate: copy one of the blocks below and change:
+#   id             - a short unique name for this gate
+#   description    - plain-language explanation (shown in the audit trail)
+#   field          - which evidence field to check (see the list in
+#                    backend/excel_ingest.py's parse_fin_health_excel, or
+#                    README.md in this folder for the full field list)
+#   operator       - one of: eq, neq, gt, gte, lt, lte, in, not_in
+#   value          - what the field is compared against (always written as
+#                    plain text, even for a number — e.g. "5" not 5)
+#   on_fail.decision - always NOT_QUALIFIED for a gate (a hard reject)
+#   on_fail.reason   - the rejection reason shown to whoever reviews it
+#
+# NOTE: "Fix with AI" (per-file or whole-skill) regenerates this file from
+# scratch and will strip these comments even if it doesn't touch gates —
+# see README.md in this folder. Re-add them by hand if that happens.
+# ---------------------------------------------------------------------------
+rule_group: gates
+description: Hard eligibility checks — failing any one of these rejects the company outright.
+gates:
+- id: company_active
+  description: MCA company status is Active
+  field: company_status
+  operator: eq
+  value: Active
+  on_fail:
+    decision: NOT_QUALIFIED
+    reason: Company is not in Active status per MCA records
+- id: gst_active
+  description: GST registration is Active
+  field: gst_status
+  operator: eq
+  value: Active
+  on_fail:
+    decision: NOT_QUALIFIED
+    reason: GST registration is not Active
