@@ -8,6 +8,59 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Add Sarvam AI for Indic language identification, and pin the reply language
+
+`0e8e67e` — 6 files, +550/−10
+
+A Tamil question came back answered in Telugu. Our own detection is a Unicode
+range -- it separates Devanagari from Tamil and nothing finer, not Hindi from
+Marathi, not Tamil from Malayalam, and nothing at all once ASR partly
+romanises the text. Sarvam is trained on exactly these languages.
+
+capabilities_impl/sarvam.py, not a registered tool: the model never chooses
+it, the pipeline calls it. Same constraints as fx_rates -- allowlisted host,
+cached, 4 second timeout -- with one difference that matters. fx fails
+closed, because a wrong exchange rate is worse than none. This fails soft: no
+key, a timeout, or an unrecognised response all return None and the answer
+goes out exactly as it does today. It runs before every answer, so it is not
+allowed to be load-bearing.
+
+The reply language is now pinned in the prompt, caller first and Sarvam
+second. The voice client already sends `language` and its ASR knows what it
+transcribed better than anything downstream can infer from the output, so
+that wins; Sarvam is the fallback for callers who send nothing. Codes are
+resolved to names first -- "the user is writing in ta-IN" asks the model to
+know a BCP-47 table, "Tamil" does not.
+
+`language` therefore joins _TEXT_ROUTING_KEYS. It was inert context before
+and left in the rendered evidence deliberately; now that it is a directive of
+its own, leaving it in both places says the same thing twice, in two voices,
+one of which reads as the user's.
+
+Measured on the exact turn that produced the Telugu answer: the reply is
+Tamil either way now (that bug was on qwen; we are on gemma), but with the
+language pinned a garbled transcript gets "I didn't follow, please say that
+again" instead of an invented interpretation -- which is the right move for a
+voice channel where the input is frequently mangled.
+
+`translate` is written and deliberately NOT wired in. The intended use is
+giving docs.search a real English query instead of refusing Indic ones, and
+that overturns DECISIONS #4 -- a translator subtly wrong on financial
+vocabulary would degrade retrieval silently, which is the failure that
+decision exists to avoid. It wants measuring first.
+
+The header name, both endpoint paths and the response field names are written
+from Sarvam's public API and are UNVERIFIED against a live key. All are
+environment-overridable and `python -m capabilities_impl.sarvam` probes all
+four in one call, naming whichever is wrong.
+
+Tests: +8, all of which assert the absent/broken/slow paths degrade rather
+than raise.
+
+## 2026-08-13 · Regenerate changelog
+
+`ec78ca0` — 1 file, +39/−0
+
 ## 2026-08-13 · Record the API surface, and show what is actually being called
 
 `9db73ae` — 9 files, +544/−2
