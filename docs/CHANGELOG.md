@@ -8,6 +8,45 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Record the API surface, and show what is actually being called
+
+`9db73ae` — 9 files, +544/−2
+
+A client team was calling us on a URL shape we do not serve and with field
+names we do not read. Both were invisible: from our side a 404 in a log
+nobody reads, from theirs a request that failed for no stated reason. Two
+things now make that visible.
+
+**docs/API.md**, generated from the app by scripts/dump_api_surface.py. Never
+hand-edited, for the same reason as the changelog -- a hand-maintained
+endpoint list drifts and then reads as authoritative while being wrong.
+
+It reads app.openapi(), not app.routes. They disagree: walking app.routes
+finds 11 endpoints and none of the 24 under /admin, because routes pulled in
+by include_router do not surface the same way. openapi() is the contract
+FastAPI actually publishes, and it reports all 36. Docstring text is cut to
+one sentence and has its pipes escaped, since several contain JSON examples
+with | in them that silently turn a markdown table into gibberish.
+
+**GET /admin/api-surface**, surfaced in the UI under Integrate. Two halves,
+and both are needed: the declared list says what is real, the traffic list
+says what is being asked for, and a row in the second that is not in the
+first is the bug. Traffic is parsed from uvicorn's own access lines, with id
+segments collapsed so one endpoint is one row. Declared paths are templates,
+so matching compiles each to a pattern rather than comparing strings.
+
+Verified by calling a path that does not exist: it shows up flagged, in red,
+with its 404.
+
+run_backend.ps1 now tees to uvicorn_out.log and appends rather than
+truncates. That log is the only record of what a client called, and with it
+going to a console that gets closed, a client on the wrong URL stays
+invisible to everyone.
+
+## 2026-08-13 · Regenerate changelog
+
+`0dc1079` — 1 file, +42/−0
+
 ## 2026-08-13 · Read request flags at whichever level the caller nests them
 
 `90389c6` — 3 files, +239/−11
