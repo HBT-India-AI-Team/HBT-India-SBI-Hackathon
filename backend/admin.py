@@ -1157,6 +1157,10 @@ class ChatPayload(BaseModel):
     # The Playground's colloquial-style toggle. Defaults on, so a client that
     # doesn't know about it gets the shipped behaviour.
     style: bool = True
+    # Spoken-answer mode: short, no markdown. Defaults off — it is the voice
+    # client that turns this on, and the Playground toggle exists so the
+    # result can be checked without wiring one up.
+    voice: bool = False
 
 
 @router.post("/agents/{agent_id}/chat")
@@ -1166,7 +1170,8 @@ def chat_with_agent(agent_id: str, payload: ChatPayload) -> dict:
     a client's own site is POST /agents/{agent_id}/chat in backend/main.py.
     """
     try:
-        result = chat.handle_chat_turn(agent_id, payload.session_id, payload.message, payload.style)
+        result = chat.handle_chat_turn(
+            agent_id, payload.session_id, payload.message, payload.style, payload.voice)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
     return {

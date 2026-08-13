@@ -49,6 +49,38 @@ function DecisionCard({ decision }: { decision: ChatDecision }) {
   )
 }
 
+/** A composer mode toggle.
+ *
+ *  Both modes are sent per message rather than held on the session, so the
+ *  same question can be asked twice in one thread and the answers read side
+ *  by side — which is the only way to judge either of them. */
+function ModePill({ label, on, onToggle, title }: {
+  label: string
+  on: boolean
+  onToggle: () => void
+  title: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      title={title}
+      className={`shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium cursor-pointer transition-colors ${
+        on
+          ? 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
+          : 'border-neutral-200 bg-white text-neutral-400 hover:text-neutral-600'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-brand-500' : 'bg-neutral-300'}`}
+      />
+      {label}
+    </button>
+  )
+}
+
 /** Says whether the vernacular layer actually reached this answer.
  *
  *  It has several ways to produce nothing — switched off, a script with no
@@ -59,22 +91,30 @@ function DecisionCard({ decision }: { decision: ChatDecision }) {
  *  as a bug, and it is the reading a demo audience will reach for first. */
 function StyleBadge({ trace }: { trace: StageTraceEntry[] }) {
   const style = trace.find((t) => t.detail?.style)?.detail?.style
-  if (!style) return null
+  const spoken = trace.some((t) => t.detail?.voice)
+  if (!style && !spoken) return null
 
   const sources = [
-    style.guide ? `${style.language ?? ''} register guide`.trim() : null,
-    style.examples ? `${style.examples} example${style.examples === 1 ? '' : 's'}` : null,
+    style?.guide ? `${style.language ?? ''} register guide`.trim() : null,
+    style?.examples ? `${style.examples} example${style.examples === 1 ? '' : 's'}` : null,
+  ].filter(Boolean)
+
+  const parts = [
+    !style ? null : style.applied
+      ? `colloquial style: ${sources.join(' + ')}`
+      : `plain style — ${style.reason ?? 'not applied'}`,
+    spoken ? 'spoken answer (short, no markdown)' : null,
   ].filter(Boolean)
 
   return (
     <div className="mt-1.5 text-[11px] text-neutral-400 flex items-center gap-1.5">
       <span
         aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full shrink-0 ${style.applied ? 'bg-brand-400' : 'bg-neutral-300'}`}
+        className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+          style?.applied || spoken ? 'bg-brand-400' : 'bg-neutral-300'
+        }`}
       />
-      {style.applied
-        ? `colloquial style: ${sources.join(' + ')}`
-        : `plain style — ${style.reason ?? 'not applied'}`}
+      {parts.join(' · ')}
     </div>
   )
 }
@@ -134,10 +174,11 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [input, setInput] = useState('')
-  // Deliberately survives an agent switch, unlike the thread below it: this is
-  // a viewing preference, and having it silently snap back to on is the more
-  // surprising behaviour.
+  // Deliberately survive an agent switch, unlike the thread below them: these
+  // are viewing preferences, and having one silently snap back is the more
+  // surprising behaviour. Defaults mirror the backend's — style on, voice off.
   const [styleOn, setStyleOn] = useState(true)
+  const [voiceOn, setVoiceOn] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const threadRef = useRef<HTMLDivElement>(null)
@@ -193,7 +234,11 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
     const controller = new AbortController()
     abortRef.current = controller
     try {
-      const res = await api.chatWithAgent(agentId, sessionId, message, styleOn, controller.signal)
+      const res = await api.chatWithAgent(agentId, sessionId, message, {
+        style: styleOn,
+        voice: voiceOn,
+        signal: controller.signal,
+      })
       setSessionId(res.session_id)
       setMessages((prev) => [
         ...prev,
@@ -309,34 +354,31 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
           />
           <div className="mt-1.5 flex items-center gap-2">
             <div className="mr-auto flex items-center gap-2 min-w-0">
-              {/* Sent per message, not stored on the session, so the same
-                  question can be asked twice in one thread and the two
-                  answers read side by side. */}
-              <button
-                type="button"
-                onClick={() => setStyleOn((s) => !s)}
-                aria-pressed={styleOn}
+              <ModePill
+                label="Colloquial"
+                on={styleOn}
+                onToggle={() => setStyleOn((s) => !s)}
                 title={
                   styleOn
                     ? 'Colloquial style is on — Hindi and Tamil answers are written the way people actually speak. Turn it off to compare against the plain answer.'
                     : 'Colloquial style is off — answers use the model’s default register.'
                 }
-                className={`shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium cursor-pointer transition-colors ${
-                  styleOn
-                    ? 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
-                    : 'border-neutral-200 bg-white text-neutral-400 hover:text-neutral-600'
-                }`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`h-1.5 w-1.5 rounded-full ${styleOn ? 'bg-brand-500' : 'bg-neutral-300'}`}
-                />
-                Colloquial
-              </button>
+              />
+              <ModePill
+                label="Voice"
+                on={voiceOn}
+                onToggle={() => setVoiceOn((v) => !v)}
+                title={
+                  voiceOn
+                    ? 'Voice mode is on — answers come back as two to four spoken sentences with no markdown, the way the voice client will receive them.'
+                    : 'Voice mode is off — answers are written for a screen.'
+                }
+              />
               {/* Shift+Enter is invisible otherwise, and the hint doubles as the
-                  thing that keeps the button from reading as an orphan in an
-                  otherwise empty row. */}
-              <span className="hidden lg:block truncate text-[11px] text-neutral-400 select-none">
+                  thing that keeps the buttons from reading as orphans in an
+                  otherwise empty row. Hidden earlier now that two pills share
+                  the space with it. */}
+              <span className="hidden xl:block truncate text-[11px] text-neutral-400 select-none">
                 <span className="font-medium text-neutral-500">Enter</span> to send ·{' '}
                 <span className="font-medium text-neutral-500">Shift+Enter</span> for a new line
               </span>

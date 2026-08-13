@@ -277,6 +277,70 @@ failure impossible rather than merely tested. Worth doing; not done.
 
 ---
 
+## 15. gemma4:12b, chosen for memory and not for quality
+
+**Decided:** the agent runs on `gemma4:12b` (7.6 GB) instead of `qwen3.6:35b`
+(23.9 GB). ~16 GB freed for the voice agent sharing the host.
+
+**Why:** the two models do not co-exist on this box. An assistant that cannot
+be spoken to is a worse product than one that is a few points weaker on text.
+
+**What it costs**, from the original benchmark on this agent's hard cases:
+
+| | quality | broken | wall time (3 questions) |
+|---|---|---|---|
+| qwen3.6:35b | 29/33 | 0 | 136s |
+| gemma4:12b | 23/33 | 1 | 190s |
+
+**Re-measured at the switch**, on tool chaining, rate lookup, FD maturity, and
+Tamil and Hindi script mirroring — all five called tools correctly, including
+the `get_fd_rate` → `fd_maturity` chain, all returned full content under
+`think: false`, and **the recorded Western-digit-grouping failure did not
+reproduce**: `₹2,40,000`, `₹4,19,973`, `₹1,06,398.02`.
+
+One new finding: **Tamil is disproportionately slow** — 97s against 10–21s for
+everything else, and 21s for Devanagari Hindi. Suspected tokenizer cost on
+Tamil script, compounded by the 3,253-character Tamil register guide. That is
+above `timeout_seconds: 90` for a single call and matters most for voice.
+
+**Would overturn it:** the voice agent moving to its own host. Then qwen comes
+back — it is the fallback, not gemma4:31b (timed out on every case) or
+gpt-oss:20b (empty replies).
+
+---
+
+## 16. Voice mode is prompting, not a second model or a post-processor
+
+**Decided:** `voice: true` appends a brief to the answer prompt. No summariser
+runs afterwards.
+
+**Why:** the same argument that killed the style rephraser. Anything that
+shortens an answer *after* the grounded call can drop a caveat or round
+₹1,06,398.02, and it runs after the only step that knows those matter. The
+call that already writes the answer is the one that should write it short.
+
+**The brief goes last, after style, deliberately.** They contradict each other
+— style says "say everything you would have said, the same length", voice says
+"two to four sentences". Position in the prompt is how voice wins, and there is
+a test pinning the order.
+
+**The override is scoped to length and layout, and that scoping is load-bearing.**
+An earlier draft said it overrode "length or formatting"; the model read digit
+grouping as formatting and returned ₹106,398.02 spoken where it had written
+₹1,06,398.02 on screen. An Indian listener hears that as a hundred thousand.
+
+**Measured:** 30–63% of the screen length, 2–3 sentences, markdown clean on 4
+of 4, and the only figures dropped were as-of dates and percentages restated as
+rupee amounts.
+
+**Cost:** brevity is a request, not a guarantee. Nothing enforces the sentence
+count.
+
+**Would overturn it:** a TTS client that needs SSML, which is a format the
+model should not be hand-writing.
+
+---
+
 ## Things deliberately NOT done
 
 **A second model to rephrase answers into colloquial Hindi.** Proposed and

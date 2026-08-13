@@ -76,6 +76,8 @@ export interface StageDetail {
     examples?: number
     reason?: string
   }
+  /** Present and true only when the answer was written to be spoken. */
+  voice?: boolean
 }
 
 export interface StageTraceEntry {

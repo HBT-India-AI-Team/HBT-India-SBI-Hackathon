@@ -167,9 +167,13 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
     structured evidence dict, and remembers the conversation via session_id
     — what a client's embedded chat (see /embed/{agent_id} below) calls.
 
-    Optional "style": false opts out of the vernacular wording layer. Omitting
-    it leaves style on, so a client written before the flag existed keeps the
-    behaviour it already has.
+    Two optional flags, both safe to omit:
+
+      "style": false   opt out of the vernacular wording layer (default on,
+                       so a client written before the flag keeps its
+                       behaviour)
+      "voice":  true   the reply will be spoken aloud — two to four
+                       sentences, plain prose, no markdown (default off)
     """
     if not api_keys.is_valid(agent_id, x_api_key):
         raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key for this agent")
@@ -181,6 +185,7 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
         result = chat.handle_chat_turn(
             agent_id, request.get("session_id"), message,
             _bool_field(request.get("style"), default=True),
+            _bool_field(request.get("voice"), default=False),
         )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")

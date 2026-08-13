@@ -231,7 +231,7 @@ def _governing_output_contract(ctx, bundle) -> dict:
 
 def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
                        tool_calls: list[dict] | None = None,
-                       style: dict | None = None) -> None:
+                       style: dict | None = None, voice: bool = False) -> None:
     """Attaches what this LLM call actually did to the stage's detail, for
     the Playground's AI Observation panel.
 
@@ -256,6 +256,8 @@ def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
         ]
     if style:
         detail["style"] = style
+    if voice:
+        detail["voice"] = True
     # This assignment replaces the slot rather than updating it, so anything a
     # stage wants in its detail has to arrive through this call.
     ctx.pending_stage_detail = {k: v for k, v in detail.items() if v is not None}
@@ -304,7 +306,7 @@ def reason_llm(ctx, bundle, logger) -> None:
 # had typed it. "style" was: the prompt carried a literal "style: True" line,
 # and the tool loop -- which style is not even supposed to reach -- started
 # picking different tools because of it. Reproducibly, 3 runs out of 3.
-_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id", "style"}
+_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id", "style", "voice"}
 
 
 def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
@@ -410,6 +412,61 @@ def _style_section(ctx, logger) -> tuple[str, dict]:
     if examples:
         logger.event(ctx, "style_examples_used", count=len(examples))
     return section, detail
+
+
+_VOICE_BRIEF = (
+    "\n\n## This answer will be spoken aloud, not read\n\n"
+    "It goes to a text-to-speech engine and reaches the user as sound. That "
+    "changes what a good answer looks like, and **these instructions override "
+    "anything above about length and layout.**\n\n"
+    # Scoped deliberately. An earlier draft said "length or formatting", and
+    # the model read digit grouping as formatting: the same FD figure that
+    # came out Rs 1,06,398.02 on screen came out Rs 106,398.02 spoken. An
+    # Indian listener hears that as a hundred thousand, not a lakh.
+    "**Nothing here relaxes how numbers, currency or names are written.** "
+    "Indian digit grouping and lakh/crore still apply exactly as above — "
+    "₹1,06,398.02, never ₹106,398.02 — and scheme names still come from the "
+    "tool. Only the shape of the answer changes.\n\n"
+    # Markdown is the first thing that breaks. Engines either read the
+    # punctuation out ("asterisk asterisk") or strip it and run the sentences
+    # together; neither is recoverable at the client.
+    "**Plain sentences only. No markdown at all.** No `**bold**`, no bullet "
+    "points, no numbered lists, no headings, no tables. If there are several "
+    "options, say them in a sentence — \"there are two good options: SCSS at "
+    "8.2 percent, or a senior citizen FD at 6.75\" — not as a list.\n\n"
+    "**Two to four sentences.** Someone listening cannot skim, scroll back, "
+    "or skip ahead, and a long answer is a long wait. Lead with the answer "
+    "itself, then at most one sentence of why. Stop there.\n\n"
+    # Brevity here comes from cutting whole sections, not from softening
+    # facts. The distinction is the entire safety argument for this mode.
+    "**Get shorter by cutting sections, never by cutting accuracy.** Drop the "
+    "enumerated alternatives, the worked example, the background, the source "
+    "URL. Keep every figure exactly as the tool returned it — do not round it, "
+    "do not approximate it, do not drop the paise if they are not zero. Keep "
+    "any threshold, age limit, eligibility condition or caveat that would "
+    "change what the listener does. If the honest answer needs a warning, the "
+    "warning is not the part you cut.\n\n"
+    "**Say the source, don't spell it.** \"According to SBI\" or \"per RBI's "
+    "rules\" — never a URL, and never an as-of date unless the user asked how "
+    "current it is.\n\n"
+    "**Ask at most one follow-up question, at the very end.** Speech is "
+    "turn-taking; two questions in one breath cannot be answered.\n\n"
+    # The image path emits a raw JSON object as `content`. Spoken, that is
+    # a machine reading punctuation for twenty seconds.
+    "**Never emit an image.** `content_type` is always `text` in this mode, "
+    "whatever the user asked for. A JSON object read aloud is unusable — say "
+    "what the chart would have shown instead.\n"
+)
+
+
+def _voice_enabled(raw_input) -> bool:
+    """On only when a caller says so explicitly.
+
+    Opposite default to style: style shapes every answer unless switched off,
+    while voice restructures one for a channel most callers are not on.
+    Anything but an explicit true leaves the answer as it is.
+    """
+    return isinstance(raw_input, dict) and raw_input.get("voice") is True
 
 
 @register_stage("reason_llm_text")
@@ -926,7 +983,13 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
     # there is noise against a selection step that is already delicate. This
     # call is the one that writes prose the user reads.
     style_text, style_detail = _style_section(ctx, logger)
-    answer_prompt = system_prompt + style_text
+    # Voice goes last on purpose. It contradicts style directly -- style says
+    # "say everything you would have said, the same length", voice says "two
+    # to four sentences" -- and the one that has to win is the one that knows
+    # the answer is going to be spoken. Last word in the prompt is how that
+    # is expressed.
+    voice = _voice_enabled(ctx.raw_input)
+    answer_prompt = system_prompt + style_text + (_VOICE_BRIEF if voice else "")
 
     adapter = _build_adapter(bundle)
     logger.event(ctx, "ollama_call_started", model=bundle.definition.llm.model)
@@ -937,7 +1000,7 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
         )
         ctx.llm_output = parsed
         _record_llm_detail(ctx, meta, prompt_chars=len(answer_prompt) + len(user_prompt),
-                           tool_calls=tool_calls_made, style=style_detail)
+                           tool_calls=tool_calls_made, style=style_detail, voice=voice)
         logger.llm_call(
             ctx, model=meta["model"], duration_ms=meta["duration_ms"],
             prompt_tokens=meta.get("prompt_tokens"), completion_tokens=meta.get("completion_tokens"),

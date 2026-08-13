@@ -149,15 +149,24 @@ would have — which is why `_style_section` also returns a detail dict saying
 which of the several silent nothings actually happened. The Playground renders
 it under each reply.
 
-### Turning style off
+### The two request flags
 
-`style: false` in the chat body. Defaults on; `/invoke`, the embed page and the
-public API send nothing and keep the shipped behaviour.
+Both go in the chat body, both are per turn, neither is stored on the session.
 
-It is listed in `_TEXT_ROUTING_KEYS`, and **anything added to `raw_input` must
-be** — `_build_text_prompt` renders every other key into the user prompt. When
-`style` was missing from that set the model read `style: True` as though the
-user had typed it, and tool selection changed.
+| flag | default | effect |
+|---|---|---|
+| `style` | **on** | vernacular wording layer — omit it and nothing changes for an existing client |
+| `voice` | **off** | answer is written to be spoken: 2–4 sentences, plain prose, no markdown, no image payload |
+
+`voice` appends its brief **after** style, because the two contradict each
+other — style says "the same length", voice says "two to four sentences" — and
+the one that knows the answer is spoken has to win. The brief overrides length
+and layout only: Indian digit grouping and scheme names still apply.
+
+Both are listed in `_TEXT_ROUTING_KEYS`, and **anything added to `raw_input`
+must be** — `_build_text_prompt` renders every other key into the user prompt.
+When `style` was missing from that set the model read `style: True` as though
+the user had typed it, and tool selection changed.
 
 ---
 
@@ -207,6 +216,8 @@ backend binds localhost only, so the ngrok tunnel reaches it *through* Vite.
 | **Hindi answer with no citations** | `docs.search` refused the Devanagari query and the model didn't retry in English |
 | **Reply is empty** | `think` got switched on for `generate_structured` |
 | **No tool calls at all** | `think` got switched off for `run_tool_loop` |
+| **Voice answer has `**` or bullets in it** | `voice` didn't reach the prompt — check the flag arrived as a real boolean |
+| **A rupee figure reads as ₹106,398** | the voice brief's override leaked past layout onto number formatting |
 | **Style changed nothing** | read the badge under the reply — it says which: toggled off, script with no corpus, or below 0.60. All are silent in the answer itself |
 | **A flag changed the model's behaviour in a way it shouldn't** | it's in `raw_input` but not `_TEXT_ROUTING_KEYS`, so the model is being shown it |
 | **Style dropped a fact** | known: the corpus is speech. Measured at 2/12 |

@@ -64,17 +64,29 @@ governance:
   max_llm_retries: 1
 
 llm:
-  # Benchmarked against gemma4:12b, gemma4:31b and gpt-oss:20b on this agent's
-  # own hard cases — tool chaining, Indian digit grouping, script mirroring,
-  # and citing a rule without drifting to the wrong product. qwen won on all
-  # three axes at once: quality (29/33 vs 23/33), reliability (0 broken cases
-  # vs 1), and wall time (136s vs 190s for the same three questions).
-  # The incumbent's specific failures: Western digit grouping (₹212,796.03
-  # where an Indian reader expects ₹2,12,796.03) and run-to-run variance --
-  # it passed all three cases on one run and broke one on the next, same
-  # temperature, same seed. gemma4:31b timed out on every case; gpt-oss:20b
-  # returned an empty reply and wrote rupees with spaces for separators.
-  model: qwen3.6:35b
+  # Chosen for memory, not for quality, and that trade is deliberate.
+  #
+  # qwen3.6:35b is 23.9 GB resident; gemma4:12b is 7.6 GB. The ~16 GB freed
+  # goes to the voice agent sharing this host. Without it the two models do
+  # not co-exist, and an assistant that cannot be spoken to is a worse product
+  # than one that occasionally formats a rupee figure the wrong way.
+  #
+  # What this costs, benchmarked on this agent's own hard cases (tool
+  # chaining, Indian digit grouping, script mirroring, citing a rule without
+  # drifting to the wrong product):
+  #
+  #                    quality   broken   wall time (3 questions)
+  #   qwen3.6:35b      29/33        0     136s
+  #   gemma4:12b       23/33        1     190s
+  #
+  # gemma's specific failures were Western digit grouping (₹212,796.03 where
+  # an Indian reader expects ₹2,12,796.03) and run-to-run variance -- it
+  # passed all three cases on one run and broke one on the next, at the same
+  # temperature and seed. Both were re-checked at the time of this switch; see
+  # docs/DECISIONS.md. gemma4:31b timed out on every case and gpt-oss:20b
+  # returned an empty reply, so neither is the fallback if this regresses --
+  # qwen is.
+  model: gemma4:12b
   # qwen3.6 is a reasoning model, and behind this skill's ~18,000-character
   # instructions it reasons instead of answering: measured on "which SBI
   # savings account should I open", 3,457 characters of `thinking` followed by
