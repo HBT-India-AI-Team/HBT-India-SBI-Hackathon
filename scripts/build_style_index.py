@@ -113,6 +113,21 @@ _PRESENTER = re.compile(
 
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 
+# Screen narration. A large slice of Hindi finance YouTube is someone walking
+# through an app -- "tap here, enter the OTP, upload a selfie" -- which is
+# fluent, colloquial, on-topic-adjacent, and the wrong thing entirely: it
+# teaches an assistant that cannot see a screen to narrate one. Measured at
+# 22% of the first index built from this corpus.
+#
+# Two markers required, not one. A single "क्लिक कर" inside a real
+# explanation of how to open an account online is legitimate; a passage built
+# out of them is a tutorial.
+_UI_MARKER = re.compile(
+    r"स्लाइडर|कैप्चा|ओटीपी|\bOTP\b|टैप कर|क्लिक कर|स्क्रीन|इंटरफेस"
+    r"|ऑप्शन पे|बटन|सेल्फी|अपलोड|लॉग ?इन|डैशबोर्ड|पेज पे|यहां पे लिखा"
+    r"|दिख रहा है|नीचे स्क्रॉल|मेनू में",
+)
+
 
 def looks_like_advice(text: str) -> tuple[bool, str]:
     """Keep passages that explain; drop questions, claims and noise.
@@ -133,6 +148,8 @@ def looks_like_advice(text: str) -> tuple[bool, str]:
         return False, "solicitation"
     if _PRESENTER.search(stripped):
         return False, "presenter boilerplate"
+    if len(_UI_MARKER.findall(stripped)) >= 2:
+        return False, "app screen narration"
     if _CLAIM.search(stripped):
         return False, "carries a figure"
 
@@ -246,12 +263,61 @@ def load_corpus(corpus_dir: Path, stems: list[str]) -> list[dict]:
     return rows
 
 
+def merge_adjacent(rows: list[dict], max_chars: int = MAX_CHARS) -> list[dict]:
+    """Rejoin consecutive chunks from the same video into one passage.
+
+    Transcripts are chunked at 2-3 sentences, so an exemplar is a fragment
+    from the middle of an explanation with no beginning and no end. Shown
+    three of those, the model matches the fragment shape and answers in
+    flowing pieces -- which is where the measured 10% shortening and the
+    dropped trailing sections come from.
+
+    Merging runs after the per-chunk filter rather than before it, so a
+    figure or a promo line still removes only its own chunk instead of
+    poisoning its neighbours.
+    """
+    by_video: dict[str, list[dict]] = {}
+    for row in rows:
+        by_video.setdefault(row.get("video_id") or "?", []).append(row)
+
+    merged: list[dict] = []
+    for video, chunks in by_video.items():
+        chunks.sort(key=lambda r: r.get("chunk_index") or 0)
+        buffer: list[dict] = []
+
+        def flush() -> None:
+            if not buffer:
+                return
+            head = buffer[0]
+            merged.append({**head, "text": " ".join(c["text"] for c in buffer)})
+            buffer.clear()
+
+        for chunk in chunks:
+            index = chunk.get("chunk_index")
+            contiguous = (
+                buffer
+                and isinstance(index, int)
+                and isinstance(buffer[-1].get("chunk_index"), int)
+                and index == buffer[-1]["chunk_index"] + 1
+            )
+            room = sum(len(c["text"]) + 1 for c in buffer) + len(chunk["text"]) <= max_chars
+            if contiguous and room:
+                buffer.append(chunk)
+            else:
+                flush()
+                buffer.append(chunk)
+        flush()
+    return merged
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", required=True,
                         help="directory holding <lang>.jsonl style passages")
     parser.add_argument("--lang", action="append", dest="languages", default=None,
                         help="language code; repeatable (default: hi)")
+    parser.add_argument("--merge-adjacent", action="store_true",
+                        help="rejoin consecutive chunks from one video into fuller passages")
     args = parser.parse_args()
 
     languages = args.languages or ["hi"]
@@ -263,6 +329,12 @@ def main() -> int:
 
     print(f"Reading {corpus_dir} for {', '.join(languages)}")
     rows = load_corpus(corpus_dir, languages)
+    if args.merge_adjacent and rows:
+        before = len(rows)
+        rows = merge_adjacent(rows)
+        lengths = sorted(len(r["text"]) for r in rows)
+        print(f"  merged {before} chunks -> {len(rows)} passages "
+              f"(median {lengths[len(lengths) // 2]} chars)")
     if not rows:
         print("Nothing survived filtering -- index NOT written.", file=sys.stderr)
         print("If the corpus is YouTube comments this is expected: they are the "
