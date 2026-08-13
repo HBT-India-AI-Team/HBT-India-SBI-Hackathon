@@ -212,6 +212,20 @@ Two things this does **not** license. Don't drop into Latin script mid-word —
 soften a caveat: "ये रेट हर 3 महीने में बदल सकता है" is casual and complete,
 which is the target.
 
+### Tamil has the same problem, and its guidance arrives separately
+
+Tamil is more diglossic than Hindi, not less: written Tamil and spoken Tamil
+differ enough that formal written Tamil is hard going even for a fluent
+speaker, and bank Tamil defaults to the formal end.
+
+The equivalent of the table above is **not here**. It lives in
+`capabilities_impl/fixtures/register/ta.md` and is injected into the answer
+prompt only when the user actually writes in Tamil, because it is long and
+every English question would otherwise pay for it. If you are wondering why
+Hindi has a table in this file and Tamil does not, that is why — and the
+reason Hindi's stays here is that it is backed by counts over 1,518 scraped
+passages, while Tamil's is hand-written judgement until its corpus lands.
+
 ### Scheme names come from the tool, like every other fact
 
 `india.get_scheme_details` returns a `names` block with `en` and `hi` for every

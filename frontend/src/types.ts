@@ -66,6 +66,16 @@ export interface StageDetail {
   thinking?: string
   llm_error?: string
   tool_calls?: { name: string; arguments: Record<string, unknown>; result: unknown }[]
+  /** Whether the vernacular wording layer reached this answer, and if not why.
+   *  Reported because every way it can produce nothing looks the same from
+   *  outside — off, wrong script, or nothing above the retrieval floor. */
+  style?: {
+    applied: boolean
+    language?: string | null
+    guide?: boolean
+    examples?: number
+    reason?: string
+  }
 }
 
 export interface StageTraceEntry {

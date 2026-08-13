@@ -49,6 +49,36 @@ function DecisionCard({ decision }: { decision: ChatDecision }) {
   )
 }
 
+/** Says whether the vernacular layer actually reached this answer.
+ *
+ *  It has several ways to produce nothing — switched off, a script with no
+ *  corpus, or a question no passage scored close enough to — and from the
+ *  outside they are indistinguishable from each other and from a broken
+ *  feature. Toggling the switch and seeing the reply not change is the
+ *  expected outcome for most English questions; without this line that reads
+ *  as a bug, and it is the reading a demo audience will reach for first. */
+function StyleBadge({ trace }: { trace: StageTraceEntry[] }) {
+  const style = trace.find((t) => t.detail?.style)?.detail?.style
+  if (!style) return null
+
+  const sources = [
+    style.guide ? `${style.language ?? ''} register guide`.trim() : null,
+    style.examples ? `${style.examples} example${style.examples === 1 ? '' : 's'}` : null,
+  ].filter(Boolean)
+
+  return (
+    <div className="mt-1.5 text-[11px] text-neutral-400 flex items-center gap-1.5">
+      <span
+        aria-hidden="true"
+        className={`h-1.5 w-1.5 rounded-full shrink-0 ${style.applied ? 'bg-brand-400' : 'bg-neutral-300'}`}
+      />
+      {style.applied
+        ? `colloquial style: ${sources.join(' + ')}`
+        : `plain style — ${style.reason ?? 'not applied'}`}
+    </div>
+  )
+}
+
 function ThinkingTrace({ trace }: { trace: StageTraceEntry[] }) {
   const [open, setOpen] = useState(false)
   const totalMs = trace.reduce((sum, t) => sum + t.duration_ms, 0)
@@ -104,6 +134,10 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [input, setInput] = useState('')
+  // Deliberately survives an agent switch, unlike the thread below it: this is
+  // a viewing preference, and having it silently snap back to on is the more
+  // surprising behaviour.
+  const [styleOn, setStyleOn] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const threadRef = useRef<HTMLDivElement>(null)
@@ -159,7 +193,7 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
     const controller = new AbortController()
     abortRef.current = controller
     try {
-      const res = await api.chatWithAgent(agentId, sessionId, message, controller.signal)
+      const res = await api.chatWithAgent(agentId, sessionId, message, styleOn, controller.signal)
       setSessionId(res.session_id)
       setMessages((prev) => [
         ...prev,
@@ -223,7 +257,12 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
               <span className="whitespace-pre-wrap">{m.content}</span>
             )}
             {m.decision && <DecisionCard decision={m.decision} />}
-            {m.stageTrace && m.stageTrace.length > 0 && <ThinkingTrace trace={m.stageTrace} />}
+            {m.stageTrace && m.stageTrace.length > 0 && (
+              <>
+                <StyleBadge trace={m.stageTrace} />
+                <ThinkingTrace trace={m.stageTrace} />
+              </>
+            )}
           </div>
         ))}
         {sending && (
@@ -268,14 +307,40 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
             disabled={sending}
             className="block w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-neutral-400 disabled:opacity-60"
           />
-          <div className="mt-1.5 flex items-center justify-end gap-2">
-            {/* Shift+Enter is invisible otherwise, and the hint doubles as the
-                thing that keeps the button from reading as an orphan in an
-                otherwise empty row. */}
-            <span className="hidden sm:block mr-auto text-[11px] text-neutral-400 select-none">
-              <span className="font-medium text-neutral-500">Enter</span> to send ·{' '}
-              <span className="font-medium text-neutral-500">Shift+Enter</span> for a new line
-            </span>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="mr-auto flex items-center gap-2 min-w-0">
+              {/* Sent per message, not stored on the session, so the same
+                  question can be asked twice in one thread and the two
+                  answers read side by side. */}
+              <button
+                type="button"
+                onClick={() => setStyleOn((s) => !s)}
+                aria-pressed={styleOn}
+                title={
+                  styleOn
+                    ? 'Colloquial style is on — Hindi and Tamil answers are written the way people actually speak. Turn it off to compare against the plain answer.'
+                    : 'Colloquial style is off — answers use the model’s default register.'
+                }
+                className={`shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium cursor-pointer transition-colors ${
+                  styleOn
+                    ? 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
+                    : 'border-neutral-200 bg-white text-neutral-400 hover:text-neutral-600'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-1.5 w-1.5 rounded-full ${styleOn ? 'bg-brand-500' : 'bg-neutral-300'}`}
+                />
+                Colloquial
+              </button>
+              {/* Shift+Enter is invisible otherwise, and the hint doubles as the
+                  thing that keeps the button from reading as an orphan in an
+                  otherwise empty row. */}
+              <span className="hidden lg:block truncate text-[11px] text-neutral-400 select-none">
+                <span className="font-medium text-neutral-500">Enter</span> to send ·{' '}
+                <span className="font-medium text-neutral-500">Shift+Enter</span> for a new line
+              </span>
+            </div>
             {/* Icon button rather than a "Send" label: the composer grows to
                 six lines, and a full-width pill reads as a second panel
                 instead of an action. */}

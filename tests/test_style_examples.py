@@ -53,12 +53,14 @@ def test_unreachable_embedding_host_returns_no_examples(monkeypatch, tmp_path):
     assert style_examples.for_query("मेरी बेटी 5 साल की है") == []
 
 
-def test_only_devanagari_queries_retrieve():
-    """The corpus is Devanagari. Matching romanized Hinglish against it
-    retrieves on transliteration noise rather than register, so it is routed
-    out rather than answered badly."""
+def test_language_is_routed_by_script():
+    """Only Indic script routes. Matching romanized text against an
+    Indic-script corpus retrieves on transliteration noise rather than
+    register, so it is routed out rather than answered badly."""
     assert style_examples.language_of("मेरी बेटी 5 साल की है") == "hi"
+    assert style_examples.language_of("சேமிப்பு கணக்குக்கு வட்டி எவ்வளவு?") == "ta"
     assert style_examples.language_of("bhai FD ka rate kya hai") is None
+    assert style_examples.language_of("vatti evvalavu kidaikkum") is None
     assert style_examples.language_of("what is the FD rate") is None
     assert style_examples.language_of("") is None
 
@@ -124,7 +126,7 @@ def test_style_never_reaches_the_tool_selection_prompt(monkeypatch):
     monkeypatch.setattr(style_examples, "for_query", lambda *_a, **_k: ["शैली का उदाहरण"])
 
     ctx = _Ctx({"message": "मेरी बेटी 5 साल की है"})
-    section = pipeline_stages._style_section(ctx, _Logger())
+    section, _detail = pipeline_stages._style_section(ctx, _Logger())
 
     assert "शैली का उदाहरण" in section, "style section should carry the passage"
 
@@ -144,13 +146,17 @@ def test_style_failure_is_logged_and_swallowed(monkeypatch):
 
     monkeypatch.setattr(style_examples, "for_query", boom)
     logger = _Logger()
-    assert pipeline_stages._style_section(_Ctx({"message": "नमस्ते जी कैसे हैं"}), logger) == ""
+    section, detail = pipeline_stages._style_section(_Ctx({"message": "नमस्ते जी कैसे हैं"}), logger)
+    assert section == ""
+    assert detail["applied"] is False
     assert any(name == "warning" for name, _ in logger.events)
 
 
 @pytest.mark.parametrize("message", [None, "", "   ", 42])
 def test_no_usable_message_means_no_style(message):
-    assert pipeline_stages._style_section(_Ctx({"message": message}), _Logger()) == ""
+    section, detail = pipeline_stages._style_section(_Ctx({"message": message}), _Logger())
+    assert section == ""
+    assert detail["applied"] is False
 
 
 def test_the_message_is_found_in_both_caller_shapes(monkeypatch):
@@ -163,12 +169,96 @@ def test_the_message_is_found_in_both_caller_shapes(monkeypatch):
     monkeypatch.setattr(style_examples, "for_query", lambda *_a, **_k: ["उदाहरण"])
     question = "गोल्ड लोन कैसे लिया जाता है?"
 
-    flat = pipeline_stages._style_section(_Ctx({"message": question}), _Logger())
-    wrapped = pipeline_stages._style_section(
+    flat, _ = pipeline_stages._style_section(_Ctx({"message": question}), _Logger())
+    wrapped, _ = pipeline_stages._style_section(
         _Ctx({"evidence": {"message": question, "conversation": "..."}}), _Logger())
 
     assert "उदाहरण" in flat
     assert "उदाहरण" in wrapped, "the chat route's shape must resolve too"
+
+
+def test_the_toggle_only_turns_style_off_when_asked(monkeypatch):
+    """Default-on, and off only on an explicit false.
+
+    The Playground sends this so a reviewer can compare a styled and an
+    unstyled answer in one session. Every other caller — /invoke, the embed
+    page, the public API — sends nothing, and nothing has to keep meaning on:
+    a new flag must not quietly change what a shipped integration gets.
+    """
+    monkeypatch.setattr(style_examples, "for_query", lambda *_a, **_k: ["उदाहरण"])
+    question = "गोल्ड लोन कैसे लिया जाता है?"
+
+    on, _ = pipeline_stages._style_section(_Ctx({"evidence": {"message": question}, "style": True}), _Logger())
+    absent, _ = pipeline_stages._style_section(_Ctx({"evidence": {"message": question}}), _Logger())
+    off, detail = pipeline_stages._style_section(
+        _Ctx({"evidence": {"message": question}, "style": False}), _Logger())
+
+    assert "उदाहरण" in on
+    assert absent == on, "an absent flag must behave exactly like style: true"
+    assert off == ""
+    assert detail["applied"] is False
+
+
+def test_the_toggle_is_never_shown_to_the_model():
+    """A runtime flag in raw_input is rendered into the user prompt unless it
+    is declared as routing, and this one was.
+
+    The prompt carried a literal "style: True" line, the tool loop read it,
+    and tool selection changed -- on a question where turning style *off*
+    pulled in an extra tool and a figure the styled answer then "lost". Three
+    runs each way, perfectly reproducible, and entirely an artefact of the
+    flag being visible. Style is not allowed to reach tool selection at all,
+    so this is the check that it cannot.
+    """
+    skill = type("_Skill", (), {"instructions_text": "be helpful", "shared_text": ""})()
+    raw_input = {"evidence": {"message": "गोल्ड लोन कैसे लिया जाता है?"}, "style": False}
+
+    _system, user_prompt = pipeline_stages._build_text_prompt(skill, raw_input)
+
+    assert "style" not in user_prompt.lower()
+    assert "गोल्ड लोन" in user_prompt, "the actual message must still get through"
+
+
+def test_a_written_guide_carries_a_language_with_no_corpus(monkeypatch, tmp_path):
+    """Tamil has no corpus yet, and the Hindi one that exists still only
+    cleared the floor on five of twelve real questions. The guide is the half
+    that fires regardless, so a language is never left with nothing.
+    """
+    (tmp_path / "ta.md").write_text("Write the Tamil people speak.", encoding="utf-8")
+    monkeypatch.setattr(style_examples, "_REGISTER_DIR", tmp_path)
+    monkeypatch.setattr(style_examples, "_guides", {})
+    monkeypatch.setattr(style_examples, "for_query", lambda *_a, **_k: [])
+
+    section, detail = pipeline_stages._style_section(
+        _Ctx({"evidence": {"message": "சேமிப்பு கணக்குக்கு வட்டி எவ்வளவு?"}}), _Logger())
+
+    assert "Write the Tamil people speak." in section
+    assert detail == {"applied": True, "language": "ta", "guide": True, "examples": 0}
+    # A guide is an instruction to change register, which is the thing that was
+    # measured dropping facts. It must not arrive without the guard.
+    assert "Change the wording, not the substance" in section
+
+
+def test_a_language_with_no_guide_and_no_passages_adds_nothing(monkeypatch, tmp_path):
+    monkeypatch.setattr(style_examples, "_REGISTER_DIR", tmp_path)
+    monkeypatch.setattr(style_examples, "_guides", {})
+    monkeypatch.setattr(style_examples, "for_query", lambda *_a, **_k: [])
+
+    section, detail = pipeline_stages._style_section(
+        _Ctx({"evidence": {"message": "मेरी बेटी 5 साल की है"}}), _Logger())
+
+    assert section == ""
+    assert detail["applied"] is False
+    assert "0.6" in detail["reason"], "the trace should say it was the floor, not a fault"
+
+
+def test_the_guards_are_not_repeated_when_both_halves_fire():
+    """Both halves want the same guard, and saying it twice in one prompt is
+    how a rule starts reading as filler."""
+    section = style_examples.as_prompt_section(["एक उदाहरण"], "Some written guidance.")
+    assert section.count("Change the wording, not the substance") == 1
+    assert "Some written guidance." in section
+    assert "एक उदाहरण" in section
 
 
 def test_a_nested_message_is_not_invented_from_nothing():

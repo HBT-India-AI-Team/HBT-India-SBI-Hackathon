@@ -65,6 +65,10 @@ _index: dict | None = None
 _index_lock = threading.Lock()
 _LOADED_SENTINEL: dict = {"passages": []}
 
+_REGISTER_DIR = Path(__file__).resolve().parent / "fixtures" / "register"
+_guides: dict[str, str] = {}
+_guides_lock = threading.Lock()
+
 
 def _load_index() -> dict | None:
     global _index
@@ -105,22 +109,62 @@ def _embed(text: str) -> list[float] | None:
     return [v / norm for v in vector]
 
 
-_DEVANAGARI = re.compile(r"[ऀ-ॿ]")
+# Whole Unicode blocks. Tamil is written as an escape because its block opens
+# at U+0B80, which is unassigned and renders as nothing -- spelled literally
+# the range looks like a typo and invites being "fixed".
+_SCRIPTS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("hi", re.compile("[ऀ-ॿ]")),   # Devanagari
+    ("ta", re.compile("[஀-௿]")),   # Tamil
+)
 
 
 def language_of(text: str) -> str | None:
     """Script-based, not a language detector.
 
-    The index is keyed by language code, but this only has to answer "is this
-    Devanagari" to route Hindi. Romanized Hinglish deliberately returns None:
-    the corpus is Devanagari, and matching romanized text against it retrieves
-    on transliteration noise rather than register.
+    It only has to answer "which Indic block is this written in", because
+    that is what routes a query to a corpus and to a register guide.
+    Romanized text deliberately returns None: the corpora are Indic-script,
+    and matching romanized text against them retrieves on transliteration
+    noise rather than on register.
+
+    Adding a language means adding its block here *and* a guide under
+    fixtures/register/. Forgetting the block is silent — the query simply
+    never reaches its own corpus, which is the exact shape of the
+    hi_transcript key mismatch.
     """
     letters = [c for c in text if c.isalpha()]
     if not letters:
         return None
-    devanagari = sum(1 for c in letters if _DEVANAGARI.match(c))
-    return "hi" if devanagari / len(letters) > 0.3 else None
+    for code, block in _SCRIPTS:
+        if sum(1 for c in letters if block.match(c)) / len(letters) > 0.3:
+            return code
+    return None
+
+
+def register_guide(language: str | None) -> str:
+    """A hand-written note on how a language is really spoken, or "".
+
+    The retrieval half of this module needs a corpus, and a corpus is a
+    strong but slow instrument: Tamil has none yet, and the Hindi one that
+    does exist still only cleared the floor on five of twelve real questions
+    because it was collected by channel rather than by topic. This is the
+    half that fires regardless — short, written by hand, and held to exactly
+    the same rule as the passages: it may change wording and may not
+    introduce a fact.
+
+    Guides are cached for the life of the process, like the index, so editing
+    one needs a backend restart. Deleting a file turns its language off.
+    """
+    if not language:
+        return ""
+    with _guides_lock:
+        if language not in _guides:
+            path = _REGISTER_DIR / f"{language}.md"
+            try:
+                _guides[language] = path.read_text(encoding="utf-8").strip()
+            except OSError:
+                _guides[language] = ""
+        return _guides[language]
 
 
 def for_query(query: str, k: int = DEFAULT_K, language: str | None = None) -> list[str]:
@@ -156,7 +200,80 @@ def for_query(query: str, k: int = DEFAULT_K, language: str | None = None) -> li
     return [text for _, text in scored[:k]]
 
 
-def as_prompt_section(examples: list[str]) -> str:
+# Applies to any instruction to change register, retrieved or hand-written,
+# which is why it lives outside both blocks below rather than inside the
+# passage framing where it started.
+_SUBSTANCE_GUARDS = (
+    # Measured: with examples attached, answers ran 13% shorter and shed
+    # real facts -- a Rs 2,00,000 RuPay accident cover and its eligibility
+    # date vanished from one answer entirely. A speaker covers one point
+    # per breath, and matching that shape drops the rest.
+    "**Change the wording, not the substance.** Spoken language is short "
+    "because speech is short, not because the answer should be. Say "
+    "everything you would have said — every figure, every condition, "
+    "every caveat, the same structure and the same length — in their "
+    "words rather than yours. Dropping a fact to sound more natural is a "
+    "worse answer, not a better one.\n\n"
+    # The measured failure was never a wrong number -- it was a whole
+    # closing section going missing. An answer that ended by telling
+    # someone to build a 3-6 month emergency fund lost that paragraph
+    # entirely once it started sounding conversational, and the advice
+    # was the most useful thing in it.
+    "**Never drop or alter a named rule, a threshold, or a "
+    "recommendation.** Things like the 50-30-20 rule, a minimum balance, "
+    "an age or income limit, an eligibility cut-off, or advice to build "
+    "an emergency fund must survive intact — including any closing "
+    "suggestion. Rephrase them in everyday words; do not summarise them "
+    "away, and do not adjust the numbers in them. \"At least 3 months of "
+    "expenses\" does not become \"at least 6\", and a rupee figure "
+    "attached to a recommendation stays attached to it. If an answer "
+    "would be shorter, it is because a sentence got simpler, never "
+    "because a point got cut.\n\n"
+    # The register these passages come from ends on a punchy line, and
+    # the model reproduces the habit even though no passage contains the
+    # sentiment: one answer closed with "put your money in the right
+    # place or you'll end up a servant of the bank". FinGuru is a bank's
+    # assistant. That voice is not available to it.
+    "**Do not editorialise about banks, and do not add a sign-off.** "
+    "Creators end on a rhetorical flourish — a warning, a jab at banks, "
+    "a call to action. Do not copy that habit. No line about being "
+    "cheated, trapped, looted or made a servant of anyone, and no closing "
+    "one-liner that was not answering the question. Warmth is welcome; "
+    "showmanship is not. Stop when the answer is finished.\n\n"
+)
+
+
+def as_prompt_section(examples: list[str], guide: str = "") -> str:
+    """Assemble whichever halves of the style layer are available.
+
+    Two independent inputs, either of which can be empty. The guide is a
+    written register note and fires whenever the script is recognised; the
+    passages are retrieved and fire only above the floor. With neither, this
+    returns "" and the prompt goes out unchanged.
+
+    They are kept as separate sections rather than merged because they carry
+    different authority. The guide is checked-in text someone wrote on
+    purpose. The passages are scraped, unverified, and need the framing
+    below to stop the model mining them for facts.
+    """
+    if not examples and not guide:
+        return ""
+
+    parts: list[str] = []
+    if guide:
+        parts.append(
+            "\n\n## How this language is actually spoken about money\n\n"
+            f"{guide}\n\n"
+        )
+        # When passages follow, their block carries these already.
+        if not examples:
+            parts.append(_SUBSTANCE_GUARDS)
+    if examples:
+        parts.append(_examples_block(examples))
+    return "".join(parts)
+
+
+def _examples_block(examples: list[str]) -> str:
     """Wrap passages so the model treats them as tone, not as content.
 
     The framing carries real weight. Unlabelled, retrieved text reads as
@@ -164,8 +281,6 @@ def as_prompt_section(examples: list[str]) -> str:
     to tool output and invite exactly the confusion the grounding rule
     exists to prevent.
     """
-    if not examples:
-        return ""
     quoted = "\n\n".join(f"    {text}" for text in examples)
     return (
         "\n\n## How a real advisor explains this in the user's language\n\n"
@@ -179,42 +294,7 @@ def as_prompt_section(examples: list[str]) -> str:
         "They are transcripts of talking, so they carry filler, repetition "
         "and speech-to-text errors. Do not copy those. Take the register, "
         "write it cleanly.\n\n"
-        # Measured: with examples attached, answers ran 13% shorter and shed
-        # real facts -- a Rs 2,00,000 RuPay accident cover and its eligibility
-        # date vanished from one answer entirely. A speaker covers one point
-        # per breath, and matching that shape drops the rest.
-        "**Change the wording, not the substance.** These passages are short "
-        "because speech is short, not because the answer should be. Say "
-        "everything you would have said — every figure, every condition, "
-        "every caveat, the same structure and the same length — in their "
-        "words rather than yours. Dropping a fact to sound more natural is a "
-        "worse answer, not a better one.\n\n"
-        # The measured failure was never a wrong number -- it was a whole
-        # closing section going missing. An answer that ended by telling
-        # someone to build a 3-6 month emergency fund lost that paragraph
-        # entirely once it started sounding conversational, and the advice
-        # was the most useful thing in it.
-        "**Never drop or alter a named rule, a threshold, or a "
-        "recommendation.** Things like the 50-30-20 rule, a minimum balance, "
-        "an age or income limit, an eligibility cut-off, or advice to build "
-        "an emergency fund must survive intact — including any closing "
-        "suggestion. Rephrase them in everyday words; do not summarise them "
-        "away, and do not adjust the numbers in them. \"At least 3 months of "
-        "expenses\" does not become \"at least 6\", and a rupee figure "
-        "attached to a recommendation stays attached to it. If an answer "
-        "would be shorter, it is because a sentence got simpler, never "
-        "because a point got cut.\n\n"
-        # The register these passages come from ends on a punchy line, and
-        # the model reproduces the habit even though no passage contains the
-        # sentiment: one answer closed with "put your money in the right
-        # place or you'll end up a servant of the bank". FinGuru is a bank's
-        # assistant. That voice is not available to it.
-        "**Do not editorialise about banks, and do not add a sign-off.** "
-        "Creators end on a rhetorical flourish — a warning, a jab at banks, "
-        "a call to action. Do not copy that habit. No line about being "
-        "cheated, trapped, looted or made a servant of anyone, and no closing "
-        "one-liner that was not answering the question. Warmth is welcome; "
-        "showmanship is not. Stop when the answer is finished.\n\n"
+        + _SUBSTANCE_GUARDS +
         "They are tone, not content. They are not sources, they are not "
         "current, and nothing in them is verified. Do not quote them, cite "
         "them, or take a single fact, figure or claim from them. Every number "

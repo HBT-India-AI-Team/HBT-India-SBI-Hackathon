@@ -155,11 +155,20 @@ export const api = {
 
   /** `signal` backs the composer's stop button. Note this aborts the client's
    *  wait, not the run: the backend has no cancellation hook, so the model
-   *  call finishes server-side regardless. */
-  chatWithAgent: (agentId: string, sessionId: string | null, message: string, signal?: AbortSignal) =>
+   *  call finishes server-side regardless.
+   *
+   *  `style` is sent per turn rather than held on the session, so the same
+   *  question can be asked twice in one conversation and the answers compared. */
+  chatWithAgent: (
+    agentId: string,
+    sessionId: string | null,
+    message: string,
+    style = true,
+    signal?: AbortSignal,
+  ) =>
     apiFetch<ChatTurnResult>(`/admin/agents/${agentId}/chat`, {
       method: 'POST',
-      body: JSON.stringify({ session_id: sessionId, message }),
+      body: JSON.stringify({ session_id: sessionId, message, style }),
       signal,
     }),
 

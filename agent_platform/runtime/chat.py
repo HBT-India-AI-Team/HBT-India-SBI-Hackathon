@@ -166,7 +166,8 @@ def _has_content_type_contract(skills) -> bool:
     )
 
 
-def _content_reply(agent_id: str, session: dict) -> tuple[str, str, list[dict[str, Any]], dict | None]:
+def _content_reply(agent_id: str, session: dict,
+                   style: bool = True) -> tuple[str, str, list[dict[str, Any]], dict | None]:
     """Runs this agent's own real pipeline for one turn (not a bespoke LLM
     call) — the "rich content" chat path: content_type-aware output plus a
     genuine stage-by-stage trace (RunContext.stage_results, populated by
@@ -183,7 +184,10 @@ def _content_reply(agent_id: str, session: dict) -> tuple[str, str, list[dict[st
         # figures from a ₹3,18,500 one. Restoring this means restoring a real
         # authenticated identity from the session, never a default.
     }
-    ctx = invoke_agent(agent_id, {"evidence": evidence})
+    # Style rides alongside evidence rather than inside it. Evidence is domain
+    # data: it persists on the session, gets merged turn to turn and is shown
+    # back to the user, none of which is true of a rendering preference.
+    ctx = invoke_agent(agent_id, {"evidence": evidence, "style": style})
     stage_trace = [
         {
             "stage": r.stage, "status": r.status, "summary": r.summary,
@@ -219,7 +223,13 @@ def _guidance_reply(adapter: OllamaAdapter, skills, messages: list[dict]) -> str
     return reply or "Could you tell me more?"
 
 
-def handle_chat_turn(agent_id: str, session_id: str | None, message: str) -> ChatTurnResult:
+def handle_chat_turn(agent_id: str, session_id: str | None, message: str,
+                     style: bool = True) -> ChatTurnResult:
+    """`style` is per turn, not per session: the Playground's toggle exists so
+    the same question can be asked twice in one conversation and the two
+    answers compared. Defaulting to True keeps every existing caller —
+    /invoke, the embed page, the public API — on the behaviour they have.
+    """
     bundle = load_agent(agent_id)
     if session_id is None:
         session_id = chat_store.new_session_id()
@@ -234,7 +244,7 @@ def handle_chat_turn(agent_id: str, session_id: str | None, message: str) -> Cha
 
     if not fields:
         if _has_content_type_contract(all_skills):
-            content_type, content, stage_trace, decision = _content_reply(agent_id, session)
+            content_type, content, stage_trace, decision = _content_reply(agent_id, session, style)
             session["messages"].append({"role": "assistant", "content": content})
             chat_store.save_session(session)
             return ChatTurnResult(

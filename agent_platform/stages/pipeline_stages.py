@@ -230,7 +230,8 @@ def _governing_output_contract(ctx, bundle) -> dict:
 
 
 def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
-                       tool_calls: list[dict] | None = None) -> None:
+                       tool_calls: list[dict] | None = None,
+                       style: dict | None = None) -> None:
     """Attaches what this LLM call actually did to the stage's detail, for
     the Playground's AI Observation panel.
 
@@ -253,6 +254,10 @@ def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
         detail["tool_calls"] = [
             {"name": c["name"], "arguments": c["arguments"], "result": c["result"]} for c in tool_calls
         ]
+    if style:
+        detail["style"] = style
+    # This assignment replaces the slot rather than updating it, so anything a
+    # stage wants in its detail has to arrive through this call.
     ctx.pending_stage_detail = {k: v for k, v in detail.items() if v is not None}
 
 
@@ -293,7 +298,13 @@ def reason_llm(ctx, bundle, logger) -> None:
         ctx.llm_output = None
 
 
-_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id"}
+# Keys that steer the runtime and are not content. _build_text_prompt renders
+# every *other* key straight into the user prompt, so anything added to
+# raw_input and left out of this set is shown to the model as though the user
+# had typed it. "style" was: the prompt carried a literal "style: True" line,
+# and the tool loop -- which style is not even supposed to reach -- started
+# picking different tools because of it. Reproducibly, 3 runs out of 3.
+_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id", "style"}
 
 
 def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
@@ -332,33 +343,73 @@ def _user_message(raw_input) -> str:
     return ""
 
 
-def _style_section(ctx, logger) -> str:
-    """Vernacular passages to match the wording of, or "" to change nothing.
+def _style_enabled(raw_input) -> bool:
+    """Off only when a caller says so in as many words.
+
+    The Playground sends this from a toggle so a reviewer can put a styled
+    and an unstyled answer side by side in one session. /invoke callers send
+    nothing at all, and nothing means on -- a new flag must never quietly
+    change what an existing integration already gets.
+    """
+    return not (isinstance(raw_input, dict) and raw_input.get("style") is False)
+
+
+def _style_section(ctx, logger) -> tuple[str, dict]:
+    """Vernacular wording guidance, plus a record of whether any applied.
+
+    Returns the prompt text and a small dict describing what happened, which
+    the caller hands to _record_llm_detail. That reporting is not decoration:
+    every path in here can legitimately produce nothing -- wrong script, no
+    index, no embedding host, or a query that simply scored below the floor
+    -- and all of them look identical from the outside. Twice now a wiring
+    bug has hidden inside that silence. The trace says which it was.
 
     Imported lazily and inside a try: agent_platform is the generic runtime
     and capabilities_impl is one app built on it, so the runtime must stay
-    importable without it. Every failure here -- no module, no index, no
-    embedding host -- returns "" and the prompt goes out exactly as it would
-    have. Nothing about grounding is allowed to depend on style.
+    importable without it. Nothing about grounding is allowed to depend on
+    style, so every failure returns "" and the prompt goes out unchanged.
     """
+    if not _style_enabled(ctx.raw_input):
+        return "", {"applied": False, "reason": "turned off by the caller"}
+
     try:
         from capabilities_impl import style_examples
     except ImportError:
-        return ""
+        return "", {"applied": False, "reason": "style module not installed"}
 
     message = _user_message(ctx.raw_input)
     if not message:
-        return ""
+        return "", {"applied": False, "reason": "no user message found"}
 
     try:
-        examples = style_examples.for_query(message)
+        language = style_examples.language_of(message)
+        guide = style_examples.register_guide(language)
+        examples = style_examples.for_query(message, language=language) if language else []
+        section = style_examples.as_prompt_section(examples, guide)
     except Exception as exc:                # noqa: BLE001 - style is never fatal
-        logger.warning(ctx, f"Style retrieval failed, answering unstyled: {exc}")
-        return ""
+        logger.warning(ctx, f"Style lookup failed, answering unstyled: {exc}")
+        return "", {"applied": False, "reason": f"lookup failed: {exc}"}
+
+    detail = {
+        "applied": bool(section),
+        "language": language,
+        "guide": bool(guide),
+        "examples": len(examples),
+    }
+    if not section:
+        # Only when nothing at all applied. With a guide in play the counts
+        # above already say which half fired, and a "reason" beside them
+        # would read as if the whole layer had been skipped.
+        detail["reason"] = (
+            "not a script with a style corpus" if not language
+            # The common case, and the one that reads as a bug: the layer is
+            # working and the corpus simply has nothing near this question.
+            else f"no passage cleared {style_examples.MIN_SCORE}"
+        )
 
     if examples:
         logger.event(ctx, "style_examples_used", count=len(examples))
-    return style_examples.as_prompt_section(examples)
+    return section, detail
 
 
 @register_stage("reason_llm_text")
@@ -870,11 +921,12 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
             f"answer, don't recompute or guess them:\n{tool_lines}"
         )
 
-    # Style examples go on THIS call and not the tool loop above. The loop
-    # picks tools and writes English, numeric arguments -- vernacular passages
-    # there are noise against a selection step that is already delicate. This
+    # Style goes on THIS call and not the tool loop above. The loop picks
+    # tools and writes English, numeric arguments -- vernacular guidance
+    # there is noise against a selection step that is already delicate. This
     # call is the one that writes prose the user reads.
-    answer_prompt = system_prompt + _style_section(ctx, logger)
+    style_text, style_detail = _style_section(ctx, logger)
+    answer_prompt = system_prompt + style_text
 
     adapter = _build_adapter(bundle)
     logger.event(ctx, "ollama_call_started", model=bundle.definition.llm.model)
@@ -885,7 +937,7 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
         )
         ctx.llm_output = parsed
         _record_llm_detail(ctx, meta, prompt_chars=len(answer_prompt) + len(user_prompt),
-                           tool_calls=tool_calls_made)
+                           tool_calls=tool_calls_made, style=style_detail)
         logger.llm_call(
             ctx, model=meta["model"], duration_ms=meta["duration_ms"],
             prompt_tokens=meta.get("prompt_tokens"), completion_tokens=meta.get("completion_tokens"),

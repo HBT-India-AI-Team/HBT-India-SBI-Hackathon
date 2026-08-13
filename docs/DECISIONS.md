@@ -225,6 +225,58 @@ observing an effect.
 
 ---
 
+## 13. A written register guide sits beside retrieval, not behind it
+
+**Decided:** `fixtures/register/<lang>.md` is injected whenever the script is
+recognised, independently of whether any passage clears the floor.
+`capabilities_impl/fixtures/register/ta.md` is the first.
+
+**Why:** retrieval needs a corpus, and a corpus is a slow instrument. Tamil has
+none. The Hindi one that *does* exist reached only 5 of 12 real questions,
+because it was collected by channel rather than by topic — so even a language
+with a corpus goes unserved on whole topics. A guide is a few hundred lines
+someone can write in an afternoon and it fires every time.
+
+They compose: when a corpus lands, its passages join the guide in the same
+section rather than replacing it. The guide is checked-in text written on
+purpose; passages are scraped and unverified, which is why they keep their own
+framing.
+
+**Cost:** two places that shape wording for one language, and a guide is
+unmeasured where the Hindi table is counted. `ta.md` says so at the bottom.
+
+**Would overturn it:** a Tamil corpus with real topic coverage. Even then the
+guide probably stays — it costs nothing when passages are found, and it is the
+only thing serving the topics the corpus misses.
+
+---
+
+## 14. The style toggle is a runtime flag, and runtime flags must be declared
+
+**Decided:** `style` rides at the top level of `raw_input` beside `evidence`,
+defaults to on, and is listed in `_TEXT_ROUTING_KEYS`.
+
+**Why the placement:** evidence is domain data — it persists on the session,
+merges turn to turn, and is shown back to the user. A rendering preference is
+none of those things.
+
+**Why the registration, which is the part that bites:** `_build_text_prompt`
+renders every raw_input key it does not recognise straight into the user
+prompt. Adding `style` put a literal `style: True` line in front of the model.
+The tool loop read it and **changed which tools it called** — on the test
+question, `style: False` pulled in an extra tool and a ₹90,000 figure, so the
+styled answer appeared to have "lost" it. Three runs each way, identical every
+time. Style is not permitted to reach tool selection at all, and it did,
+through the one path nobody was watching.
+
+**Cost:** a second place to edit when adding a runtime flag.
+
+**Would overturn it:** `_build_text_prompt` taking an explicit allow-list of
+content fields instead of excluding known routing keys, which would make the
+failure impossible rather than merely tested. Worth doing; not done.
+
+---
+
 ## Things deliberately NOT done
 
 **A second model to rephrase answers into colloquial Hindi.** Proposed and

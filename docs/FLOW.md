@@ -109,8 +109,8 @@ break this.
 |---|---|---|
 | answers | **what is true** | **how to say it** |
 | model | nomic-embed-text | **bge-m3** |
-| index | `doc_index.json` | `style_index.json` |
-| query | translated to English first | user's raw Devanagari |
+| index | `doc_index.json` | `style_index.json` + `register/*.md` |
+| query | translated to English first | user's raw Devanagari or Tamil |
 | floor | 0.58 | 0.60 |
 | output | quoted and cited | never quoted, never cited |
 | is a tool? | yes — model chooses it | **no** — injected by the pipeline |
@@ -129,8 +129,35 @@ which is worse than never working, because the failure is invisible.
 Not registered as a tool, because "write like this" is an instruction, not a
 fact the model should be able to look up.
 
-Every failure path returns `[]`, which means the prompt goes out exactly as it
-would have. **Deleting `fixtures/style_index.json` disables the whole layer.**
+Two independent halves, either of which can be empty:
+
+```
+  language_of(message)        script → "hi" | "ta" | None
+        ├── register_guide()  fixtures/register/<lang>.md   fires whenever the
+        │                                                   script is known
+        └── for_query()       style_index.json              fires only ≥ 0.60
+```
+
+The guide is the half that works without a corpus — Tamil has none, and Hindi's
+reaches only 5 of 12 real questions. Deleting `fixtures/style_index.json` turns
+off retrieval; deleting a `register/*.md` turns off that language's guide.
+
+**Both are cached in module memory, so editing either needs a backend restart.**
+
+Every failure path produces empty text and the prompt goes out exactly as it
+would have — which is why `_style_section` also returns a detail dict saying
+which of the several silent nothings actually happened. The Playground renders
+it under each reply.
+
+### Turning style off
+
+`style: false` in the chat body. Defaults on; `/invoke`, the embed page and the
+public API send nothing and keep the shipped behaviour.
+
+It is listed in `_TEXT_ROUTING_KEYS`, and **anything added to `raw_input` must
+be** — `_build_text_prompt` renders every other key into the user prompt. When
+`style` was missing from that set the model read `style: True` as though the
+user had typed it, and tool selection changed.
 
 ---
 
@@ -180,7 +207,8 @@ backend binds localhost only, so the ngrok tunnel reaches it *through* Vite.
 | **Hindi answer with no citations** | `docs.search` refused the Devanagari query and the model didn't retry in English |
 | **Reply is empty** | `think` got switched on for `generate_structured` |
 | **No tool calls at all** | `think` got switched off for `run_tool_loop` |
-| **Style changed nothing** | index missing, embedding host down, or query below 0.60 — all silent by design |
+| **Style changed nothing** | read the badge under the reply — it says which: toggled off, script with no corpus, or below 0.60. All are silent in the answer itself |
+| **A flag changed the model's behaviour in a way it shouldn't** | it's in `raw_input` but not `_TEXT_ROUTING_KEYS`, so the model is being shown it |
 | **Style dropped a fact** | known: the corpus is speech. Measured at 2/12 |
 | **Edited instructions did nothing** | backend caches the skill; it has no `--reload`. Restart it |
 | **Rebuilt an index and nothing changed** | same — index is cached in module memory |

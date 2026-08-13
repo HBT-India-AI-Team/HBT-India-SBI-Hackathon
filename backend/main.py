@@ -128,7 +128,11 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
     if not message:
         raise HTTPException(status_code=400, detail="message must not be empty")
     try:
-        result = chat.handle_chat_turn(agent_id, request.get("session_id"), message)
+        # Optional "style": false opts out of the vernacular wording layer.
+        # Anything else, including omitting it, leaves it on.
+        result = chat.handle_chat_turn(
+            agent_id, request.get("session_id"), message, request.get("style") is not False,
+        )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
 

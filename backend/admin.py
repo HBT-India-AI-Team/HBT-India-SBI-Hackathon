@@ -1154,6 +1154,9 @@ async def test_run_agent_file(agent_id: str, file: UploadFile = File(...)) -> di
 class ChatPayload(BaseModel):
     session_id: str | None = None
     message: str
+    # The Playground's colloquial-style toggle. Defaults on, so a client that
+    # doesn't know about it gets the shipped behaviour.
+    style: bool = True
 
 
 @router.post("/agents/{agent_id}/chat")
@@ -1163,7 +1166,7 @@ def chat_with_agent(agent_id: str, payload: ChatPayload) -> dict:
     a client's own site is POST /agents/{agent_id}/chat in backend/main.py.
     """
     try:
-        result = chat.handle_chat_turn(agent_id, payload.session_id, payload.message)
+        result = chat.handle_chat_turn(agent_id, payload.session_id, payload.message, payload.style)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
     return {
