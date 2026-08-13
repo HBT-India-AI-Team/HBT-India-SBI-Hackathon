@@ -8,6 +8,21 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Add the style A/B sheet, with the rows style never reached greyed out
+
+`591bcaf` — 1 file
+
+The generated columns mislead on their own. Style reached 5 of the 12
+questions; the other 7 are byte-identical because they scored below the 0.60
+retrieval floor, so a reviewer comparing them is comparing nothing. Those
+rows are greyed, and a reviewed column reads each flagged row rather than
+counting its figures -- of the flags, one is a real loss (the Rs 45,000
+emergency-fund anchor), the rest are reformatting or trimmed asides.
+
+## 2026-08-13 · Regenerate CHANGELOG
+
+`ebe546c` — 1 file, +37/−0
+
 ## 2026-08-13 · Stop style rewriting recommendations or adding a sign-off
 
 `29ab6fe` — 2 files, +26/−0
