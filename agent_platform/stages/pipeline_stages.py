@@ -321,27 +321,63 @@ def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
         sections.append(f"--- Shared platform guardrails ---\n{skill.shared_text}")
     system_prompt = "\n\n".join(sections)
 
+    # Scrubbed at both levels, because callers nest flags at both. The voice
+    # client sends them inside "evidence", so filtering only the top level
+    # put a literal "'voice': True, 'style': True" into the prompt for the
+    # model to read as though the user had said it.
     fields = {k: v for k, v in raw_input.items() if k not in _TEXT_ROUTING_KEYS}
+    evidence = fields.get("evidence")
+    if isinstance(evidence, dict):
+        fields["evidence"] = {k: v for k, v in evidence.items() if k not in _TEXT_ROUTING_KEYS}
     user_prompt = "\n".join(f"{k}: {v}" for k, v in fields.items()) or "(no context provided)"
     return system_prompt, user_prompt
+
+
+# What different callers name the user's own words. Neither is more correct;
+# both are in production and neither is ours to rename.
+_MESSAGE_KEYS = ("message", "question")
+
+
+def _request_flag(raw_input, name: str):
+    """A runtime flag, at whichever level the caller nested it.
+
+    Three shapes are live and all three are legitimate:
+
+      /invoke, generic     {"question": ..., "voice": true}
+      our chat route       {"evidence": {...}, "voice": true}
+      the voice client     {"evidence": {"question": ..., "voice": true}}
+
+    Reading one level only is not a hypothetical bug. It is how style spent
+    its first week silently switched off, and how the voice client's own
+    `voice: true` did nothing at all -- the flag was set, sent, and read at a
+    level it was never at. Returns None when absent, which each caller reads
+    as its own default.
+    """
+    if not isinstance(raw_input, dict):
+        return None
+    for candidate in (raw_input, raw_input.get("evidence")):
+        if isinstance(candidate, dict) and name in candidate:
+            return candidate[name]
+    return None
 
 
 def _user_message(raw_input) -> str:
     """The user's own words, wherever the caller happened to put them.
 
-    Two shapes reach here. /invoke passes fields at the top level; the chat
-    route wraps them, calling invoke_agent(agent_id, {"evidence": {...}}), so
-    the message sits one level down. Reading only the top level looked
-    correct, ran clean, and silently returned no style on every chat turn --
-    which is the whole path that matters.
+    Two levels and two spellings. /invoke passes fields at the top level and
+    calls it `question`; our chat route nests them under "evidence" and calls
+    it `message`. Reading only the top level, or only one name, looked correct
+    and ran clean while returning no style on the path that mattered -- twice.
     """
     if not isinstance(raw_input, dict):
         return ""
     for candidate in (raw_input, raw_input.get("evidence")):
-        if isinstance(candidate, dict):
-            message = candidate.get("message")
-            if isinstance(message, str) and message.strip():
-                return message.strip()
+        if not isinstance(candidate, dict):
+            continue
+        for key in _MESSAGE_KEYS:
+            value = candidate.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
     return ""
 
 
@@ -353,7 +389,7 @@ def _style_enabled(raw_input) -> bool:
     nothing at all, and nothing means on -- a new flag must never quietly
     change what an existing integration already gets.
     """
-    return not (isinstance(raw_input, dict) and raw_input.get("style") is False)
+    return _request_flag(raw_input, "style") is not False
 
 
 def _style_section(ctx, logger) -> tuple[str, dict]:
@@ -466,7 +502,7 @@ def _voice_enabled(raw_input) -> bool:
     while voice restructures one for a channel most callers are not on.
     Anything but an explicit true leaves the answer as it is.
     """
-    return isinstance(raw_input, dict) and raw_input.get("voice") is True
+    return _request_flag(raw_input, "voice") is True
 
 
 @register_stage("reason_llm_text")

@@ -32,6 +32,50 @@ def test_voice_is_off_unless_asked_for():
     assert pipeline_stages._voice_enabled({"evidence": {}, "voice": True}) is True
 
 
+def test_flags_are_read_at_whichever_level_the_caller_nests_them():
+    """Three shapes are live in production and all three are legitimate.
+
+    The voice client puts its flags *inside* `evidence`, beside the question.
+    Reading only the top level meant its `voice: true` did nothing at all --
+    set, sent, and read at a level it was never at, with no error anywhere.
+    """
+    voice_client = {"evidence": {"question": "…", "style": True, "voice": True, "language": "ta"}}
+    our_chat_route = {"evidence": {"message": "…"}, "voice": True, "style": False}
+    flat_invoke = {"question": "…", "voice": True}
+
+    for raw_input in (voice_client, our_chat_route, flat_invoke):
+        assert pipeline_stages._voice_enabled(raw_input) is True, raw_input
+
+    assert pipeline_stages._style_enabled(voice_client) is True
+    assert pipeline_stages._style_enabled(our_chat_route) is False
+
+
+def test_the_message_is_found_under_either_name():
+    """`message` is what our chat route calls it, `question` is what the
+    voice client calls it. Neither is more correct and neither is ours to
+    rename, so both resolve."""
+    assert pipeline_stages._user_message({"evidence": {"question": " ask "}}) == "ask"
+    assert pipeline_stages._user_message({"evidence": {"message": "ask"}}) == "ask"
+    assert pipeline_stages._user_message({"question": "ask"}) == "ask"
+    assert pipeline_stages._user_message({"evidence": {"question": "   "}}) == ""
+
+
+def test_nested_flags_do_not_reach_the_prompt_either():
+    """Scrubbing only the top level left "'voice': True, 'style': True" sitting
+    inside the rendered evidence dict, where the model reads it as something
+    the user said."""
+    skill = type("_Skill", (), {"instructions_text": "be helpful", "shared_text": ""})()
+    body = {"evidence": {"question": "what is the FD rate?", "style": True,
+                         "voice": True, "language": "ta"}}
+
+    _system, user_prompt = pipeline_stages._build_text_prompt(skill, body)
+
+    assert "'voice'" not in user_prompt and "'style'" not in user_prompt
+    assert "FD rate" in user_prompt
+    # Not a flag we act on, so it stays visible as ordinary context.
+    assert "'language'" in user_prompt
+
+
 def test_the_voice_flag_is_never_shown_to_the_model():
     """Same trap the style flag fell into: _build_text_prompt renders every
     raw_input key it does not know as routing straight into the user prompt,
