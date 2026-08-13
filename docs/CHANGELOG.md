@@ -8,6 +8,56 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Add a colloquial-style toggle and a Tamil register guide
+
+`63bedf2` — 13 files, +600/−97
+
+Two things, both aimed at the same gap: the vernacular layer only reaches a
+question when the corpus happens to cover it, and there is no way to see
+whether it did.
+
+**Toggle.** The Playground composer gets a "Colloquial" switch, default on,
+sent per turn so the same question can be asked twice in one thread and the
+answers compared. /invoke, the embed page and the public API send nothing
+and keep exactly the behaviour they have.
+
+Each reply now carries a badge saying whether style reached it, and if not
+which of the several silent nothings happened -- switched off, a script with
+no corpus, or nothing above the 0.60 floor. Toggling the switch and seeing
+no change is the expected outcome for most English questions; without the
+badge that reads as a broken feature, which is the first conclusion a demo
+audience reaches for.
+
+**Tamil register guide.** fixtures/register/ta.md, injected whenever the
+user writes in Tamil, independent of retrieval. Tamil has no corpus and is
+more diglossic than Hindi -- written and spoken Tamil differ enough that
+formal written Tamil is hard going for a fluent speaker, and bank Tamil
+defaults to the formal end. The guide covers the vocabulary seam (products
+keep English names, concepts stay Tamil), address and verb endings, which
+matter more in Tamil than vocabulary does, and lakh/crore number forms.
+Hand-written judgement, not counted evidence, and it says so at the bottom.
+
+language_of() now routes Tamil as well as Devanagari. The two halves
+compose: when a Tamil corpus lands its passages join the guide in the same
+section rather than replacing it.
+
+**One bug found by testing rather than by reading.** Adding `style` to
+raw_input put a literal "style: True" line in the user prompt, because
+_build_text_prompt renders every key it does not recognise as routing. The
+tool loop read it and changed which tools it called -- on the test question
+`style: False` pulled in an extra tool and a Rs 90,000 figure, so the styled
+answer appeared to have lost it. Three runs each way, identical every time.
+Style is not permitted to reach tool selection at all, and it did, through
+the one path nobody was watching. Fixed by declaring the key; tool selection
+is now identical with the toggle on and off.
+
+Tests: +5, including one pinning the flag out of the prompt. Suite is back
+to its 60 pre-existing failures.
+
+## 2026-08-13 · Regenerate CHANGELOG
+
+`c44dc84` — 1 file, +15/−0
+
 ## 2026-08-13 · Add the style A/B sheet, with the rows style never reached greyed out
 
 `591bcaf` — 1 file
