@@ -311,3 +311,29 @@ def test_romanized_passages_are_dropped():
     )
     assert keep is False
     assert why == "not Devanagari"
+
+
+def test_the_public_api_reads_a_boolean_the_way_clients_send_them():
+    """The public route takes a raw dict, so nothing coerces for it.
+
+    A mobile or web client we do not own will send whatever its HTTP library
+    produces, and "false" as a string is what form encoding and several
+    mobile JSON libraries produce. Under an identity check that silently
+    meant style ON while the client asked for OFF -- and the admin route,
+    which has Pydantic, would have read the same payload the other way.
+    """
+    from backend.main import _bool_field
+
+    # Off, however it is spelled.
+    for value in (False, "false", "False", " FALSE ", 0, "0", "no", "off"):
+        assert _bool_field(value, default=True) is False, f"{value!r} should read as off"
+
+    # On, and — the case that matters most — absent means on, so a client
+    # written before this flag existed keeps the behaviour it has.
+    for value in (True, "true", "TRUE", 1, "1", "yes", "on", None):
+        assert _bool_field(value, default=True) is True, f"{value!r} should read as on"
+
+    # Unreadable falls back rather than raising. A malformed optional flag
+    # must not cost someone their answer.
+    for value in ({}, [], "maybe", object()):
+        assert _bool_field(value, default=True) is True

@@ -114,12 +114,62 @@ def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Heade
     }
 
 
+def _bool_field(value: Any, *, default: bool) -> bool:
+    """Read a boolean the way clients actually send them.
+
+    This route takes a raw dict rather than a Pydantic model, so nothing
+    coerces on its behalf. `value is not False` reads as sufficient and is
+    not: a client sending {"style": "false"} — a stringified bool, which is
+    what form encoding and several mobile HTTP libraries produce — would get
+    style ON while asking for it OFF. Silently, and disagreeing with the
+    admin route, which does have Pydantic and coerces the same payload the
+    other way.
+
+    Anything genuinely unreadable falls back to the default rather than
+    erroring. A malformed optional flag must not cost someone their answer.
+    """
+    if isinstance(value, bool):       # before int: bool IS an int in Python
+        return value
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"false", "0", "no", "off"}:
+            return False
+        if text in {"true", "1", "yes", "on"}:
+            return True
+    return default
+
+
+def _style_summary(stage_trace: list[dict[str, Any]] | None) -> dict | None:
+    """Whether the vernacular layer reached this answer, for the client.
+
+    Reported because the layer has several ways to produce nothing — switched
+    off, a script with no corpus, nothing above the retrieval floor — and they
+    are indistinguishable in the reply itself. A client that cannot see this
+    reports "the flag does nothing" for the case where the flag worked
+    perfectly and the corpus simply had no match. None on agents that do not
+    run the rich-content path.
+    """
+    for entry in stage_trace or []:
+        detail = entry.get("detail")
+        if isinstance(detail, dict) and "style" in detail:
+            return detail["style"]
+    return None
+
+
 @app.post("/agents/{agent_id}/chat")
 def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | None = Header(default=None)) -> dict:
     """The public, key-gated counterpart to /invoke: same auth, but takes
     free-text ({"session_id": str | null, "message": str}) instead of a
     structured evidence dict, and remembers the conversation via session_id
     — what a client's embedded chat (see /embed/{agent_id} below) calls.
+
+    Optional "style": false opts out of the vernacular wording layer. Omitting
+    it leaves style on, so a client written before the flag existed keeps the
+    behaviour it already has.
     """
     if not api_keys.is_valid(agent_id, x_api_key):
         raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key for this agent")
@@ -128,10 +178,9 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
     if not message:
         raise HTTPException(status_code=400, detail="message must not be empty")
     try:
-        # Optional "style": false opts out of the vernacular wording layer.
-        # Anything else, including omitting it, leaves it on.
         result = chat.handle_chat_turn(
-            agent_id, request.get("session_id"), message, request.get("style") is not False,
+            agent_id, request.get("session_id"), message,
+            _bool_field(request.get("style"), default=True),
         )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
@@ -140,6 +189,8 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
         "session_id": result.session_id, "reply": result.reply,
         "evidence": result.evidence, "decision": result.decision, "done": result.done,
         "content_type": result.content_type,
+        # Additive: a client that does not know this key ignores it.
+        "style": _style_summary(result.stage_trace),
     }
 
 
