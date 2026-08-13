@@ -8,6 +8,48 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Read request flags at whichever level the caller nests them
+
+`90389c6` — 3 files, +239/−11
+
+The voice client sends its flags inside `evidence`, beside the question:
+
+    {"evidence": {"question": ..., "style": true, "voice": true, "language": "ta"}}
+
+Our own chat route puts them at the top level, and _voice_enabled read only
+there. So their `voice: true` was set, sent, and ignored -- the flag existed
+at a level nothing looked at, with no error and no log line. Same for the
+message itself: they call it `question`, _user_message looked only for
+`message`, and the vernacular style layer silently did nothing on every Tamil
+turn they sent.
+
+Both shapes are legitimate and neither is ours to rename, so both resolve now
+via _request_flag and _MESSAGE_KEYS. This is the third instance of the same
+failure in this subsystem -- a language key, an evidence nesting, and now a
+flag nesting -- all of which built cleanly, passed their tests, and did
+nothing.
+
+Also scrubs routing keys from nested evidence, not just the top level.
+Filtering one level put a literal "'voice': True, 'style': True" inside the
+rendered evidence dict, where the model reads it as something the user said.
+That is the exact leak that changed tool selection when the style flag was
+added.
+
+`language` is deliberately left unwired. It reaches the prompt as ordinary
+context; nothing treats it as a directive. Worth doing after a Tamil question
+came back answered in Telugu, but it is new behaviour, not plumbing.
+
+Adds docs/INTEGRATIONS.md recording all three backends the onboarding app
+talks to and which one is ours -- one endpoint, /agents/finguru/invoke. The
+voice server (transcribe/synthesize/live WS) and the onboarding API are other
+services and we build neither.
+
+Tests: +3, covering all three live payload shapes.
+
+## 2026-08-13 · Regenerate changelog
+
+`92f8e99` — 1 file, +81/−0
+
 ## 2026-08-13 · Switch to gemma4:12b and add a spoken-answer mode
 
 `d5e5c61` — 11 files, +380/−77
