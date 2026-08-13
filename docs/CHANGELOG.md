@@ -8,6 +8,37 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-13 · Drop app screen-narration from the style corpus, and document the system
+
+`cddf9d4` — 7 files, +860/−1
+
+A fifth of the style index was someone walking through a phone app -- "tap
+here, enter the OTP, upload a selfie". Fluent, colloquial, on-topic-adjacent,
+and the wrong thing entirely: it teaches an assistant that cannot see a
+screen to narrate one. Two markers are required rather than one, because a
+single "click here" inside a real explanation of opening an account online is
+legitimate while a passage built from them is a tutorial. 64 dropped, 380
+remain, and the A/B moved from 9/12 to 10/12 figures preserved with the
+average length gap closing from -10% to -3%.
+
+Two other things were tried and did not work, both left measured rather than
+guessed at. Fewer exemplars (k=1) was worse, not better: on the one question
+where k mattered it lost 30% of the answer where k=3 held. Merging adjacent
+transcript chunks into fuller passages is inert here, because the per-chunk
+filter removes 248 scattered chunks and survivors are almost never adjacent
+-- kept behind a flag, with a comment saying so.
+
+FLOW.md, DECISIONS.md and CHANGELOG.md answer "what is happening" without
+reading the whole codebase. FLOW maps a request through both model calls and
+both retrieval paths, and ends in a symptom table -- a 3-second confident
+reply means tools were skipped, an empty reply means thinking got switched on
+for the wrong call. DECISIONS covers only the choices that look wrong until
+you know why, each with the evidence that would overturn it.
+
+CHANGELOG is generated from git rather than written, because a hand-kept one
+drifts and then reads as authoritative while being wrong. Never edit it; run
+scripts/update_changelog.py.
+
 ## 2026-08-13 · Anchor FinGuru's Hindi on how a real advisor speaks
 
 `7886712` — 15 files, +1505/−19
