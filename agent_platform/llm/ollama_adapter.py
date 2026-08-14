@@ -16,6 +16,7 @@ what handles a final, exhausted-retries failure.
 from __future__ import annotations
 
 import json
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -134,12 +135,13 @@ def read_call(offset: int) -> dict[str, Any] | None:
 
 
 class OllamaAdapter:
-    def __init__(self, host: str = "http://localhost:11434", model: str = "gemma4:12b",
+    def __init__(self, host: str = "http://localhost:11434",
+                 model: str | None = None,
                  timeout_seconds: int = 120, seed: int = 7,
                  max_transient_retries: int = 3, retry_backoff_seconds: float = 5.0,
                  think: bool | None = None):
         self.host = host.rstrip("/")
-        self.model = model
+        self.model = model or os.environ.get("OLLAMA_MODEL", "gemma4:12b")
         self.timeout_seconds = timeout_seconds
         self.seed = seed
         self.max_transient_retries = max_transient_retries

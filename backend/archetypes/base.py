@@ -22,8 +22,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 # Shared by every archetype's render_agent_yaml — not archetype-specific,
-# just the one model this whole builder is tuned against (see
-# agent_builder.py's _BUILDER_MODEL for why).
+# just the model that is actually available in this environment.
 DEFAULT_MODEL = "gemma4:12b"
 
 

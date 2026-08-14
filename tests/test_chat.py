@@ -102,6 +102,24 @@ def test_session_persists_evidence_across_two_turns(monkeypatch):
     assert second.evidence["bureau"]["score"] == 700
 
 
+def test_user_id_reuses_same_session_for_same_user(monkeypatch):
+    first_batch = {"kyc.status": "VERIFIED", "kyc.sanctions_hit": False, "lead.business_vintage_years": 5}
+    second_batch = {"bureau.default_flag": False, "bureau.score": 700}
+    adapter = _fake_chat(
+        monkeypatch,
+        {"extracted_fields": first_batch, "reply": "What's the bureau score?"},
+        {"extracted_fields": second_batch, "reply": "unused"},
+    )
+
+    first = chat.handle_chat_turn("lead_qualification", None, "kyc verified, no sanctions, 5 years old", user_id="user-42")
+    second = chat.handle_chat_turn("lead_qualification", None, "score is 700, no default", user_id="user-42")
+
+    assert first.session_id == second.session_id
+    assert adapter.calls == 2
+    assert second.done is True
+    assert second.evidence["bureau"]["score"] == 700
+
+
 def test_dotted_field_merge_writes_nested_not_flat():
     evidence = {"kyc": {"status": "PENDING"}}
     changed = chat._merge_evidence(evidence, {"kyc.status": "VERIFIED", "bureau.score": 700})

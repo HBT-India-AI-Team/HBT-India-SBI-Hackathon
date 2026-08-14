@@ -20,6 +20,9 @@ export default defineConfig({
     proxy: {
       '/admin': 'http://127.0.0.1:8080',
       '/agents': 'http://127.0.0.1:8080',
+      // Inline calculators (EMI, FIRE). Without this the Playground's
+      // calculator silently gets Vite's index.html back instead of a result.
+      '/api': 'http://127.0.0.1:8080',
       '/workflows': 'http://127.0.0.1:8080',
       '/runs': 'http://127.0.0.1:8080',
       '/healthz': 'http://127.0.0.1:8080',

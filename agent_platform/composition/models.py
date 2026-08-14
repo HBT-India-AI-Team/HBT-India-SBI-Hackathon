@@ -35,11 +35,11 @@ class GovernanceConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    # Must match a model actually present on OLLAMA_HOST (see backend/.env) — granite4.1:3b was
-    # never pulled there, only on individual developers' local Ollama installs, so any agent that
-    # inherited this default without an explicit override would fail at request time in real use.
-    # gemma4:12b is what every hand-built demo agent (lead_discovery, lead_qualification, proposal)
-    # already uses.
+    # Must name a model actually present on OLLAMA_HOST (see backend/.env).
+    # Nothing validates this, so a wrong value fails at request time as a 404
+    # per call, which surfaces as empty replies rather than as an error --
+    # granite4.1:3b was set as this default while never being pulled on the
+    # host, and it read as the prompting having broken. Check /api/tags.
     model: str = "gemma4:12b"
     temperature: float = 0.0
     seed: int = 7

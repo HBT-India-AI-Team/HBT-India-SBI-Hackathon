@@ -52,7 +52,7 @@ def _build_adapter() -> OllamaAdapter:
 
     return OllamaAdapter(
         host=os.environ.get("OLLAMA_HOST", "http://localhost:11434"),
-        model="gemma4:12b",
+        model=os.environ.get("OLLAMA_MODEL", "gemma4:12b"),
         timeout_seconds=60,
     )
 
@@ -226,7 +226,8 @@ def _guidance_reply(adapter: OllamaAdapter, skills, messages: list[dict]) -> str
 
 
 def handle_chat_turn(agent_id: str, session_id: str | None, message: str,
-                     style: bool = True, voice: bool = False) -> ChatTurnResult:
+                     style: bool = True, voice: bool = False,
+                     user_id: str | None = None) -> ChatTurnResult:
     """Both flags are per turn, not per session.
 
     `style` defaults on so every existing caller — /invoke, the embed page,
@@ -236,13 +237,34 @@ def handle_chat_turn(agent_id: str, session_id: str | None, message: str,
     `voice` defaults off because it restructures the answer for a channel
     most callers are not on: two to four sentences, no markdown, nothing that
     only makes sense on a screen.
+
+    `user_id` is optional and additive: when present, the backend resumes the
+    same conversation for that user even when the caller omits `session_id`.
+    Existing `session_id`-based callers continue to work unchanged.
     """
     bundle = load_agent(agent_id)
-    if session_id is None:
-        session_id = chat_store.new_session_id()
-        session = chat_store.new_session(session_id, agent_id)
+
+    if session_id is None and user_id:
+        session = chat_store.get_session_for_user(user_id, agent_id)
+        if session is not None:
+            session_id = session["session_id"]
+        else:
+            session_id = chat_store.new_session_id()
+            session = chat_store.new_session(session_id, agent_id, user_id=user_id)
+    elif session_id is not None:
+        session = chat_store.get_session(session_id)
+        if session is None:
+            session = chat_store.new_session(session_id, agent_id, user_id=user_id)
+        elif user_id and session.get("user_id") not in (None, user_id):
+            # Prevent cross-user bleed when a stale session_id is reused.
+            session_id = chat_store.new_session_id()
+            session = chat_store.new_session(session_id, agent_id, user_id=user_id)
+        elif user_id and session.get("user_id") is None:
+            session["user_id"] = user_id
+            chat_store.save_session(session)
     else:
-        session = chat_store.get_session(session_id) or chat_store.new_session(session_id, agent_id)
+        session_id = chat_store.new_session_id()
+        session = chat_store.new_session(session_id, agent_id, user_id=user_id)
 
     session["messages"].append({"role": "user", "content": message})
     all_skills = list(bundle.skills.values())

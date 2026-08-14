@@ -715,6 +715,23 @@ def validate_text_output(ctx, bundle, logger) -> None:
 # its own schema. Only capabilities listed here are offered to the model; a capability an
 # agent declares without a schema here is simply never offered as a tool (still usable
 # directly by other stages, e.g. gather_evidence's lead_id path).
+def _tool_usage_instructions() -> str:
+    """Hard instruction to make EMI/FIRE questions run through real finance tools.
+
+    The model can otherwise answer from intuition on simple arithmetic, which is
+    exactly the failure mode we are trying to prevent in the chat UI. Keep this
+    explicit and mandatory so tool calls are part of the normal chat flow.
+    """
+    return (
+        "Mandatory finance-tool rule: if the user asks about an EMI, loan payment, monthly payment, "
+        "loan repayment schedule, FIRE target, retirement corpus, monthly goal, or target investment, "
+        "you MUST call the relevant finance tool before answering, even when the question is simple or "
+        "looks trivial. Do not compute manually, do not estimate, and do not answer from intuition. "
+        "Use the tool result as the source of truth. If required parameters are missing, ask only for the "
+        "missing values and then call the tool. For EMI and FIRE questions, tool use is required."
+    )
+
+
 _TOOL_SCHEMAS: dict[str, dict] = {
     "finance.get_fd_rate": {
         "type": "function",
@@ -1120,9 +1137,15 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
 
         adapter = _build_adapter(bundle)
         try:
+            tool_rule = _tool_usage_instructions()
             adapter.run_tool_loop(
-                system_prompt=system_prompt + "\n\nCall the available tools whenever they let you answer "
-                                               "with a real number instead of an estimate.",
+                system_prompt=(
+                    system_prompt
+                    + "\n\n"
+                    + tool_rule
+                    + "\n\nCall the available tools whenever they let you answer with a real number instead "
+                    "of an estimate."
+                ),
                 user_prompt=user_prompt,
                 tools=tools,
                 resolve_tool=resolve_tool,

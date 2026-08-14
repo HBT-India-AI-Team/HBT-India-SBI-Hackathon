@@ -37,7 +37,7 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import HTMLResponse, StreamingResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from . import admin, api_keys, embed_page  # noqa: E402
+from . import admin, api_keys, embed_page, tool_routes, tool_suggest  # noqa: E402
 
 app = FastAPI(
     title="Reusable Agent Runtime",
@@ -57,6 +57,7 @@ app.add_middleware(
 )
 
 app.include_router(admin.router)
+app.include_router(tool_routes.router)
 
 
 @app.get("/healthz")
@@ -117,6 +118,12 @@ def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Heade
         "output": ctx.validated_output,
         "hitl": ctx.hitl,
         "error": ctx.error,
+        # Calculators to open beside the reply. Additive — [] on almost every
+        # turn, and a client that does not know the key ignores it.
+        "tools": tool_suggest.suggest(
+            _request_message(request),
+            [{"detail": r.detail} for r in ctx.stage_results],
+        ),
     }
 
 
@@ -164,6 +171,19 @@ def _style_summary(stage_trace: list[dict[str, Any]] | None) -> dict | None:
         if isinstance(detail, dict) and "style" in detail:
             return detail["style"]
     return None
+
+
+def _request_message(request: dict[str, Any]) -> str:
+    """The user's own words, however this caller nested and named them.
+
+    Reuses the pipeline's own resolver rather than reaching for
+    request["message"]: /invoke callers say `question`, the chat route says
+    `message`, and the voice client nests either under `evidence`. Reading one
+    shape has already been the cause of three silent no-ops here.
+    """
+    from agent_platform.stages.pipeline_stages import _user_message
+
+    return _user_message(request)
 
 
 def _invoke_stream_events(agent_id: str, request: dict[str, Any]):
@@ -231,6 +251,10 @@ def _invoke_stream_events(agent_id: str, request: dict[str, Any]):
     yield "data: " + json.dumps({
         "event": "done",
         "run_id": ctx.run_id,
+        "tools": tool_suggest.suggest(
+            _request_message(request),
+            [{"detail": r.detail} for r in ctx.stage_results],
+        ),
         "output": ctx.validated_output,
         "decision": ctx.decision,
         "hitl": ctx.hitl,
@@ -288,6 +312,7 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
             agent_id, request.get("session_id"), message,
             _bool_field(request.get("style"), default=True),
             _bool_field(request.get("voice"), default=False),
+            user_id=request.get("user_id"),
         )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
@@ -296,8 +321,10 @@ def chat_with_agent(agent_id: str, request: dict[str, Any], x_api_key: str | Non
         "session_id": result.session_id, "reply": result.reply,
         "evidence": result.evidence, "decision": result.decision, "done": result.done,
         "content_type": result.content_type,
-        # Additive: a client that does not know this key ignores it.
+        # Additive: a client that does not know these keys ignores them.
         "style": _style_summary(result.stage_trace),
+        # Calculators to open beside the reply — [] for almost every turn.
+        "tools": tool_suggest.suggest(message, result.stage_trace),
     }
 
 

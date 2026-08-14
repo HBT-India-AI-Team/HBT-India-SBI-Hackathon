@@ -70,6 +70,10 @@ only thing that should touch these.
 | method | path | key | what |
 |---|---|---|---|
 | `GET` | `/agents` | — | Get Agents |
+| `GET` | `/api/tools` | — | Every calculator, with its input fields |
+| `POST` | `/api/tools/execute` | — | Compute a result |
+| `POST` | `/api/tools/save` | — | Remember a user's inputs for a calculator, so it comes back filled in. |
+| `GET` | `/api/tools/saved` | — | A user's saved calculators |
 | `GET` | `/runs` | — | Get Runs |
 | `GET` | `/runs/{run_id}` | — | Get Run Detail |
 | `GET` | `/runs/{run_id}/explanation` | — | Get Run Explanation |

@@ -99,6 +99,49 @@ export interface StageTraceEntry {
   detail?: StageDetail
 }
 
+/** One field of an inline calculator. The client renders from this rather
+ *  than hard-coding a form, so adding a calculator needs no frontend change. */
+export interface ToolInput {
+  key: string
+  label: string
+  type: string
+  prefix?: string
+  suffix?: string
+  min?: number
+  step?: number
+}
+
+export interface ToolDefinition {
+  tool_id: string
+  name: string
+  /** The registered capability that does the arithmetic. The client never
+   *  computes anything itself — that is what keeps the calculator and the
+   *  answer above it from disagreeing. */
+  capability: string
+  inputs: ToolInput[]
+  result_key: string
+  output_label: string
+  output_prefix?: string | null
+}
+
+/** A calculator to open beside a reply.
+ *  `computed` — a tool call actually ran, and `prefill` holds its arguments.
+ *  `mentioned` — the topic came up with no numbers, so the form opens empty. */
+export interface ToolSuggestion {
+  tool_id: string
+  reason: 'computed' | 'mentioned'
+  prefill: Record<string, number | string>
+  tool: ToolDefinition
+}
+
+export interface ToolResult {
+  tool_id: string
+  result: Record<string, unknown>
+  value: number | null
+  output_label: string
+  output_prefix?: string | null
+}
+
 export type ChatContentType = 'text' | 'code' | 'image' | 'video' | 'audio'
 
 export interface ChatTurnResult {
@@ -109,6 +152,8 @@ export interface ChatTurnResult {
   done: boolean
   content_type?: ChatContentType | null
   stage_trace?: StageTraceEntry[] | null
+  /** Calculators to open beside this reply. Empty on almost every turn. */
+  tools?: ToolSuggestion[]
 }
 
 /** One endpoint this backend declares, from its own OpenAPI schema. */

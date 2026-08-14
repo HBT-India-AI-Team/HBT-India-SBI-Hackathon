@@ -6,6 +6,8 @@ import type {
   ApiKeyResult,
   ApiSurface,
   ArchetypeSummary,
+  ToolDefinition,
+  ToolResult,
   Capability,
   ChatTurnResult,
   InputMode,
@@ -197,6 +199,7 @@ export const api = {
     sessionId: string | null,
     message: string,
     opts: {
+      userId?: string | null
       style?: boolean
       voice?: boolean
       signal?: AbortSignal
@@ -208,6 +211,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         session_id: sessionId,
+        user_id: opts.userId ?? null,
         message,
         style: opts.style ?? true,
         voice: opts.voice ?? false,
@@ -247,6 +251,31 @@ export const api = {
     if (!result) throw new ApiRequestError('Stream ended without a reply')
     return result
   },
+
+  /** Every calculator the backend knows about, with its input fields. */
+  listTools: () => apiFetch<ToolDefinition[]>('/api/tools'),
+
+  /** Compute a calculator's result. Runs the same registered capability the
+   *  agent calls when it answers in prose, so the widget and the sentence
+   *  above it cannot disagree. */
+  executeTool: (toolId: string, inputs: Record<string, string | number>) =>
+    apiFetch<ToolResult>('/api/tools/execute', {
+      method: 'POST',
+      body: JSON.stringify({ tool_id: toolId, inputs }),
+    }),
+
+  /** Remember a user's inputs so the calculator comes back filled in. Same
+   *  `user_id` the chat session is keyed by. */
+  saveTool: (
+    userId: string,
+    toolId: string,
+    inputValues: Record<string, string | number>,
+    result: Record<string, unknown> | null,
+  ) =>
+    apiFetch<{ user_id: string; tool_id: string }>('/api/tools/save', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, tool_id: toolId, input_values: inputValues, result }),
+    }),
 
   testRunAgent: (agentId: string, input: Record<string, unknown>) =>
     apiFetch<TestRunResult>(`/admin/agents/${agentId}/test-run`, {

@@ -41,14 +41,10 @@ from .archetypes.qualification import (  # noqa: F401
 )
 from .archetypes.qualification import fallback_spec as fallback_blank_spec  # noqa: F401
 
-# Both point at gemma4:12b — the model actually present on OLLAMA_HOST (granite4.1:3b and
-# qwen2.5-coder:14b were only ever tested against a developer's own local Ollama, not the real
-# configured server; qwen 503'd there entirely). gemma4:12b is also what every hand-built demo
-# agent already uses, and live-tested clean: zero validate_spec errors on both the split decision
-# and full rule generation, in ~20-30s per call. Kept as two separate constants/adapter builders
-# (even though they're equal today) so either can be swapped independently later.
-_BUILDER_MODEL = "gemma4:12b"
-_DECOMPOSE_MODEL = "gemma4:12b"
+# Use the locally installed model by default so the app can actually call Ollama in this
+# environment; callers may still override this with OLLAMA_MODEL when they want a different host.
+_BUILDER_MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:12b")
+_DECOMPOSE_MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:12b")
 
 
 # -- generation ----

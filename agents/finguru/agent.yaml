@@ -86,6 +86,11 @@ llm:
   # docs/DECISIONS.md. gemma4:31b timed out on every case and gpt-oss:20b
   # returned an empty reply, so neither is the fallback if this regresses --
   # qwen is.
+  # WHATEVER IS NAMED HERE MUST EXIST ON THE OLLAMA HOST. Nothing validates
+  # that, at startup or anywhere else. granite4.1:3b was set here and is not
+  # pulled on the host: every call 404'd, every reply came back empty, and it
+  # read as the prompting having stopped working. Check `/api/tags` before
+  # changing this, and `ollama pull <model>` on the GPU box first.
   model: gemma4:12b
   # qwen3.6 is a reasoning model, and behind this skill's ~18,000-character
   # instructions it reasons instead of answering: measured on "which SBI

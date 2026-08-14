@@ -43,7 +43,7 @@ from agent_platform.runtime import chat
 from agent_platform.runtime.executor import invoke_agent
 from agent_platform.runtime.pipeline import STAGE_REGISTRY
 
-from . import agent_builder, agent_templates, api_keys, excel_ingest
+from . import agent_builder, agent_templates, api_keys, excel_ingest, tool_suggest
 from .archetypes import get_archetype, list_archetypes
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -871,7 +871,7 @@ def _build_edit_adapter() -> OllamaAdapter:
     # Generous like agent_builder's own generation timeout — the shared Ollama host is
     # sometimes slow even for a short file, and this is an admin-only, human-in-the-loop
     # action (not a live end-user request), so it can afford to wait.
-    return OllamaAdapter(host=host, model="gemma4:12b", timeout_seconds=400, seed=7)
+    return OllamaAdapter(host=host, model=os.environ.get("OLLAMA_MODEL", "gemma4:12b"), timeout_seconds=400, seed=7)
 
 
 def _strip_wrapping_fence(text: str) -> str:
@@ -1241,6 +1241,7 @@ async def test_run_agent_file(agent_id: str, file: UploadFile = File(...)) -> di
 
 class ChatPayload(BaseModel):
     session_id: str | None = None
+    user_id: str | None = None
     message: str
     # The Playground's colloquial-style toggle. Defaults on, so a client that
     # doesn't know about it gets the shipped behaviour.
@@ -1273,7 +1274,9 @@ def _chat_stream_events(agent_id: str, payload: "ChatPayload"):
         speech_stream.sentence_sink.set(sink)
         try:
             outcome["result"] = chat.handle_chat_turn(
-                agent_id, payload.session_id, payload.message, payload.style, payload.voice)
+                agent_id, payload.session_id, payload.message, payload.style, payload.voice,
+                user_id=payload.user_id,
+            )
         except FileNotFoundError:
             outcome["error"] = f"Unknown agent_id '{agent_id}'"
         except Exception as exc:                # noqa: BLE001 - relayed below
@@ -1305,6 +1308,9 @@ def _chat_stream_events(agent_id: str, payload: "ChatPayload"):
     result = outcome["result"]
     yield _sse({
         "event": "done",
+        # Which calculator, if any, to open beside this reply. Derived from the
+        # tool calls that actually ran, not asked of the model.
+        "tools": tool_suggest.suggest(payload.message, result.stage_trace),
         "session_id": result.session_id,
         "reply": result.reply,
         "evidence": result.evidence,
@@ -1339,10 +1345,13 @@ def chat_with_agent(agent_id: str, payload: ChatPayload) -> dict:
     """
     try:
         result = chat.handle_chat_turn(
-            agent_id, payload.session_id, payload.message, payload.style, payload.voice)
+            agent_id, payload.session_id, payload.message, payload.style, payload.voice,
+            user_id=payload.user_id,
+        )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
     return {
+        "tools": tool_suggest.suggest(payload.message, result.stage_trace),
         "session_id": result.session_id, "reply": result.reply,
         "evidence": result.evidence, "decision": result.decision, "done": result.done,
         "content_type": result.content_type, "stage_trace": result.stage_trace,

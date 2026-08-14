@@ -31,7 +31,12 @@ WORKFLOW_ID = "agent_router"
 WORKFLOW_VERSION = "1.0.0"
 
 CONFIDENCE_THRESHOLD = 0.6
-_ROUTER_LLM = LLMConfig(model="gemma4:12b", temperature=0.0, seed=7, timeout_seconds=60)
+_ROUTER_LLM = LLMConfig(
+    model=os.environ.get("OLLAMA_MODEL", "gemma4:12b"),
+    temperature=0.0,
+    seed=7,
+    timeout_seconds=60,
+)
 
 _ROUTING_SCHEMA_TEMPLATE = {
     "type": "object",

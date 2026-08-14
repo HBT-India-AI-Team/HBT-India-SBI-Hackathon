@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { api, ApiRequestError } from '../api'
 import { Badge } from './ui'
 import type { BadgeTone } from './ui'
+import { Calculator } from './Calculator'
 import { ContentRenderer } from './ContentRenderer'
-import type { ChatDecision, ChatContentType, StageTraceEntry } from '../types'
+import type { ChatDecision, ChatContentType, StageTraceEntry, ToolSuggestion } from '../types'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -11,6 +12,8 @@ interface ChatMessage {
   decision?: ChatDecision | null
   contentType?: ChatContentType | null
   stageTrace?: StageTraceEntry[] | null
+  /** Calculators to open under this reply — EMI, FIRE. Usually empty. */
+  tools?: ToolSuggestion[]
 }
 
 interface ChatWindowProps {
@@ -188,6 +191,17 @@ function ThinkingTrace({ trace }: { trace: StageTraceEntry[] }) {
 export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
+  // Stable per browser. Sent on every turn so the backend can thread a
+  // conversation by user rather than only by session_id, and so a saved
+  // calculator comes back to the same person. Persisted rather than
+  // regenerated, or "resume my conversation" could never be tested here.
+  const [userId] = useState<string>(() => {
+    const existing = localStorage.getItem('playground_user_id')
+    if (existing) return existing
+    const fresh = `pg-${Math.random().toString(36).slice(2, 10)}`
+    localStorage.setItem('playground_user_id', fresh)
+    return fresh
+  })
   const [input, setInput] = useState('')
   // Deliberately survive an agent switch, unlike the thread below them: these
   // are viewing preferences, and having one silently snap back is the more
@@ -256,6 +270,7 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
       // final reply is the authoritative one, and rebuilding the answer by
       // concatenating previews would drift the moment the two disagree.
       const res = await api.chatWithAgentStream(agentId, sessionId, message, {
+        userId,
         style: styleOn,
         voice: voiceOn,
         signal: controller.signal,
@@ -271,6 +286,7 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
           decision: res.decision,
           contentType: res.content_type,
           stageTrace: res.stage_trace,
+          tools: res.tools,
         },
       ])
     } catch (err) {
@@ -325,6 +341,11 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
             ) : (
               <span className="whitespace-pre-wrap">{m.content}</span>
             )}
+            {/* Rendered under the prose, not instead of it: the answer
+                explains, the calculator lets them change the numbers. */}
+            {m.tools?.map((suggestion) => (
+              <Calculator key={suggestion.tool_id} suggestion={suggestion} userId={userId} />
+            ))}
             {m.decision && <DecisionCard decision={m.decision} />}
             {m.stageTrace && m.stageTrace.length > 0 && (
               <>
