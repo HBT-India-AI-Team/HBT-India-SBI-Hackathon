@@ -39,24 +39,42 @@ from pathlib import Path
 _INDEX_PATH = Path(__file__).resolve().parent / "fixtures" / "style_index.json"
 _EMBED_MODEL = os.environ.get("STYLE_EMBED_MODEL", "bge-m3")
 
-# Measured against the 454-passage transcript corpus with
-# scripts/eval_style_examples.py. Re-run it after any corpus change.
+# Measured with scripts/eval_style_examples.py. Re-run it after any corpus
+# change -- these numbers move, and a stale threshold is invisible.
 #
-#   on-topic floor     0.496   (weakest finance question)
-#   off-topic ceiling  0.584   (best score junk achieves)
-#   usable gap        -0.088
+# 492-passage transcript corpus (hi 363, ta 129), merged, topic-scraped and
+# stripped of auto-caption markers:
 #
-# The gap is NEGATIVE: no threshold both serves every real question and
-# excludes every irrelevant one. "मेरे फोन की बैटरी जल्दी खत्म हो जाती है"
-# scores 0.584, above six of the ten finance questions, because the corpus is
-# thick with app walkthroughs that talk about phones.
+#            floor   ceiling    gap     at 0.60
+#   hi       0.546    0.575   -0.029    7/10 served, 0 junk
+#   ta       0.528    0.564   -0.036    3/8  served, 0 junk
 #
-# So this is set high rather than split down the middle. At 0.60 nothing
-# off-topic clears it (ceiling 0.584) and roughly six in ten real questions
-# still get examples; the rest are answered exactly as they are today. That
-# asymmetry is the whole argument: a missing exemplar costs nothing, while a
-# mismatched one re-voices a correct answer toward an unrelated topic. Style
-# is the one part of this system allowed to do nothing.
+# The previous Hindi-only corpus measured floor 0.496 / ceiling 0.584 / gap
+# -0.088 at 454 passages, so both ends improved: real questions score higher
+# and junk scores lower. Stripping ">>" caption markers moved the scores
+# barely at all -- bge-m3 largely ignores them -- but they were 56% of the
+# Tamil passages, and the point was the text shown to the model, not the
+# retrieval maths.
+#
+# The gap is still NEGATIVE in both languages: no threshold both serves every
+# real question and excludes every irrelevant one. "मेरे फोन की बैटरी जल्दी
+# खत्म हो जाती है" still scores 0.575, above three of the ten finance
+# questions, because the corpus is thick with app walkthroughs about phones.
+#
+# So this stays set high rather than split down the middle. At 0.60 nothing
+# off-topic clears it in either language; the questions that miss are
+# answered exactly as they are today. That asymmetry is the whole argument: a
+# missing exemplar costs nothing, while a mismatched one re-voices a correct
+# answer toward an unrelated topic. Style is the one part of this system
+# allowed to do nothing.
+#
+# 0.58 would serve 9/10 Hindi and 4/8 Tamil while still admitting no measured
+# junk -- but it clears Hindi's ceiling by 0.005, which is noise on an
+# eight-query off-topic set. Not worth two extra exemplars.
+#
+# MIN_SCORE is global. Tamil's ceiling (0.564) sits below Hindi's floor, so
+# one threshold works today; a language whose junk outscores another's real
+# questions is the case this design cannot express.
 MIN_SCORE = 0.60
 DEFAULT_K = 3
 MAX_K = 5
@@ -145,12 +163,15 @@ def register_guide(language: str | None) -> str:
     """A hand-written note on how a language is really spoken, or "".
 
     The retrieval half of this module needs a corpus, and a corpus is a
-    strong but slow instrument: Tamil has none yet, and the Hindi one that
-    does exist still only cleared the floor on five of twelve real questions
-    because it was collected by channel rather than by topic. This is the
-    half that fires regardless — short, written by hand, and held to exactly
-    the same rule as the passages: it may change wording and may not
-    introduce a fact.
+    strong but slow instrument. Tamil now has one — 129 passages — but it
+    clears the floor on only three of eight real questions, and those three
+    are exactly its best-covered topics: insurance, pension, personal loan.
+    Hindi, at 363, manages seven of ten. This is the half that fires
+    regardless — short, written by hand, and held to exactly the same rule as
+    the passages: it may change wording and may not introduce a fact.
+
+    That is the division of labour worth keeping: the guide covers every
+    question, the corpus deepens the ones it happens to know about.
 
     Guides are cached for the life of the process, like the index, so editing
     one needs a backend restart. Deleting a file turns its language off.

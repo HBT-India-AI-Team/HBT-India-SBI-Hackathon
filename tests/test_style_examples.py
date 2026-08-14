@@ -303,14 +303,54 @@ def test_passages_carrying_figures_are_dropped():
 
 
 def test_romanized_passages_are_dropped():
-    """Only Devanagari queries reach the index, so a romanized passage could be
-    embedded but never matched — keeping it would only inflate the count."""
+    """Retrieval routes on script, so a romanized passage could be embedded
+    but never matched — keeping it would only inflate the count."""
     keep, why = _filter()(
         "Personal loan unko milta hai jinki bank details badhiya ho, option "
         "personal loan ka unke phone mein hi aata hai bhai dekh lena"
     )
     assert keep is False
-    assert why == "not Devanagari"
+    assert why == "not in hi script"
+
+
+def test_a_passage_must_be_in_its_own_languages_script():
+    """The check is per language, not "is it Devanagari".
+
+    It was the latter, and every Tamil passage in the corpus — 601 of them —
+    was dropped as "not Devanagari" while the corpus looked like it had Tamil
+    in it. Nothing errored; the index simply had no Tamil and Tamil queries
+    retrieved nothing.
+    """
+    tamil = ("இன்சூரன்ஸையும் இன்வெஸ்ட்மென்ட்டையும் சேர்த்து குழப்பிக்காதீங்க, "
+             "டெர்ம் இன்சூரன்ஸ் தனியா எடுத்துக்கிட்டு மீதி பணத்தை முதலீடு பண்ணுங்க")
+    assert _filter()(tamil, "ta")[0] is True
+    # …and the same passage is correctly refused for Hindi.
+    assert _filter()(tamil, "hi") == (False, "not in hi script")
+
+
+def test_a_language_with_no_filter_set_is_refused_not_waved_through():
+    """Marathi is Devanagari, so a script-only check would have passed it —
+    while none of the claim or solicitation guards, all written in Hindi,
+    would fire on it. "No filter matched" must not look like "clean"."""
+    marathi = ("मुदत ठेवीवर मिळणारे व्याज हे तुमच्या एकूण उत्पन्नात धरले जाते "
+               "त्यामुळे कर भरताना ते विसरू नका असे तज्ञ सांगतात बरं का")
+    keep, why = _filter()(marathi, "mr")
+    assert keep is False
+    assert "no filter set" in why
+
+
+def test_auto_caption_markers_are_stripped_before_filtering():
+    """">>" is YouTube's speaker-change marker and was in 56% of the Tamil
+    passages. An exemplar is shown to the model as "write like this", so a
+    passage full of ">>" is an instruction to emit ">>"."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("bsi", "scripts/build_style_index.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.strip_caption_noise(">> ஓகே >> நீங்க") == "ஓகே நீங்க"
+    assert module.strip_caption_noise("क्या हुआ [संगीत] इस साल") == "क्या हुआ इस साल"
+    assert module.strip_caption_noise("  spaced   out  ") == "spaced out"
 
 
 def test_the_public_api_reads_a_boolean_the_way_clients_send_them():

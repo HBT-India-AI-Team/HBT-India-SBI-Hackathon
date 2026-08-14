@@ -112,6 +112,49 @@ _PRESENTER = re.compile(
 )
 
 _DEVANAGARI = re.compile(r"[ऀ-ॿ]")
+_TAMIL = re.compile(r"[஀-௿]")
+
+# Tamil counterparts of the four filters above. Written by hand from the same
+# principles, and deliberately NOT as battle-tested as the Hindi set -- those
+# were tuned against leakage actually observed in a built index, these are
+# not. Treat a Tamil passage that looks wrong in a reply as a bug here first.
+_TA_CLAIM = re.compile(
+    r"\d+\s*(?:%|சதவீத|சதவிகித)"                       # a rate
+    r"|₹\s*\d|\d+\s*(?:ரூபாய்|ரூபா)|ரூபாய்\s*\d"        # an amount
+    r"|\d+\s*(?:லட்ச|லச்ச|கோடி|ஆயிர)"                   # lakh / crore / thousand
+    r"|\bபிரிவு\s*\d|\b80\s*[சிcC]\b",                  # a tax section
+)
+_TA_NOISE = re.compile(
+    r"^\s*(?:@\w+|sir|sirji|சார்|ஐயா|அண்ணா|தல)\s*$"
+    r"|^\s*(?:thanks?|thank you|நன்றி|ரொம்ப நன்றி)\b",
+    re.IGNORECASE,
+)
+_TA_SOLICITATION = re.compile(
+    r"\b\d{10}\b|\+91[\s-]?\d"
+    r"|\b(?:whats?app|வாட்ஸ்அப்|டெலிகிராம்|telegram|dm|inbox)\b"
+    r"|100\s*%|💯"
+    r"|\b(?:agent|ஏஜென்ட்|கமிஷன்|commission)\b"
+    r"|(?:தொடர்பு\s*கொள்|கூப்பிடு|கால்\s*பண்ண)"
+    r"|(?:ஆப்|அப்ளிகேஷன்|செயலி|app)\s*(?:சொல்|காட்|யூஸ்|டவுன்லோட்|இன்ஸ்டால்)"
+    r"|(?:டவுன்லோட்|இன்ஸ்டால்|download|install)\s*(?:பண்ண|செய்|link|லிங்க்)"
+    r"|(?:லிங்க்|link)\s*(?:கீழ|டெஸ்கிரிப்ஷன்|description)"
+    r"|(?:சப்ஸ்கிரைப்|subscribe|சேனல)",
+    re.IGNORECASE,
+)
+_TA_PRESENTER = re.compile(
+    r"என்\s*பெயர்\s*\S+"
+    r"|நீங்க\s*பார்(?:த்து|க்கிற)"
+    r"|(?:வணக்கம்|ஹலோ)\b.{0,40}(?:நான்|உங்கள|நண்பர்)"
+    r"|(?:இந்த\s*வீடியோ|இன்னைக்கு\s*வீடியோ|வீடியோல\s*நாம)"
+    r"|(?:எபிசோட்|நிகழ்ச்சி)",
+)
+_TA_UI = re.compile(
+    r"ஸ்லைடர்|கேப்ச்சா|ஓடிபி|\bOTP\b|டேப்\s*பண்ண|கிளிக்\s*பண்ண|ஸ்கிரீன்|இன்டர்ஃபேஸ்"
+    r"|ஆப்ஷன்|பட்டன்|செல்ஃபி|அப்லோட்|லாக்\s*இன்|டாஷ்போர்டு|பேஜ்ல"
+    r"|தெரியுது|கீழ\s*ஸ்க்ரோல்|மெனுல",
+    re.IGNORECASE,
+)
+
 
 # Screen narration. A large slice of Hindi finance YouTube is someone walking
 # through an app -- "tap here, enter the OTP, upload a selfie" -- which is
@@ -128,8 +171,47 @@ _UI_MARKER = re.compile(
     r"|दिख रहा है|नीचे स्क्रॉल|मेनू में",
 )
 
+# Per language: the script its passages must be written in, and the filters
+# that judge them. A language absent from here is REJECTED rather than let
+# through -- an unfiltered passage is the dangerous case, since none of the
+# claim/solicitation guards would fire on a script they were not written for,
+# and "no filter matched" would look identical to "clean".
+#
+# Marathi is deliberately absent despite yielding 448 usable passages: it is
+# written in Devanagari, so style_examples.language_of() calls it "hi" and a
+# Marathi query can never route to an "mr" bucket. Indexing it would either
+# be dead weight or, tagged "hi", quietly re-voice Hindi answers in Marathi.
+_LANGUAGE_FILTERS: dict[str, dict] = {
+    "hi": {"script": _DEVANAGARI, "claim": _CLAIM, "noise": _NOISE,
+           "solicitation": _SOLICITATION, "presenter": _PRESENTER, "ui": _UI_MARKER},
+    "ta": {"script": _TAMIL, "claim": _TA_CLAIM, "noise": _TA_NOISE,
+           "solicitation": _TA_SOLICITATION, "presenter": _TA_PRESENTER, "ui": _TA_UI},
+}
 
-def looks_like_advice(text: str) -> tuple[bool, str]:
+
+# Auto-caption artefacts. `>>` is YouTube's speaker-change marker and
+# `[संगीत]` / `[music]` its sound tags -- neither is anything a person said.
+# They reached 56% of the Tamil passages and 17% overall in the first build
+# that included Tamil, and an exemplar is shown to the model as "write like
+# this", so a passage full of ">>" is an instruction to emit ">>".
+_CAPTION_NOISE = re.compile(
+    r">>+"
+    r"|\[[^\]]{0,24}\]"          # [music], [applause], [संगीत], [இசை]
+    r"|\((?:music|applause|laughter|संगीत|इसै|இசை)\)",
+    re.IGNORECASE,
+)
+
+
+def strip_caption_noise(text: str) -> str:
+    """Remove auto-caption artefacts and re-collapse the whitespace they leave.
+
+    Run before filtering, so length is judged on what remains rather than on
+    padding that was never speech.
+    """
+    return re.sub(r"\s+", " ", _CAPTION_NOISE.sub(" ", text)).strip()
+
+
+def looks_like_advice(text: str, language: str = "hi") -> tuple[bool, str]:
     """Keep passages that explain; drop questions, claims and noise.
 
     The corpus this was first pointed at is YouTube *comments*, which are
@@ -138,30 +220,41 @@ def looks_like_advice(text: str) -> tuple[bool, str]:
     filter is what makes a comment corpus survivable and a transcript corpus
     clean; it is deliberately strict, because a bad exemplar is worse than a
     missing one.
+
+    `language` selects the filter set. It used to be Hindi-only and hardcoded,
+    which meant every Tamil passage in the corpus was dropped as "not
+    Devanagari" -- 601 of them, silently, while the corpus looked like it had
+    Tamil in it.
     """
+    filters = _LANGUAGE_FILTERS.get(language)
+    if filters is None:
+        # Not "pass it through": nothing here would judge it. See
+        # _LANGUAGE_FILTERS.
+        return False, f"no filter set for '{language}'"
+
     stripped = text.strip()
     if not (MIN_CHARS <= len(stripped) <= MAX_CHARS):
         return False, "length"
-    if _NOISE.search(stripped):
+    if filters["noise"].search(stripped):
         return False, "noise"
-    if _SOLICITATION.search(stripped):
+    if filters["solicitation"].search(stripped):
         return False, "solicitation"
-    if _PRESENTER.search(stripped):
+    if filters["presenter"].search(stripped):
         return False, "presenter boilerplate"
-    if len(_UI_MARKER.findall(stripped)) >= 2:
+    if len(filters["ui"].findall(stripped)) >= 2:
         return False, "app screen narration"
-    if _CLAIM.search(stripped):
+    if filters["claim"].search(stripped):
         return False, "carries a figure"
 
-    # Retrieval routes on script: the index is keyed by language and only
-    # Devanagari queries reach it, so a romanized passage can be embedded but
-    # never matched. Requiring the script here keeps the index honest about
-    # what it can actually serve.
+    # Retrieval routes on script: style_examples.language_of() reads the
+    # query's Unicode block, so a passage must be in the block its own
+    # language routes to or it can be embedded and never matched. Requiring
+    # it here keeps the index honest about what it can actually serve.
     letters = [c for c in stripped if c.isalpha()]
     if not letters:
         return False, "no letters"
-    if sum(1 for c in letters if _DEVANAGARI.match(c)) / len(letters) < 0.6:
-        return False, "not Devanagari"
+    if sum(1 for c in letters if filters["script"].match(c)) / len(letters) < 0.6:
+        return False, f"not in {language} script"
     # A passage that is mostly a question is the audience's voice, not an
     # explainer's. One trailing question ("समझ आया?") is fine.
     if stripped.count("?") + stripped.count("？") > 1:
@@ -243,18 +336,23 @@ def load_corpus(corpus_dir: Path, stems: list[str]) -> list[dict]:
                 dropped["romanized (tagged)"] = dropped.get("romanized (tagged)", 0) + 1
                 continue
 
-            text = (record.get("text") or "").strip()
-            ok, why = looks_like_advice(text)
+            text = strip_caption_noise(record.get("text") or "")
+            language = record.get("language") or stem
+            ok, why = looks_like_advice(text, language)
             if not ok:
                 dropped[why] = dropped.get(why, 0) + 1
                 continue
-            language = record.get("language") or stem
             languages[language] = languages.get(language, 0) + 1
             rows.append({
                 "text": text,
                 "language": language,
                 "source": record.get("source", "unknown"),
                 "video_id": record.get("video_id"),
+                # Carried because merge_adjacent needs it to tell whether two
+                # chunks were neighbours. It was not, so `contiguous` was
+                # never true and --merge-adjacent silently did nothing: 1128
+                # chunks in, 1128 "passages" out, every one still a fragment.
+                "chunk_index": record.get("chunk_index"),
             })
             kept += 1
         detail = ", ".join(f"{k} {v}" for k, v in sorted(dropped.items()))
