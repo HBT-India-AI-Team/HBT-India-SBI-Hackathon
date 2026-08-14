@@ -8,6 +8,50 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-14 · Stream in the Playground, and untie streaming from voice mode
+
+`c533325` — 6 files, +219/−7
+
+Streaming was gated on voice, which conflated two independent things. Voice
+changes how an answer is *written* -- short, no markdown, no image. Streaming
+changes when the client *sees* it. A text client watching an answer appear
+wants the second without the first, and both combinations are legitimate.
+
+The gate is now "is anything consuming sentences": if a sink is registered,
+stream; otherwise take the ordinary path, which has the retry a stream cannot.
+There is no reason to pay that cost for sentences nothing will read.
+
+Adds POST /admin/agents/{agent_id}/chat/stream, the streaming counterpart to
+the Playground's chat route. Same handle_chat_turn, so a conversation can
+move between the two without losing its session. Emits `sentence` events as
+each is written, then `done` carrying every field the plain route returns --
+including evidence, so ChatTurnResult means the same thing on both.
+
+The Playground now shows the answer building sentence by sentence in a dashed
+provisional bubble, replaced by the authoritative reply on completion. Not
+concatenated from the previews: the final reply is the real one, and
+rebuilding from fragments would drift the moment the two disagreed.
+
+Read with fetch + a stream reader rather than EventSource, which cannot POST.
+Partial SSE frames are buffered -- a network chunk can split one in half, and
+parsing that half throws.
+
+Verified against the running backend with voice OFF, which is the case that
+was broken:
+
+    +11695ms  S1: The current interest rate for an SBI Savings Bank account is 2.5%...
+    +11884ms  S2: Please note that this single rate applies to all balances...
+    +12291ms  S3: While there are different types of accounts available—such as...
+    +12533ms  S4: The differences between these account types mainly relate to...
+    +12545ms  DONE (562 chars) sentences=4 first_sentence_ms=2502
+
+850ms of head start, and em-dashes, parentheticals, "2.5%" and "15 June 2025"
+all survived the splitter intact.
+
+## 2026-08-14 · Regenerate changelog
+
+`a07554e` — 1 file, +63/−31
+
 ## 2026-08-14 · Stream sentences to the client over SSE; stop calling TTS ourselves
 
 `94b6945` — 5 files, +237/−97
@@ -621,22 +665,3 @@ Now applies the same feedback to every rule-bearing skill independently
 (one refine_spec call each, mirroring generate_agent_skills' existing
 per-skill pattern), reports per-skill success/failure, and only fails the
 whole request if every skill's correction was invalid.
-
-## 2026-08-07 · Add per-agent input mode (chat/form/json/trigger) to Playground
-
-`9866fe6` — 8 files, +127/−22
-
-Different agents genuinely need different input shapes: evidence-driven
-agents work well as chat, flat-field search agents fit a form, agents with
-nested object/array input (proposal) need raw JSON, and lookup-only agents
-just need a trigger. agent.yaml now declares input_mode (default "chat");
-Playground shows the matching interface and lets it be changed inline via
-a new POST /admin/agents/{id}/input-mode endpoint instead of requiring a
-hand-edit of agent.yaml.
-
-## 2026-08-07 · Add a one-click "Accept draft" button
-
-`f4c159e` — 1 file, +37/−5
-
-Flips draft/routable in agent.yaml and saves, instead of requiring someone
-to hand-edit two YAML lines to get a generated agent out of draft status.
