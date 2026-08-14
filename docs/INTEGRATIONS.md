@@ -77,6 +77,48 @@ name before it reaches the prompt. If you omit it we fall back to Sarvam
 language ID when a key is configured, and to the model's own guess otherwise —
 but you have the ASR's own answer and we do not, so please keep sending it.
 
+### Streaming: `/agents/finguru/invoke/stream`
+
+For the voice path. **Same body, same `X-API-Key`** — only the response
+differs, so switching is a URL change plus how you read the reply.
+
+```
+POST /agents/finguru/invoke/stream
+Content-Type: application/json
+X-API-Key: <same key>
+
+{"evidence": {"question": "...", "voice": true, "language": "ta-IN", ...}}
+```
+
+Response is `text/event-stream`, one JSON object per `data:` line:
+
+```
+data: {"event":"sentence","index":1,"text":"…","elapsed_ms":12060.4}
+data: {"event":"sentence","index":2,"text":"…","elapsed_ms":12421.7}
+data: {"event":"done","run_id":"…","output":{...},"decision":null,"hitl":null}
+```
+
+- **`sentence`** — a finished sentence, emitted while the rest is still being
+  written. Speak these as they arrive.
+- **`done`** — carries the same `output` object `/invoke` returns
+  (`language`, `content_type`, `content`, `confidence`). Treat this as
+  authoritative and the sentences as an early preview; `content` is the
+  concatenation of them.
+- **`error`** — `{"event":"error","message":"…"}`. No further events follow.
+
+`EventSource` cannot POST, so read it with `fetch` + a `ReadableStream`
+reader, the way the admin UI already consumes `/admin/agents/generate/stream`.
+
+**Why we split the sentences and not you.** This agent's output is money.
+`₹1,06,398.02` split naively on the full stop becomes `₹1,06,398.` and `02` —
+two utterances, the first a wrong number spoken to someone who cannot see the
+screen. The splitter here knows about decimals, Indian digit grouping, `Rs.`,
+and the Devanagari danda `।`.
+
+**Measured head start: ~600 ms** on a 12.7 s turn. It is small, and the reason
+is [DECISIONS #18](DECISIONS.md): 81% of a turn is the tool loop, not answer
+generation. Streaming the answer cannot fix that.
+
 ### What they get back
 
 `/invoke` returns the reply at **`output.content`**, not `reply`:
@@ -138,26 +180,14 @@ attaching a Bearer token.
 | `POST /voice-api/synthesize` | `…/voice/synthesize` | `{text, language}` → WAV (TTS) |
 | `WS /voice-ws` | `…/voice/call?token=…` | live mode |
 
-### We now push to it as well
+**We never call any of these.** Synthesis, playback and the audio channel are
+entirely client-side. We produce text; they speak it.
 
-In voice mode we forward each sentence to the speech service the moment it is
-finished, rather than waiting for the whole answer. One `POST {"text",
-"language"}` per sentence.
-
-| var | default | |
-|---|---|---|
-| `VOICE_TTS_URL` | *(unset)* | unset means do not forward — streaming and its timing logs still run |
-| `VOICE_TTS_TOKEN` | *(unset)* | sent as `Authorization: Bearer …` |
-| `VOICE_TTS_TIMEOUT_SECONDS` | `10` | |
-
-Point `VOICE_TTS_URL` at the GPU box's synthesize endpoint. If they would
-rather we pushed over the already-open WebSocket than open a connection per
-sentence, `stream_to_speech(..., sink=…)` takes a callable — say the word and
-we will wire it to the socket instead.
-
-**A failed forward never fails the answer.** Every speech-side error is caught
-and counted; a reply that reached the user as text but not audio is a degraded
-success.
+An earlier version of the streaming work POSTed sentences to `/voice/synthesize`
+from this backend. That was wrong for this architecture and has been removed:
+the browser owns the speaker, so a WAV generated here had nowhere to go. What
+replaced it is the SSE endpoint below — we hand over text early, they decide
+what to do with it.
 
 Client side: `voice.js`, `useVoiceCall.js`.
 

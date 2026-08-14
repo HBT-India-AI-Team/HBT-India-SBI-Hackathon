@@ -7,7 +7,12 @@ generic over agent_id.
 """
 from __future__ import annotations
 
+import json
+import queue
 import sys
+import threading
+import time
+from contextvars import copy_context
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +26,7 @@ load_dotenv(Path(__file__).parent / ".env")
 
 import capabilities_impl  # noqa: E402,F401  (registers mock tools)
 from agent_platform.composition import list_agents, load_agent  # noqa: E402
+from agent_platform.llm import speech_stream  # noqa: E402
 from agent_platform.runtime import chat  # noqa: E402
 from agent_platform.runtime.executor import invoke_agent  # noqa: E402
 from agent_platform.state import get_run, list_runs  # noqa: E402
@@ -28,7 +34,7 @@ from agent_platform.workflows import list_workflows, run_workflow  # noqa: E402
 
 from fastapi import FastAPI, Header, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi.responses import HTMLResponse  # noqa: E402
+from fastapi.responses import HTMLResponse, StreamingResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from . import admin, api_keys, embed_page  # noqa: E402
@@ -158,6 +164,102 @@ def _style_summary(stage_trace: list[dict[str, Any]] | None) -> dict | None:
         if isinstance(detail, dict) and "style" in detail:
             return detail["style"]
     return None
+
+
+def _invoke_stream_events(agent_id: str, request: dict[str, Any]):
+    """Sentences as they are finished, then the same payload /invoke returns.
+
+    Same body and same key as /invoke — only the response differs, so a client
+    switching over changes a URL and how it reads the reply, nothing else.
+
+    Events, each a `data:` line of JSON:
+
+        {"event": "sentence", "index": 1, "text": "…", "elapsed_ms": 2630.8}
+        {"event": "done", "output": {...}, "run_id": "…", "decision": …}
+        {"event": "error", "message": "…"}
+
+    The run happens on a worker thread pushing into a queue that this
+    generator drains, because the pipeline is synchronous throughout and the
+    whole point is to emit before it has finished. The sink is carried into
+    that thread by copy_context — a ContextVar does not cross a thread
+    boundary on its own, and getting that wrong would look exactly like
+    "streaming produced no sentences".
+    """
+    events: queue.Queue = queue.Queue()
+    outcome: dict[str, Any] = {}
+
+    def sink(text: str, _language: str | None) -> None:
+        events.put({"event": "sentence", "text": text})
+
+    def worker() -> None:
+        speech_stream.sentence_sink.set(sink)
+        try:
+            ctx = invoke_agent(agent_id, raw_input=dict(request))
+            outcome["ctx"] = ctx
+        except Exception as exc:                # noqa: BLE001 - relayed below
+            outcome["error"] = f"{type(exc).__name__}: {exc}"
+        finally:
+            events.put(None)
+
+    # copy_context so the sink set above is visible to the pipeline, which
+    # runs inside this thread.
+    threading.Thread(target=copy_context().run, args=(worker,), daemon=True).start()
+
+    started = time.perf_counter()
+    index = 0
+    while True:
+        event = events.get()
+        if event is None:
+            break
+        index += 1
+        event["index"] = index
+        event["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 1)
+        yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+    if "error" in outcome:
+        yield f"data: {json.dumps({'event': 'error', 'message': outcome['error']})}\n\n"
+        return
+
+    ctx = outcome.get("ctx")
+    if ctx is None or ctx.error:
+        message = (ctx.error or {}).get("message") if ctx else "run produced nothing"
+        yield f"data: {json.dumps({'event': 'error', 'message': message})}\n\n"
+        return
+
+    # The same fields /invoke returns, so a client can treat this as the
+    # authoritative reply and the sentences purely as an early preview.
+    yield "data: " + json.dumps({
+        "event": "done",
+        "run_id": ctx.run_id,
+        "output": ctx.validated_output,
+        "decision": ctx.decision,
+        "hitl": ctx.hitl,
+    }, ensure_ascii=False) + "\n\n"
+
+
+@app.post("/agents/{agent_id}/invoke/stream")
+def invoke_agent_stream(agent_id: str, request: dict[str, Any],
+                        x_api_key: str | None = Header(default=None)) -> StreamingResponse:
+    """Streaming counterpart to /invoke: same body, same key, sentences first.
+
+    For a client that speaks the reply aloud. Waiting for a 10-25 second
+    answer before saying any of it is silence then a monologue; this hands
+    over each sentence as it is finished so the first words can be spoken
+    while the rest is still being written.
+
+    Sentence boundaries are computed here rather than by the client because
+    getting them wrong is not cosmetic: this agent's output is money, and
+    "₹1,06,398.02" split on the full stop becomes "₹1,06,398." and "02" — two
+    utterances, the first a wrong number spoken to someone who cannot see the
+    screen.
+    """
+    if not api_keys.is_valid(agent_id, x_api_key):
+        raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key for this agent")
+    return StreamingResponse(
+        _invoke_stream_events(agent_id, request),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/agents/{agent_id}/chat")

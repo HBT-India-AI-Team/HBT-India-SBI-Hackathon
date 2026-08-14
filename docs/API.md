@@ -23,6 +23,7 @@ These are the only ones an outside team should be calling.
 | `GET` | `/agents/{agent_id}` | — | Get Agent |
 | `POST` | `/agents/{agent_id}/chat` | yes | The public, key-gated counterpart to /invoke: same auth, but takes free-text ({"session_id": str \| null, "message": str}) instead |
 | `POST` | `/agents/{agent_id}/invoke` | yes | Body is the agent's raw input as-is (e.g |
+| `POST` | `/agents/{agent_id}/invoke/stream` | yes | Streaming counterpart to /invoke: same body, same key, sentences first |
 | `GET` | `/embed/{agent_id}` | — | What a client's site iframes in |
 | `GET` | `/healthz` | — | Healthz |
 

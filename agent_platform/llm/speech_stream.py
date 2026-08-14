@@ -1,9 +1,14 @@
-"""Speak each sentence the moment it is finished, not when the answer is.
+"""Emit each sentence the moment it is finished, not when the answer is.
 
-A grounded reply here runs 10-25 seconds. Waiting for all of it before
-speaking any of it means the listener hears silence for the whole of that,
-then a monologue. Forwarding sentence by sentence turns the wait into
-time-to-first-word, which is a fraction of it.
+A grounded reply here runs 10-25 seconds. A client that waits for all of it
+before speaking any of it leaves the listener in silence for the whole of
+that, then delivers a monologue. Handing over sentence by sentence turns the
+wait into time-to-first-word, which is a fraction of it.
+
+**We produce text and nothing else.** Speech synthesis, playback and the
+audio channel all belong to the client; this side never calls a TTS service.
+An earlier version did, which was wrong for this architecture: the browser
+owns the speaker, so a WAV generated here would have had nowhere to go.
 
 ## Shape
 
@@ -11,64 +16,53 @@ time-to-first-word, which is a fraction of it.
                                                                 │
                                         one task per sentence ──┘
                                                                 ▼
-                                                          speech service
+                                                        sink (SSE, socket…)
 
 `requests` has no async form and nothing async is installed, so the read runs
 in a worker thread via `asyncio.to_thread` and feeds a queue. Each finished
-sentence is dispatched with `create_task`, so a slow or unreachable speech
-service never stalls token consumption — which is the whole point of doing
-this at all. Tasks are awaited once at the end.
+sentence is dispatched with `create_task`, so a slow consumer never stalls
+token consumption — which is the whole point of doing this at all. Tasks are
+awaited once at the end.
 
 ## What it refuses to do
 
-**It does not fail the answer.** Every speech-side error is caught and
-counted. A reply that reached the user as text but not as audio is a degraded
-success; an exception here would turn it into nothing at all.
+**It does not fail the answer.** Every sink error is caught and counted. A
+reply that arrived whole at the end but not sentence-by-sentence is a
+degraded success; an exception here would turn it into nothing at all.
 
 **It does not retry a broken stream.** By the time a stream dies, part of it
-has already been spoken. Replaying from the top would repeat audio the
-listener has heard. The caller falls back to the non-streaming path.
+has already gone out and may already have been spoken. Replaying from the top
+would repeat it. The caller falls back to the non-streaming path.
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
-import os
 import queue
 import threading
 import time
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, Callable
-
-import requests
 
 from agent_platform.llm.streaming import JsonStringField, SentenceSplitter
 
 logger = logging.getLogger(__name__)
 
-# Read per call, not at import. Captured at import these would freeze whatever
-# the environment held the first time this module was touched -- so adding
-# VOICE_TTS_URL to .env would appear to do nothing until someone worked out
-# that a restart was needed, and a test could not point it anywhere. The cost
-# is a dict lookup per sentence.
+# The sink a run should send its sentences to, set by whoever is streaming.
 #
-# The speech service is on another machine (the GPU box). Unset means "do not
-# forward": streaming still runs and still logs its timings, it simply has
-# nowhere to send to, which is correct on a laptop with no GPU peer.
-def _tts_url() -> str:
-    return os.environ.get("VOICE_TTS_URL", "").strip()
-
-
-def _tts_token() -> str:
-    return os.environ.get("VOICE_TTS_TOKEN", "").strip()
-
-
-def _tts_timeout() -> float:
-    try:
-        return float(os.environ.get("VOICE_TTS_TIMEOUT_SECONDS", "10"))
-    except ValueError:
-        return 10.0
+# A ContextVar rather than an argument because the sink is decided at the HTTP
+# edge and consumed six frames down, inside a pipeline stage whose signature
+# is shared with every other agent. Threading a callable through all of that
+# would put a speech concern into code that has nothing to do with speech.
+#
+# It does not cross a thread boundary by itself -- a worker must be started
+# with contextvars.copy_context().run(...) for the value to follow it, which
+# is what backend/main.py does.
+sentence_sink: ContextVar[Callable[[str, str | None], None] | None] = ContextVar(
+    "sentence_sink", default=None,
+)
 
 # The field of the output contract that holds the words to speak. The rest of
 # the object -- language, content_type, confidence -- is machinery.
@@ -98,40 +92,26 @@ class StreamResult:
         return self.sentences[0].elapsed_ms if self.sentences else None
 
 
-def _post_sentence(text: str, language: str | None) -> None:
-    """One blocking POST to the speech service. Raises on failure."""
-    headers = {"Content-Type": "application/json"}
-    token = _tts_token()
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    payload: dict[str, Any] = {"text": text}
-    if language:
-        payload["language"] = language
-    response = requests.post(_tts_url(), json=payload, headers=headers,
-                             timeout=_tts_timeout())
-    response.raise_for_status()
-
-
 async def _forward(event: SentenceEvent, language: str | None,
                    sink: Callable[[str, str | None], None] | None) -> None:
-    """Hand one sentence to speech, off the token-reading path.
+    """Hand one sentence to the consumer, off the token-reading path.
 
-    Every failure is swallowed into the event. The listener losing one
-    sentence of audio is bad; the caller losing the whole answer because a
-    speech box was down is worse.
+    Every failure is swallowed into the event. The client losing one sentence
+    early is bad; losing the whole answer because a consumer misbehaved is
+    worse -- the full text is still returned at the end either way.
     """
-    send = sink or _post_sentence
-    if send is _post_sentence and not _tts_url():
-        # Nothing configured to speak to. Streaming and its timings still ran;
-        # this is the state on any machine without a GPU peer.
-        event.error = "VOICE_TTS_URL not set"
+    send = sink or sentence_sink.get()
+    if send is None:
+        # No one is listening. Splitting and timing still ran, which is what
+        # every non-streaming caller sees.
+        event.error = "no sink"
         return
     try:
         await asyncio.to_thread(send, event.text, language)
         event.forwarded = True
     except Exception as exc:                    # noqa: BLE001 - never fatal
         event.error = f"{type(exc).__name__}: {exc}"
-        logger.warning("Sentence %d not spoken: %s", event.index, event.error)
+        logger.warning("Sentence %d not delivered: %s", event.index, event.error)
 
 
 def _drain_to_queue(stream, q: "queue.Queue[Any]") -> None:

@@ -246,25 +246,52 @@ def test_a_broken_stream_is_raised_not_half_answered():
     assert sent == ["First."], "what was already spoken should have been spoken"
 
 
-def test_the_endpoint_is_read_per_call_not_at_import(monkeypatch):
-    """Captured at import, VOICE_TTS_URL would freeze at whatever the
-    environment held when this module was first touched — so adding it to
-    .env would appear to do nothing until someone worked out that a restart
-    was needed. That is exactly the kind of silent no-op this codebase has
-    already shipped three times."""
+def test_this_side_never_calls_a_speech_service():
+    """Synthesis, playback and the audio channel are the client's. An earlier
+    version POSTed to a TTS endpoint, which was wrong for this architecture:
+    the browser owns the speaker, so a WAV produced here had nowhere to go."""
+    import ast
+    import inspect
+
     from agent_platform.llm import speech_stream
 
-    monkeypatch.delenv("VOICE_TTS_URL", raising=False)
-    assert speech_stream._tts_url() == ""
+    tree = ast.parse(inspect.getsource(speech_stream))
+    imported = {
+        alias.name.split(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import) for alias in node.names
+    } | {
+        node.module.split(".")[0]
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module
+    }
+    assert "requests" not in imported, f"must not make HTTP calls; imports {imported}"
+    assert "httpx" not in imported and "urllib" not in imported
 
-    monkeypatch.setenv("VOICE_TTS_URL", "http://gpu-box:8001/voice/synthesize")
-    assert speech_stream._tts_url() == "http://gpu-box:8001/voice/synthesize"
+
+def test_the_sink_can_be_supplied_by_context(monkeypatch):
+    """The sink is chosen at the HTTP edge and consumed six frames down,
+    inside a stage shared with every other agent. A ContextVar keeps a speech
+    concern out of signatures that have nothing to do with speech."""
+    from agent_platform.llm import speech_stream
+
+    seen: list[str] = []
+    token = speech_stream.sentence_sink.set(lambda text, _lang: seen.append(text))
+    try:
+        adapter = _FakeAdapter({"language": "English", "content_type": "text",
+                                "content": "One. Two."})
+        result = asyncio.run(stream_to_speech(adapter, system_prompt="s",
+                                              user_prompt="u", schema={}))
+    finally:
+        speech_stream.sentence_sink.reset(token)
+
+    assert seen == ["One.", "Two."]
+    assert all(s.forwarded for s in result.sentences)
 
 
-def test_with_no_endpoint_configured_streaming_still_runs(monkeypatch):
-    """The state the backend is actually in until a GPU box address exists:
-    sentences are split and timed, they just have nowhere to go."""
-    monkeypatch.delenv("VOICE_TTS_URL", raising=False)
+def test_with_nobody_listening_streaming_still_runs():
+    """Every non-streaming caller is in this state: sentences are split and
+    timed, they simply have nowhere to go."""
     adapter = _FakeAdapter({"language": "English", "content_type": "text",
                             "content": "One. Two."})
 
@@ -273,7 +300,7 @@ def test_with_no_endpoint_configured_streaming_still_runs(monkeypatch):
 
     assert [s.text for s in result.sentences] == ["One.", "Two."]
     assert not any(s.forwarded for s in result.sentences)
-    assert all(s.error == "VOICE_TTS_URL not set" for s in result.sentences)
+    assert all(s.error == "no sink" for s in result.sentences)
     assert result.parsed["content"] == "One. Two."
 
 
