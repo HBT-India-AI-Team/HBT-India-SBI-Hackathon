@@ -56,6 +56,28 @@ HI_OFF_TOPIC = [
     "मेरी तबीयत ठीक नहीं है, कौन सी दवा लूं?",
     "ट्रेन का टिकट कैसे बुक करें?",
     "बच्चों के लिए कौन सा स्कूल अच्छा है?",
+    # The ceiling decides the threshold, so it deserves more than a handful of
+    # samples. Eight was too few: it put the Hindi ceiling at 0.575 and made a
+    # 0.58 threshold look safe.
+    "मेरा फोन हैंग हो रहा है, कौन सा ऐप डिलीट करूं?",
+    "मेरे मोबाइल का इंटरनेट बहुत धीमा चल रहा है",
+    "मुझे नई नौकरी के लिए रिज्यूमे बनाना है",
+    "घर की सफाई के लिए कौन सी मशीन अच्छी है?",
+]
+
+# Banking-ADJACENT, not junk. These are what an app's users genuinely ask, and
+# the corpus is thick with app walkthroughs, so they score high: "ऑनलाइन फॉर्म
+# भरने में क्या दस्तावेज लगते हैं" hits 0.641, above every real question here.
+#
+# Kept out of the ceiling deliberately. Excluding them would need a threshold
+# that also excludes half the real questions, and the cost of serving them is
+# small -- a style exemplar of a finance creator explaining an app is not a
+# bad voice for an OTP question. They are reported so the number is visible
+# rather than quietly folded into "junk admitted".
+HI_NEAR_MISS = [
+    "ऐप में लॉगिन करते समय ओटीपी नहीं आ रहा है",
+    "ऑनलाइन फॉर्म भरने में क्या क्या दस्तावेज लगते हैं?",
+    "गाड़ी का इंश्योरेंस क्लेम कैसे करें एक्सीडेंट के बाद?",
 ]
 
 # Tamil, chosen against what the Tamil corpus actually covers -- its tagged
@@ -80,11 +102,19 @@ TA_OFF_TOPIC = [
     "2011 உலகக் கோப்பையை யாரு ஜெயிச்சாங்க?",
     "ரயில் டிக்கெட் எப்படி புக் பண்றது?",
     "குழந்தைகளுக்கு எந்தப் பள்ளி நல்லது?",
+    "என் ஃபோன் ஹேங் ஆகுது, எந்த ஆப் டெலீட் பண்ணனும்?",
+    "புது வேலைக்கு ரெஸ்யூம் எப்படி தயார் பண்றது?",
 ]
 
-CASES: dict[str, tuple[list[str], list[str]]] = {
-    "hi": (HI_ON_TOPIC, HI_OFF_TOPIC),
-    "ta": (TA_ON_TOPIC, TA_OFF_TOPIC),
+TA_NEAR_MISS = [
+    "ஆப்ல லாக்இன் பண்ணும்போது ஓடிபி வரலை",
+    "ஆன்லைன் ஃபார்ம் நிரப்ப என்னென்ன ஆவணங்கள் தேவை?",
+    "கார் இன்சூரன்ஸ் கிளெய்ம் விபத்துக்குப் பிறகு எப்படி?",
+]
+
+CASES: dict[str, tuple[list[str], list[str], list[str]]] = {
+    "hi": (HI_ON_TOPIC, HI_OFF_TOPIC, HI_NEAR_MISS),
+    "ta": (TA_ON_TOPIC, TA_OFF_TOPIC, TA_NEAR_MISS),
 }
 
 
@@ -110,7 +140,8 @@ def best_scores(query: str, language: str) -> list[float]:
     return scores[:3]
 
 
-def evaluate(language: str, on_topic: list[str], off_topic: list[str]) -> None:
+def evaluate(language: str, on_topic: list[str], off_topic: list[str],
+             near_miss: list[str]) -> None:
     threshold = style_examples.MIN_SCORE
     print("=" * 62)
     print(f"  {language.upper()}")
@@ -135,6 +166,11 @@ def evaluate(language: str, on_topic: list[str], off_topic: list[str]) -> None:
         top = best_scores(query, language)[0]
         off_best.append(top)
         print(f"  {top:.3f} {'✗ LEAKS' if top >= threshold else '       '} {query[:56]}")
+
+    print("\nBANKING-ADJACENT (not junk — reported, not counted in the ceiling)")
+    for query in near_miss:
+        top = best_scores(query, language)[0]
+        print(f"  {top:.3f} {'· served' if top >= threshold else '       '} {query[:56]}")
 
     floor, ceiling = min(on_best), max(off_best)
     served = sum(1 for s in on_best if s >= threshold)
@@ -161,8 +197,8 @@ def evaluate(language: str, on_topic: list[str], off_topic: list[str]) -> None:
 
 
 def main() -> int:
-    for language, (on_topic, off_topic) in CASES.items():
-        evaluate(language, on_topic, off_topic)
+    for language, (on_topic, off_topic, near_miss) in CASES.items():
+        evaluate(language, on_topic, off_topic, near_miss)
     # One threshold serves every language, so the binding constraint is the
     # highest off-topic ceiling across all of them, not each language's own.
     print("MIN_SCORE is global. A language whose junk scores higher than another's"

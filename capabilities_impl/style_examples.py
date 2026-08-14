@@ -42,19 +42,24 @@ _EMBED_MODEL = os.environ.get("STYLE_EMBED_MODEL", "bge-m3")
 # Measured with scripts/eval_style_examples.py. Re-run it after any corpus
 # change -- these numbers move, and a stale threshold is invisible.
 #
-# 492-passage transcript corpus (hi 363, ta 129), merged, topic-scraped and
-# stripped of auto-caption markers:
+# 535-passage transcript corpus (hi 379, ta 156), after five videos were
+# scraped specifically for the topics that were scoring lowest:
 #
 #            floor   ceiling    gap     at 0.60
-#   hi       0.546    0.575   -0.029    7/10 served, 0 junk
-#   ta       0.528    0.564   -0.036    3/8  served, 0 junk
+#   hi       0.586    0.575   +0.011    7/10 served, 0 junk
+#   ta       0.555    0.564   -0.009    5/8  served, 0 junk
 #
-# The previous Hindi-only corpus measured floor 0.496 / ceiling 0.584 / gap
-# -0.088 at 454 passages, so both ends improved: real questions score higher
-# and junk scores lower. Stripping ">>" caption markers moved the scores
-# barely at all -- bge-m3 largely ignores them -- but they were 56% of the
-# Tamil passages, and the point was the text shown to the model, not the
-# retrieval maths.
+# Where it started, and each step:
+#
+#            passages          hi floor   ta served
+#   before    454 (hi only)      0.496     no corpus at all
+#   +Tamil    492 (363/129)      0.546     3/8
+#   +5 videos 535 (379/156)      0.586     5/8
+#
+# The topic-targeted scrape is what moved Tamil: gold loan went 0.521 -> 0.639
+# and FD 0.553 -> 0.728, both from one video each. Coverage predicts score
+# closely enough that the remaining misses name their own fix -- Tamil
+# budgeting (0.555) and Hindi senior-citizen income (0.586) are the next two.
 #
 # The gap is still NEGATIVE in both languages: no threshold both serves every
 # real question and excludes every irrelevant one. "मेरे फोन की बैटरी जल्दी
@@ -68,9 +73,21 @@ _EMBED_MODEL = os.environ.get("STYLE_EMBED_MODEL", "bge-m3")
 # answer toward an unrelated topic. Style is the one part of this system
 # allowed to do nothing.
 #
-# 0.58 would serve 9/10 Hindi and 4/8 Tamil while still admitting no measured
-# junk -- but it clears Hindi's ceiling by 0.005, which is noise on an
-# eight-query off-topic set. Not worth two extra exemplars.
+# Hindi's gap is positive now, and the eval suggests 0.58 -- which would serve
+# 10/10 Hindi and 7/8 Tamil with no measured junk. It is still NOT taken: 0.58
+# clears Hindi's junk ceiling by 0.005, and 0.005 of cosine is noise. The
+# off-topic set was widened from 8 queries to 12 partly to test exactly this,
+# and while the ceiling held at 0.575, holding is not the same as proving a
+# 0.005 margin. Revisit if the ceiling drops, not because the floor rose.
+#
+# What that widening did show: three banking-ADJACENT queries -- OTP not
+# arriving, documents for an online form, a motor-insurance claim -- score
+# 0.616 to 0.641, above every real question here. They are reported by the
+# eval but deliberately excluded from the ceiling, because no threshold
+# separates them from real banking questions and the cost of serving them is
+# small: a finance creator explaining an app is not a bad voice for an OTP
+# question. Folding them into "junk" would have argued for a threshold that
+# also excluded half the questions this exists to serve.
 #
 # MIN_SCORE is global. Tamil's ceiling (0.564) sits below Hindi's floor, so
 # one threshold works today; a language whose junk outscores another's real
@@ -163,12 +180,12 @@ def register_guide(language: str | None) -> str:
     """A hand-written note on how a language is really spoken, or "".
 
     The retrieval half of this module needs a corpus, and a corpus is a
-    strong but slow instrument. Tamil now has one — 129 passages — but it
-    clears the floor on only three of eight real questions, and those three
-    are exactly its best-covered topics: insurance, pension, personal loan.
-    Hindi, at 363, manages seven of ten. This is the half that fires
-    regardless — short, written by hand, and held to exactly the same rule as
-    the passages: it may change wording and may not introduce a fact.
+    strong but slow instrument. Tamil now has one — 156 passages — clearing
+    the floor on five of eight real questions, up from three before five
+    videos were scraped for its weakest topics. Hindi, at 379, manages seven
+    of ten. This is the half that fires regardless — short, written by hand,
+    and held to exactly the same rule as the passages: it may change wording
+    and may not introduce a fact.
 
     That is the division of labour worth keeping: the guide covers every
     question, the corpus deepens the ones it happens to know about.
