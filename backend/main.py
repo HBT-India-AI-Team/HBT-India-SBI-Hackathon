@@ -310,13 +310,23 @@ def _invoke_stream_events(agent_id: str, request: dict[str, Any]):
         yield f"data: {json.dumps({'event': 'error', 'message': message})}\n\n"
         return
 
+    # Recorded here as well as in /invoke, and deliberately not only there:
+    # a client that switches to streaming must not silently stop appearing in
+    # its own history. Same identity rule -- no identity, no write.
+    question = _request_message(request)
+    session_id = chat_store.record_turn(
+        agent_id=agent_id, identity=_request_identity(request),
+        question=question, answer=(ctx.validated_output or {}).get("content") or "",
+    )
+
     # The same fields /invoke returns, so a client can treat this as the
     # authoritative reply and the sentences purely as an early preview.
     yield "data: " + json.dumps({
         "event": "done",
         "run_id": ctx.run_id,
+        "session_id": session_id,
         "tools": tool_suggest.suggest(
-            _request_message(request),
+            question,
             [{"detail": r.detail} for r in ctx.stage_results],
         ),
         "output": ctx.validated_output,
