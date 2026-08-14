@@ -76,6 +76,40 @@ def test_a_tool_call_opens_a_prefilled_calculator():
     assert [f["key"] for f in suggestion["tool"]["inputs"]] == ["principal", "rate", "months"]
 
 
+def test_a_goal_question_prefills_the_answer_it_computed():
+    """"2 crore in 20 years — what monthly SIP?" never *supplies* a monthly
+    investment, it computes one. Reading the call's arguments alone leaves the
+    calculator's main field blank directly under a reply that just quoted the
+    figure for it, so the computed value is read out of the result."""
+    trace = [{"detail": {"tool_calls": [{
+        "name": "money.sip_required_for_goal",
+        "arguments": {"target_amount": 20000000, "annual_return_percent": 12, "years": 20},
+        "result": {"ok": True, "required_monthly_investment": 20016.81},
+    }]}}]
+
+    [suggestion] = tool_suggest.suggest("2 crore corpus in 20 years?", trace)
+
+    assert suggestion["reason"] == "computed"
+    assert suggestion["prefill"] == {
+        "annual_return": 12, "years": 20, "monthly_investment": 20016.81}
+    # Every field the widget renders is filled, so it opens showing a result
+    # rather than an empty form.
+    assert set(suggestion["prefill"]) == {f["key"] for f in suggestion["tool"]["inputs"]}
+
+
+def test_a_failed_capability_prefills_nothing_from_its_result():
+    """No number reached the prose, so none should reach the widget."""
+    trace = [{"detail": {"tool_calls": [{
+        "name": "money.sip_required_for_goal",
+        "arguments": {"target_amount": -5, "annual_return_percent": 12, "years": 20},
+        "result": {"ok": False, "reason": "target_amount must be > 0"},
+    }]}}]
+
+    [suggestion] = tool_suggest.suggest("corpus?", trace)
+
+    assert "monthly_investment" not in suggestion["prefill"]
+
+
 def test_naming_the_topic_opens_an_empty_calculator():
     """"How does EMI work?" has nothing to compute, so no tool runs — and that
     is exactly when someone wants a blank calculator to try numbers in."""

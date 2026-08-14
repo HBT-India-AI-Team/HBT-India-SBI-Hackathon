@@ -32,23 +32,43 @@ from typing import Any
 
 from . import tool_store
 
-# Capability -> (tool_id, {capability arg: widget input key}).
-# The argument names differ between the two on purpose; see tool_store.
-_FROM_CAPABILITY: dict[str, tuple[str, dict[str, str]]] = {
-    "finance.calculate_emi": ("emi_calculator", {
-        "principal": "principal",
-        "annual_rate_percent": "rate",
-        "tenure_months": "months",
-    }),
-    "money.sip_projection": ("fire_calculator", {
-        "monthly_investment": "monthly_investment",
-        "annual_return_percent": "annual_return",
-        "years": "years",
-    }),
-    "money.sip_required_for_goal": ("fire_calculator", {
-        "annual_return_percent": "annual_return",
-        "years": "years",
-    }),
+# Capability -> which calculator it fills, and where each widget field comes
+# from. `args` reads what the capability was called with; `result` reads what
+# it returned. Capability argument names differ from widget input keys on
+# purpose; see tool_store.
+#
+# `result` exists for the inverse capabilities. A goal question --  "2 crore in
+# 20 years, what monthly SIP?" -- never *supplies* a monthly investment, it
+# computes one, so reading arguments alone leaves the widget's main field
+# blank next to a reply that just quoted the answer for it. Taking it from the
+# result fills the calculator with the same figure the prose states, which is
+# the point: the widget must not be able to disagree with the sentence above
+# it.
+_FROM_CAPABILITY: dict[str, dict[str, Any]] = {
+    "finance.calculate_emi": {
+        "tool_id": "emi_calculator",
+        "args": {
+            "principal": "principal",
+            "annual_rate_percent": "rate",
+            "tenure_months": "months",
+        },
+    },
+    "money.sip_projection": {
+        "tool_id": "fire_calculator",
+        "args": {
+            "monthly_investment": "monthly_investment",
+            "annual_return_percent": "annual_return",
+            "years": "years",
+        },
+    },
+    "money.sip_required_for_goal": {
+        "tool_id": "fire_calculator",
+        "args": {
+            "annual_return_percent": "annual_return",
+            "years": "years",
+        },
+        "result": {"required_monthly_investment": "monthly_investment"},
+    },
 }
 
 # Word-boundary matched so "premium" does not trigger on "emi", which it
@@ -75,6 +95,35 @@ def _tool_calls(stage_trace: list[dict[str, Any]] | None) -> list[dict[str, Any]
     return calls
 
 
+def _prefill(call: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
+    """The numbers this calculator should open on.
+
+    Arguments win over results where both could supply a field: an argument is
+    what the user actually said, a result is something derived from it. They
+    do not overlap today, and this keeps them from silently doing so later.
+
+    A failed capability (`ok: False`) contributes nothing from its result --
+    the prose has no number in that case, so neither should the widget.
+    """
+    prefill: dict[str, Any] = {}
+
+    arguments = call.get("arguments")
+    if isinstance(arguments, dict):
+        for capability_arg, widget_key in mapping.get("args", {}).items():
+            value = arguments.get(capability_arg)
+            if value is not None:
+                prefill[widget_key] = value
+
+    result = call.get("result")
+    if isinstance(result, dict) and result.get("ok") is not False:
+        for result_key, widget_key in mapping.get("result", {}).items():
+            value = result.get(result_key)
+            if value is not None:
+                prefill.setdefault(widget_key, value)
+
+    return prefill
+
+
 def _definition(tool_id: str) -> dict[str, Any] | None:
     try:
         return tool_store.get_tool_by_id(tool_id)
@@ -96,15 +145,10 @@ def suggest(message: str, stage_trace: list[dict[str, Any]] | None = None) -> li
         mapping = _FROM_CAPABILITY.get(call.get("name") or "")
         if mapping is None:
             continue
-        tool_id, arg_map = mapping
+        tool_id = mapping["tool_id"]
         if tool_id in suggestions:
             continue
-        arguments = call.get("arguments") or {}
-        prefill = {
-            widget_key: arguments[capability_arg]
-            for capability_arg, widget_key in arg_map.items()
-            if isinstance(arguments, dict) and arguments.get(capability_arg) is not None
-        }
+        prefill = _prefill(call, mapping)
         definition = _definition(tool_id)
         if definition is None:
             continue
