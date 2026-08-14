@@ -1,0 +1,185 @@
+{
+  "_comment": [
+    "SBI debit-card merchant offers, scraped from the bank's own offers page.",
+    "",
+    "These are NOT rates. A rate drifts and gets stale; an offer ends on a date",
+    "and is then simply wrong to quote. So every entry carries valid_from and",
+    "valid_to where the page states them, and india.get_card_offers computes",
+    "active/expired against today rather than storing a flag that would rot.",
+    "",
+    "Where the page gives no dates -- Cleartrip, Flipkart Travel, the business",
+    "card bundle, the Visa activation voucher -- valid_from and valid_to are",
+    "null and the capability reports dates_published: false. Inventing a window",
+    "would be worse than admitting there isn't one.",
+    "",
+    "verbatim holds the page's own wording for each offer, so a reply can be",
+    "checked against the source without re-scraping."
+  ],
+  "source_url": "https://sbi.bank.in/web/personal-banking/cards/debit-card/debit-card-offers",
+  "source_name": "State Bank of India — Debit Card Offers",
+  "page_last_updated": "2026-08-11",
+  "as_of": "2026-08-15",
+  "max_age_days": 30,
+  "offers": [
+    {
+      "id": "reliance_digital",
+      "merchant": "Reliance Digital",
+      "category": "electronics",
+      "title": "Instant Discount On Reliance Digital",
+      "valid_from": "2026-08-11",
+      "valid_to": "2026-08-16",
+      "additional_windows": [
+        {
+          "label": "Onam period (Kerala offline stores only)",
+          "valid_from": "2026-08-21",
+          "valid_to": "2026-08-30"
+        }
+      ],
+      "discount_type": "slab",
+      "slabs": [
+        {"reads_as": "Spend Rs 10,000 to Rs 49,999: 7.5% off, capped at Rs 1,500",
+         "min_spend": 10000, "max_spend": 49999, "discount_percent": 7.5, "max_discount": 1500},
+        {"reads_as": "Spend Rs 50,000 to Rs 99,999: flat Rs 2,500 off",
+         "min_spend": 50000, "max_spend": 99999, "flat_discount": 2500},
+        {"reads_as": "Spend Rs 1,00,000 to Rs 1,99,999: flat Rs 5,000 off",
+         "min_spend": 100000, "max_spend": 199999, "flat_discount": 5000},
+        {"reads_as": "Spend Rs 2,00,000 or more: flat Rs 10,000 off",
+         "min_spend": 200000, "max_spend": null, "flat_discount": 10000}
+      ],
+      "channels": ["Reliance Digital stores", "My Jio Store", "Jio Signature Store",
+                   "BSNL Stores (Kerala)", "Reliance Digital online", "JioMart",
+                   "Digital ASP", "JioMart Electronics"],
+      "verbatim": "Independence Day Period: 11th Aug 2026 to 16th Aug 2026 (For offline stores + Online platforms). Onam Period: 21st Aug 2026 to 30th Aug 2026 (Only for Kerala offline stores). Rs 10,000 Upto Rs 49,999: 7.5% Upto 1500. Above Rs 49,999 Upto Rs 99,999: Flat 2500. Above Rs 99,999 Upto Rs 1,99,999: Flat 5000. Above Rs 1,99,999: Flat 10000."
+    },
+    {
+      "id": "apollo_247",
+      "merchant": "Apollo 24|7",
+      "category": "pharmacy",
+      "title": "Instant Discount On Apollo 24|7",
+      "valid_from": "2026-08-05",
+      "valid_to": "2026-10-05",
+      "discount_type": "percent_capped",
+      "discount_percent": 7.5,
+      "min_order_value": 1500,
+      "max_discount": 250,
+      "frequency": "Once per card per month",
+      "verbatim": "Offer Period - 5th Aug To 5th Oct 2026. Offer can be availed once per card per month. Valid on minimum order value of Rs. 1500 or above. 7.5% instant discount. Maximum discount available Rs. 250. Merchant T&C Apply."
+    },
+    {
+      "id": "big_basket",
+      "merchant": "BigBasket",
+      "category": "grocery",
+      "title": "Grocery Offer On Big Basket",
+      "valid_from": "2026-08-01",
+      "valid_to": "2026-10-31",
+      "discount_type": "tiered",
+      "tiers": [
+        {"min_order_value": 599, "discount_percent": 10, "max_discount": 100},
+        {"min_order_value": 1199, "discount_percent": 10, "max_discount": 300},
+        {"min_order_value": 499, "flat_discount": 100,
+         "condition": "Virtual Debit Card holders only"}
+      ],
+      "verbatim": "Offer Period - 1st Aug To 31st Oct 2026. Get 10% instant discount up to Rs 100 on orders of Rs 599+. Get 10% instant discount up to Rs 300 on orders of Rs 1,199+. Virtual Debit Card holders get Flat Rs 100 off on orders of Rs 499+. Merchant T&C Apply."
+    },
+    {
+      "id": "amazon_fresh",
+      "merchant": "Amazon Fresh, Grocery and Pharma",
+      "category": "grocery",
+      "title": "Exclusive SBI Debit Card Offer on Amazon Fresh, Grocery and Pharma",
+      "valid_from": "2026-05-21",
+      "valid_to": "2026-09-30",
+      "discount_type": "percent_capped",
+      "discount_percent": 10,
+      "min_order_value": 750,
+      "max_discount": 100,
+      "frequency": "Once per card per month",
+      "eligibility": "All SBI Debit Cards",
+      "verbatim": "Offer Period - 21st May 2026 to 30th Sep 2026. 10% instant discount on a minimum order value of Rs 750/-. Max discount up to Rs.100. Valid Once per card per month during the offer period. Offer valid on all SBI Debit Cards. Merchant T&C Apply."
+    },
+    {
+      "id": "cleartrip",
+      "merchant": "Cleartrip",
+      "category": "travel",
+      "title": "Exclusive SBI Debit Card Offer on Cleartrip",
+      "valid_from": null,
+      "valid_to": null,
+      "discount_type": "by_category",
+      "category_discounts": {
+        "domestic_flights_percent": 12,
+        "international_flights_percent": 10,
+        "domestic_hotels_percent": 15,
+        "international_hotels_percent": 15,
+        "bus_percent": 10
+      },
+      "verbatim": "Domestic Flights: 12%. International Flights: 10%. Domestic Hotels: 15%. International Hotels: 15%. Bus: 10%. (The page states no offer period for this one.)"
+    },
+    {
+      "id": "flipkart_travel",
+      "merchant": "Flipkart Travel",
+      "category": "travel",
+      "title": "Exclusive SBI Debit Card Offer on Flipkart Travel",
+      "valid_from": null,
+      "valid_to": null,
+      "discount_type": "by_category",
+      "category_discounts": {
+        "domestic_flights_percent": 12,
+        "international_flights_percent": 10,
+        "domestic_hotels_percent": 15,
+        "international_hotels_percent": 15,
+        "bus_percent": 10
+      },
+      "verbatim": "Domestic Flights: 12%. International Flights: 10%. Domestic Hotels: 15%. International Hotels: 15%. Bus: 10%. (The page states no offer period for this one.)"
+    },
+    {
+      "id": "flipkart_minutes",
+      "merchant": "Flipkart Minutes",
+      "category": "quick_commerce",
+      "title": "Exclusive SBI Debit Card Offer on Flipkart Minutes",
+      "valid_from": "2026-06-01",
+      "valid_to": "2026-08-31",
+      "discount_type": "tiered",
+      "tiers": [
+        {"min_order_value": 599, "discount_percent": 10, "max_discount": 100,
+         "frequency": "Once per card per calendar month"},
+        {"min_order_value": 1199, "discount_percent": 10, "max_discount": 200,
+         "frequency": "Once per card per calendar month"}
+      ],
+      "note": "Maximum discount figures apply to non-EMI transactions.",
+      "verbatim": "Offer Period - 1st June 2026 to 31st Aug 2026. Offer 1 - 10% off up to INR 100, Min Transaction Value INR 599, Max Discount (Non-EMI Txns) INR 100, once per Card per calendar month. Offer 2 - 10% off up to INR 200, Min Transaction Value INR 1,199, Max Discount (Non-EMI Txns) INR 200, once per Card per calendar month. T&C Apply."
+    },
+    {
+      "id": "business_debit_card",
+      "merchant": "Multiple (business services)",
+      "category": "business",
+      "title": "Business Debit Card Offers",
+      "valid_from": null,
+      "valid_to": null,
+      "card_required": "SBI Business Debit Card",
+      "discount_type": "bundle",
+      "bundle": [
+        {"merchant": "Google Workspace", "offer": "25% off Business Standard plans"},
+        {"merchant": "MediBuddy", "offer": "First doctor consultation for Rs 1"},
+        {"merchant": "Awfis", "offer": "15% discount"},
+        {"merchant": "FabHotels", "offer": "Flat 32% off on bookings"},
+        {"merchant": "DHL", "offer": "50% off all international shipments"},
+        {"merchant": "Cleartax", "offer": "Up to 60% off"}
+      ],
+      "verbatim": "Google Workspace - Save 25% on Business Standard plans. MediBuddy - Rs 1/- for your First Doctor Consultation. Awfis - Get 15% discount at Awfis. FabHotels - Get flat 32% off on Bookings. DHL - Get 50% off on all International Shipments. Cleartax - Get up to 60% off. (The page states no offer period for this one.)"
+    },
+    {
+      "id": "visa_global_platinum_activation",
+      "merchant": "Swiggy, Zomato, Flipkart or Amazon (any one)",
+      "category": "activation_voucher",
+      "title": "Exclusive One Time Offer for SBI Visa Global and Platinum Debit Card",
+      "valid_from": null,
+      "valid_to": null,
+      "card_required": "SBI Visa Global or Platinum Debit Card",
+      "discount_type": "voucher",
+      "channel": "Online",
+      "frequency": "One time",
+      "incomplete": true,
+      "incomplete_reason": "The page's table gives only the merchant list and the channel. No voucher value, qualifying spend or expiry is published there, so none is recorded here.",
+      "verbatim": "Activation Voucher (Swiggy, Zomato, Flipkart, Amazon - Any One): Online."
+    }
+  ]
+}

@@ -34,6 +34,11 @@ capabilities:
   # Government schemes — the numbers that change quarterly live here rather
   # than in the document corpus, which has no per-fact staleness.
   - name: india.get_scheme_details
+  # Debit card merchant offers. Same reasoning as schemes, one notch sharper:
+  # an offer does not go stale, it ENDS, and quoting an ended one sends someone
+  # to a shop expecting a discount that will not apply. The capability checks
+  # every offer's dates against today rather than trusting a stored flag.
+  - name: india.get_card_offers
   # Live market data (ECB reference rates via Frankfurter)
   - name: fx.get_rate
   # Deterministic personal-finance math

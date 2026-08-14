@@ -6,6 +6,7 @@ name.
 from agent_platform.capabilities import DEFAULT_REGISTRY
 
 from . import (
+    card_offers,
     credit_bureau,
     customer_accounts,
     doc_search,
@@ -81,6 +82,12 @@ DEFAULT_REGISTRY.register(
     "india.get_scheme_details", india_rates.get_scheme_details,
     "Look up government scheme terms — PPF, Sukanya Samriddhi, SCSS, NSC, KVP, "
     "PMJJBY, PMSBY, APY, PMJDY, MUDRA",
+)
+DEFAULT_REGISTRY.register(
+    "india.get_card_offers", card_offers.get_card_offers,
+    "Look up current SBI debit card merchant offers and discounts — Amazon, "
+    "BigBasket, Flipkart, Cleartrip, Apollo 24|7, Reliance Digital — with each "
+    "offer's validity dates checked against today",
 )
 
 # -- FinGuru: live market data ----

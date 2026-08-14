@@ -1082,6 +1082,42 @@ _TOOL_SCHEMAS: dict[str, dict] = {
             },
         },
     },
+    "india.get_card_offers": {
+        "type": "function",
+        "function": {
+            "name": "india.get_card_offers",
+            "description": "Look up current SBI DEBIT CARD merchant offers and discounts — Amazon "
+                            "Fresh/Grocery/Pharma, BigBasket, Flipkart Minutes, Flipkart Travel, "
+                            "Cleartrip, Apollo 24|7, Reliance Digital, and the business-card bundle "
+                            "(Google Workspace, MediBuddy, Awfis, FabHotels, DHL, Cleartax). Use it "
+                            "for any question about offers, discounts, cashback or deals on a debit "
+                            "card, including 'what offers are running', 'is there anything on "
+                            "groceries' and 'do I get a discount at <merchant>'. Each offer comes "
+                            "back with its dates already checked against today: never describe one "
+                            "whose status is 'expired' or 'upcoming' as available now, and say when "
+                            "it ran instead.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "merchant": {
+                        "type": "string",
+                        "description": "Merchant name to match loosely — amazon, bigbasket, "
+                                        "flipkart, cleartrip, apollo, reliance, dhl. Omit for all.",
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "One of: grocery, travel, pharmacy, electronics, "
+                                        "quick_commerce, business, activation_voucher.",
+                    },
+                    "include_inactive": {
+                        "type": "boolean",
+                        "description": "True to also return expired and not-yet-started offers — "
+                                        "needed for 'was there an offer on X' or 'when does it start'.",
+                    },
+                },
+            },
+        },
+    },
     # -- FinGuru: live market data ----
     "fx.get_rate": {
         "type": "function",
