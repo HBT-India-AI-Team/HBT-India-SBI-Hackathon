@@ -100,6 +100,44 @@ def test_language_codes_the_client_actually_sends_become_names():
     assert sarvam.language_name("ta_IN") == "Tamil"
 
 
+class TestReplyLanguageIsChecked:
+    """Declaring a language asks for one; this verifies one arrived.
+
+    Measured on gemma4:12b: a Tamil question, with language "ta" sent, read
+    and pinned, still came back written in Telugu — the exact failure the
+    declaration exists to prevent. The caller cannot detect it, and a user
+    reading an answer in a language they do not speak has been given nothing.
+    """
+
+    def test_a_different_indic_script_is_caught(self):
+        telugu = "ప్రస్తుతం SBIలో FD వడ్డీ రేట్లు మారుతుంటాయి"
+        assert pipeline_stages._wrong_script(telugu, "Tamil") == "Telugu"
+        # The name and the bare code both resolve: _language_section returns
+        # the display name only when Sarvam imports, the code otherwise.
+        assert pipeline_stages._wrong_script(telugu, "ta") == "Telugu"
+        assert pipeline_stages._wrong_script("वर्तमान में SBI में", "Tamil") == "Devanagari"
+
+    def test_english_inside_a_correct_answer_is_not_a_mismatch(self):
+        """A right answer here is full of English — "FD", "interest rate",
+        bank names. A share-of-characters test either catches nothing or
+        rejects good answers, which is why this compares Indic scripts to
+        each other instead."""
+        assert pipeline_stages._wrong_script(
+            "SBI-ல FD ரேட் இப்போ 6.25% (interest rate) இருக்கு", "Tamil") is None
+
+    def test_it_declines_to_judge_what_it_cannot(self):
+        """Silence beats a wrong verdict: a romanized-Tamil reply and an
+        English one are both legitimate, and neither has an Indic script to
+        measure."""
+        for content, language in (
+            ("FD rate ippo 6.25% irukku", "Tamil"),      # romanized, no Indic
+            ("The current FD rate is 6.25%.", "English"),
+            ("anything at all", None),                    # nothing declared
+            ("", "Tamil"),
+        ):
+            assert pipeline_stages._wrong_script(content, language) is None
+
+
 def test_the_message_is_found_under_either_name():
     """`message` is what our chat route calls it, `question` is what the
     voice client calls it. Neither is more correct and neither is ours to

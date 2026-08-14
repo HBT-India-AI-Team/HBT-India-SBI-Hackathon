@@ -12,6 +12,7 @@ import asyncio
 import copy
 import json
 import os
+import re
 
 from agent_platform.capabilities import DEFAULT_REGISTRY
 from agent_platform.explainability import decision_record
@@ -675,10 +676,72 @@ def _language_section(ctx, logger) -> tuple[str, str | None]:
         "script, whatever the text below looks like — it may be a speech "
         "transcript, and transcripts of Indian languages are frequently "
         "garbled or partly romanized. Do not switch to a different language "
-        "because the input looks unclear. If a transcript is too broken to "
-        "answer, say so in that language and ask them to repeat.\n",
+        "because the input looks unclear.\n\n"
+        # This escape hatch was one sentence and far too easy to reach. On
+        # gemma4:12b it fired on clean Tamil: "சேமிப்பு கணக்கு வட்டி எவ்வளவு?"
+        # -- a plain savings-rate question -- came back as "sorry, I did not
+        # understand, please ask clearly", as did two of four Tamil-script
+        # questions tested. Answering the obvious reading of a slightly odd
+        # question is almost always right; refusing a clear one is always
+        # wrong, so the bar is now explicit and the default is to answer.
+        "**Assume you can understand it.** Transcripts drop letters and "
+        "mangle spelling, and the intended question is nearly always "
+        "recoverable — a question about வட்டி, ரேட், FD, லோன் or கணக்கு is a "
+        "question about interest, rates, deposits, loans or accounts however "
+        "it is spelled. Answer the reading that makes sense.\n\n"
+        "Only say you did not understand when there is genuinely no question "
+        "you can identify at all — not because the wording is unusual, "
+        "colloquial, mixed with English, or missing a word. If you can name "
+        "the topic, you can answer it.\n",
         code,
     )
+
+
+# Indic blocks, by every name _language_section might hand back -- it returns
+# a display name ("Tamil") when Sarvam is importable and the raw code ("ta")
+# when it is not, so both must resolve or the check silently stops running.
+_REPLY_SCRIPTS: tuple[tuple[frozenset[str], str, re.Pattern[str]], ...] = (
+    (frozenset({"ta", "ta-in", "tamil"}), "Tamil", re.compile("[஀-௿]")),
+    (frozenset({"hi", "hi-in", "hindi", "mr", "marathi"}), "Devanagari", re.compile("[ऀ-ॿ]")),
+    (frozenset({"te", "te-in", "telugu"}), "Telugu", re.compile("[ఀ-౿]")),
+    (frozenset({"kn", "kn-in", "kannada"}), "Kannada", re.compile("[ಀ-೿]")),
+    (frozenset({"ml", "ml-in", "malayalam"}), "Malayalam", re.compile("[ഀ-ൿ]")),
+    (frozenset({"bn", "bn-in", "bengali"}), "Bengali", re.compile("[ঀ-৿]")),
+    (frozenset({"gu", "gu-in", "gujarati"}), "Gujarati", re.compile("[઀-૿]")),
+    (frozenset({"pa", "pa-in", "punjabi"}), "Gurmukhi", re.compile("[਀-੿]")),
+    (frozenset({"or", "od", "or-in", "odia"}), "Odia", re.compile("[଀-୿]")),
+)
+
+
+def _wrong_script(content: str, language: str | None) -> str | None:
+    """The script that took over instead, or None if the reply is acceptable.
+
+    Compares Indic blocks against each other rather than measuring how much of
+    the reply is Tamil. A correct Tamil answer here is full of English -- "FD",
+    "Fixed Deposit", "interest rate" -- so a share-of-characters test either
+    sits so low it catches nothing or rejects good answers. What actually goes
+    wrong is a *different Indic language*: a Tamil question answered in Telugu,
+    which both scripts-are-Indic and looks-plausible let straight through.
+
+    Returns None when it cannot judge -- English, an unlisted language, or a
+    reply with no Indic characters at all (which is a legitimate answer to a
+    question asked in romanized Tamil).
+    """
+    if not content or not language:
+        return None
+    key = language.strip().lower()
+    expected = next((entry for entry in _REPLY_SCRIPTS if key in entry[0]), None)
+    if expected is None:
+        return None
+
+    counts = [(name, len(pattern.findall(content))) for _, name, pattern in _REPLY_SCRIPTS]
+    mine = dict(counts)[expected[1]]
+    intruder, most = max(counts, key=lambda pair: pair[1])
+    if most == 0:                       # no Indic script at all — not our call
+        return None
+    if intruder != expected[1] and most > mine:
+        return intruder
+    return None
 
 
 def _has_sentence_sink() -> bool:
@@ -1326,6 +1389,36 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
                 system_prompt=answer_prompt, user_prompt=user_prompt,
                 schema=output_contract, temperature=bundle.definition.llm.temperature,
             )
+
+        # The prompt asks for a language; this checks it got one. Measured on
+        # gemma4:12b, a Tamil question with language "ta" declared, read and
+        # pinned still came back written in Telugu -- the exact failure the
+        # declaration exists to prevent. A caller cannot detect that, and a
+        # user reading an answer in a language they do not speak has been
+        # given nothing, so it is worth one more call to fix.
+        intruder = _wrong_script((parsed or {}).get("content", ""), language)
+        if intruder is not None:
+            logger.warning(ctx, f"Reply came back in {intruder}, not {language}; regenerating")
+            logger.event(ctx, "reply_language_wrong", expected=language, got=intruder)
+            retry_parsed, retry_meta = adapter.generate_structured(
+                system_prompt=(
+                    answer_prompt
+                    + f"\n\n## Your previous attempt was written in {intruder}\n\n"
+                    f"That is the wrong language and the user cannot read it. Write "
+                    f"this answer in **{language}** and its own script, every "
+                    f"sentence of it. The facts and figures stay exactly the same; "
+                    f"only the language changes.\n"
+                ),
+                user_prompt=user_prompt, schema=output_contract,
+                temperature=bundle.definition.llm.temperature,
+            )
+            # Kept only if it actually fixed the problem. A second wrong-language
+            # answer is no better than the first, and the first at least came
+            # from the unmodified prompt.
+            if _wrong_script((retry_parsed or {}).get("content", ""), language) is None:
+                parsed, meta = retry_parsed, retry_meta
+                logger.event(ctx, "reply_language_corrected", language=language)
+
         ctx.llm_output = parsed
         _record_llm_detail(ctx, meta, prompt_chars=len(answer_prompt) + len(user_prompt),
                            tool_calls=tool_calls_made, style=style_detail, voice=voice,
