@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YONO 3.0 Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1a4f8a",
+                        "outline-variant": "#c2c6d1",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9ff",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container-high": "#e8e8ed",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "background": "#f9f9ff",
+                        "primary": "#00386b",
+                        "surface": "#f9f9ff",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-dim": "#d9dadf",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-tertiary-fixed": "#2f1500",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "secondary-container": "#e0e3e6",
+                        "on-error": "#ffffff",
+                        "outline": "#737781",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#ededf3",
+                        "inverse-surface": "#2e3035",
+                        "inverse-primary": "#a5c8ff",
+                        "tertiary-container": "#793f00",
+                        "surface-container-low": "#f3f3f9",
+                        "secondary": "#5b5f61",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-primary-fixed": "#001c3a",
+                        "on-surface-variant": "#424750",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#191c1e",
+                        "primary-fixed": "#d4e3ff",
+                        "on-surface": "#1a1c20",
+                        "error": "#ba1a1a",
+                        "on-background": "#1a1c20",
+                        "tertiary": "#582c00",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-secondary-container": "#626567",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffae6b",
+                        "inverse-on-surface": "#f0f0f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "xl": "32px",
+                        "sm": "12px",
+                        "card-gap": "16px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background antialiased pb-[80px]">
+<!-- Top App Bar (Customized for Prompt) -->
+<header class="w-full top-0 sticky shadow-sm bg-surface dark:bg-inverse-surface shadow-[0px_4px_20px_rgba(26,79,138,0.05)] z-40">
+<div class="flex items-center justify-between px-container-margin py-md">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">G</div>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed-dim">Hi, Gopi</h1>
+</div>
+<button aria-label="Language Toggle" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low active:scale-95 transition-transform text-primary dark:text-primary-fixed-dim">
+<span class="material-symbols-outlined" data-icon="language">language</span>
+</button>
+</div>
+</header>
+<main class="px-container-margin py-lg space-y-lg overflow-x-hidden">
+<!-- Banner Card -->
+<section>
+<div class="bg-gradient-to-r from-primary-fixed to-tertiary-fixed rounded-[16px] p-[20px] shadow-[0px_4px_20px_rgba(26,79,138,0.05)] relative overflow-hidden">
+<div class="absolute inset-0 bg-white/20 backdrop-blur-[2px]"></div>
+<div class="relative z-10 flex flex-col items-start gap-md">
+<span class="bg-surface/80 backdrop-blur-sm px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface">3 of 5 steps done</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface w-2/3">Finish setting up your account →</h2>
+<div class="w-full bg-surface-variant h-2 rounded-full mt-xs">
+<div class="bg-primary h-2 rounded-full w-3/5"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Horizontal Scroll Tiles -->
+<section>
+<div class="flex gap-md overflow-x-auto snap-x snap-mandatory pb-2 -mx-container-margin px-container-margin scrollbar-hide" style="scrollbar-width: none; -ms-overflow-style: none;">
+<!-- Tile 1: Play & Earn -->
+<button class="snap-start flex-shrink-0 w-[100px] bg-white rounded-[16px] p-sm flex flex-col items-center justify-center gap-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] active:scale-95 transition-transform border border-transparent hover:border-outline-variant/30">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined" data-icon="sports_esports" data-weight="fill" style="font-variation-settings: 'FILL' 1;">sports_esports</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center leading-tight">Play &amp; Earn</span>
+</button>
+<!-- Tile 2: Get Started -->
+<button class="snap-start flex-shrink-0 w-[100px] bg-white rounded-[16px] p-sm flex flex-col items-center justify-center gap-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] active:scale-95 transition-transform border border-transparent hover:border-outline-variant/30">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center leading-tight">Get Started</span>
+</button>
+<!-- Tile 3: YONO Bank -->
+<button class="snap-start flex-shrink-0 w-[100px] bg-white rounded-[16px] p-sm flex flex-col items-center justify-center gap-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] active:scale-95 transition-transform border border-transparent hover:border-outline-variant/30">
+<div class="w-12 h-12 rounded-full bg-primary-fixed-dim/30 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined" data-icon="account_balance" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center leading-tight">YONO Bank</span>
+</button>
+<!-- Tile 4: My Rewards -->
+<button class="snap-start flex-shrink-0 w-[100px] bg-white rounded-[16px] p-sm flex flex-col items-center justify-center gap-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] active:scale-95 transition-transform border border-transparent hover:border-outline-variant/30">
+<div class="w-12 h-12 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#137333]">
+<span class="material-symbols-outlined" data-icon="emoji_events" data-weight="fill" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center leading-tight">My Rewards</span>
+</button>
+<!-- Tile 5: Offers -->
+<button class="snap-start flex-shrink-0 w-[100px] bg-white rounded-[16px] p-sm flex flex-col items-center justify-center gap-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] active:scale-95 transition-transform border border-transparent hover:border-outline-variant/30">
+<div class="w-12 h-12 rounded-full bg-[#FCE8E6] flex items-center justify-center text-[#C5221F]">
+<span class="material-symbols-outlined" data-icon="local_offer" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_offer</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface text-center leading-tight">Offers</span>
+</button>
+</div>
+<style>
+                /* Hide scrollbar for Chrome, Safari and Opera */
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+            </style>
+</section>
+<!-- Search Bar Pill -->
+<section>
+<div class="bg-surface-container-low rounded-full h-[56px] px-md flex items-center justify-between border border-transparent focus-within:border-primary focus-within:bg-white transition-colors shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex items-center gap-sm flex-1">
+<span class="material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full font-body-md text-body-md text-on-surface placeholder:text-outline p-0" placeholder="Search or ask a question" type="text"/>
+</div>
+<button class="text-primary hover:bg-surface-container rounded-full p-xs transition-colors">
+<span class="material-symbols-outlined" data-icon="mic" data-weight="fill" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+</div>
+</section>
+<!-- Promo Carousel -->
+<section>
+<div class="flex gap-md overflow-x-auto snap-x snap-mandatory pb-4 -mx-container-margin px-container-margin scrollbar-hide">
+<!-- Promo Card 1 -->
+<div class="snap-center flex-shrink-0 w-[85vw] max-w-[320px] rounded-[16px] overflow-hidden shadow-[0px_4px_20px_rgba(26,79,138,0.05)] relative bg-white">
+<div class="bg-cover bg-center w-full h-32 bg-surface-variant" data-alt="A highly dynamic, energetic 3D illustration of a glowing game controller floating amidst a burst of colorful, floating coins and abstract geometric shapes. The scene uses a bright, inviting light-mode color palette with primary blues and vibrant oranges. Soft, ambient lighting creates a premium, modern-tactile feel, conveying an exciting 'play to earn' concept in a sleek financial app context." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA-jr7tnO8grYwdRnwo0xjujeLKCn_FLR-iH7ZElfJKA9c5rwIk-25rqfizAVPAQDo-pt-XV00qpDqqEfbBBaFw0t-tQYem45vMD5SrT32kqDpaRs06N9qujLAvZXsTYIgSnOTEXvcVItNh7jPYrhKE7Of2P4xx_lk3gonuiQ_tabnZtKpttqvuHTT6uhcOCV5V7lLlHaofQJXwUuORM4j133xT6YwbsQNGtPvnWASZbdyuDzkzZkmssg')"></div>
+<div class="p-md bg-white">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">Play the game, earn rewards</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md text-sm">Join the daily challenge and win points.</p>
+<button class="bg-primary text-white font-label-md text-label-md py-sm px-md rounded-full w-full active:scale-95 transition-transform">Play Now</button>
+</div>
+</div>
+<!-- Promo Card 2 -->
+<div class="snap-center flex-shrink-0 w-[85vw] max-w-[320px] rounded-[16px] overflow-hidden shadow-[0px_4px_20px_rgba(26,79,138,0.05)] relative bg-white">
+<div class="bg-cover bg-center w-full h-32 bg-surface-variant" data-alt="A sophisticated, modern 3D rendering of a stylized shopping bag and a glowing credit card surrounded by gentle, floating percentage signs. The aesthetic is clean and minimal, utilizing a light-mode palette of pristine whites, soft greys, and vibrant pink accents. The lighting is soft and diffused, emphasizing a premium lifestyle and exclusive financial offers." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuArsAm-8_WwEfAwTl6gxc-YJV8E_u9NyQuWpWXI2hpSz4yZmJgabJfMqPwDsNohTfYJfJ2fXacjHVqZhdQ94j9maI_kXSCDJLKgFWcpOySU5xE8p_ChGzpl955kEvStSaqIv-E7wh_-Dr22qzpuUDaYxHwx4SV25LmAHpT7BDkBZBJi3DlhCKCoxxo3Zdvf3PAzZoBZdU4v0cS6i0Jn4mmDoVjUHT_8o-LisKuBV5WnOAX6cvOb3_34Uw')"></div>
+<div class="p-md bg-white">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-xs">Exclusive Weekend Offers</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md text-sm">Up to 20% cashback on top brands.</p>
+<button class="border-[1.5px] border-primary text-primary font-label-md text-label-md py-sm px-md rounded-full w-full active:scale-95 transition-transform">View Offers</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar from JSON -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 backdrop-blur-md rounded-t-xl bg-surface/80 dark:bg-inverse-surface/80 border-t border-outline-variant/30 shadow-[0px_-4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex justify-around items-center px-xs py-sm">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="home" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm mt-1">Game</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-label-sm text-label-sm mt-1">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Accounts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</div>
+</nav>
+</body></html>

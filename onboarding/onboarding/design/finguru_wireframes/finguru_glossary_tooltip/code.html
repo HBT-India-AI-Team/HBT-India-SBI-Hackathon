@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru - Term Glossary</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#001c3a",
+                        "on-secondary-fixed-variant": "#5c4300",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#eae8e7",
+                        "secondary-fixed": "#ffdfa0",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#e1e3e4",
+                        "inverse-primary": "#a5c8ff",
+                        "surface-container-low": "#f5f3f3",
+                        "tertiary-container": "#4c4f50",
+                        "error": "#ba1a1a",
+                        "tertiary": "#353839",
+                        "on-primary-container": "#9ac2ff",
+                        "on-tertiary-container": "#bfc0c2",
+                        "on-tertiary-fixed-variant": "#454748",
+                        "on-secondary-container": "#715300",
+                        "outline": "#737781",
+                        "inverse-on-surface": "#f2f0f0",
+                        "primary-fixed": "#d4e3ff",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-tint": "#2f5f9b",
+                        "surface-container-highest": "#e4e2e2",
+                        "surface-bright": "#fbf9f8",
+                        "on-tertiary-fixed": "#191c1d",
+                        "outline-variant": "#c2c6d1",
+                        "background": "#fbf9f8",
+                        "surface": "#fbf9f8",
+                        "on-secondary-fixed": "#261a00",
+                        "primary": "#00386b",
+                        "on-error": "#ffffff",
+                        "secondary": "#795900",
+                        "surface-dim": "#dbd9d9",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#303030",
+                        "secondary-fixed-dim": "#f6be39",
+                        "surface-variant": "#e4e2e2",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#424750",
+                        "on-background": "#1b1c1c",
+                        "on-surface": "#1b1c1c",
+                        "primary-container": "#1a4f8a",
+                        "surface-container": "#efeded",
+                        "tertiary-fixed-dim": "#c5c7c8",
+                        "secondary-container": "#ffc641"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "20px",
+                        "lg": "40px",
+                        "base": "8px",
+                        "xl": "64px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "md": "24px",
+                        "margin-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-md": ["Quicksand"],
+                        "headline-lg": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .dotted-underline {
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 4px;
+            text-decoration-color: #795900; /* secondary color */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen relative font-sans overflow-hidden">
+<!-- Top App Bar (From Shared JSON) -->
+<header class="docked full-width top-0 bg-surface dark:bg-surface-dim border-b border-outline-variant shadow-sm flex justify-between items-center px-margin-mobile py-base w-full z-50">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="lightbulb">lightbulb</span>
+<span class="text-headline-md font-headline-md font-bold text-secondary-container dark:text-secondary-fixed">FinGuru</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A small, soft-lit portrait of a friendly young professional serving as a user profile photo, set against a clean, minimal white background to match the modern fintech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqJYXTCcvHIWJS1rrtV6_Omy12qGfK-E-uqssKlFfprUn_WAGVxrsejD459VPLgimFGkLQiBesTfRMf-QCqYYDP5YQX3-_e_Nf3n2c0exhF5Azk0RVqcWQ09TKtyHfnqnssw8O_Nvw4y00I-BVmFTi5mV-wQzTMkA0i6rRtR8RBzBj5boi75a_gIXSGB6vi5pFrdVpTfbjR2TXZaAyJF3_BbY-JGkkF0u7a5HbRK-Af_o1OJiblZ5l_A"/>
+</div>
+</header>
+<!-- Main Content Canvas (The Chat Base) -->
+<main class="pt-xl pb-32 px-margin-mobile md:px-margin-desktop md:max-w-[1200px] md:mx-auto relative z-10 h-screen flex flex-col">
+<!-- Chat Area -->
+<div class="flex-1 overflow-y-auto flex flex-col gap-md">
+<!-- User Message -->
+<div class="flex justify-end mt-lg">
+<div class="bg-surface-container-high rounded-t-xl rounded-bl-xl rounded-br-sm px-md py-sm max-w-[85%] md:max-w-md shadow-sm">
+<p class="font-body-md text-body-md text-on-surface">Can you explain what I should look at when evaluating a mutual fund?</p>
+</div>
+</div>
+<!-- Guru Message -->
+<div class="flex justify-start items-end gap-sm relative">
+<!-- Mascot avatar -->
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center shadow-md mb-2 shrink-0 border-2 border-surface">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="smart_toy" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="bg-surface-container-lowest rounded-t-xl rounded-br-xl rounded-bl-sm px-md py-sm max-w-[85%] md:max-w-md shadow-[0_4px_20px_rgba(26,79,138,0.08)] relative z-20">
+<p class="font-body-md text-body-md text-on-surface">
+                        Absolutely. When evaluating mutual funds, one of the key metrics to understand is the fund's 
+                        <span class="text-secondary font-semibold dotted-underline cursor-pointer relative z-30">NAV</span>. 
+                        This helps you track the daily performance. You should also look at the expense ratio and historical returns.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Chat Input Area (Decorative for context) -->
+<div class="mt-auto py-sm">
+<div class="bg-surface-container-lowest rounded-full px-md py-sm flex items-center shadow-sm border border-outline-variant">
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md text-on-surface p-0" disabled="" placeholder="Ask FinGuru..." type="text"/>
+<button class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary ml-2">
+<span class="material-symbols-outlined" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- OVERLAY: Scrim / Dimmed Background -->
+<div class="fixed inset-0 bg-inverse-surface/40 z-40 backdrop-blur-[1px] transition-opacity"></div>
+<!-- TOOLTIP / POPOVER -->
+<!-- Positioned absolutely relative to the viewport for this demo, visually anchored above the 'NAV' text -->
+<div class="fixed top-[45%] left-1/2 -translate-x-1/2 md:translate-x-0 md:left-32 z-50 animate-fade-in-up">
+<!-- Tooltip Card -->
+<div class="bg-surface-container-lowest rounded-lg p-md shadow-[0_8px_30px_rgba(26,79,138,0.15)] w-[280px] md:w-[320px] relative border border-outline-variant/30">
+<!-- Tail/Arrow pointing down (approximate positioning) -->
+<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-surface-container-lowest rotate-45 border-r border-b border-outline-variant/30 hidden md:block"></div>
+<!-- Content -->
+<div class="mb-sm">
+<h4 class="font-label-md text-label-md text-on-surface mb-xs font-bold">NAV (Net Asset Value)</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">
+                    The price per share of a mutual fund, calculated daily.
+                </p>
+</div>
+<!-- Action -->
+<div class="mt-4 flex justify-end">
+<a class="font-label-md text-label-md text-secondary hover:text-secondary-fixed transition-colors flex items-center gap-1 group" href="#">
+                    Learn more
+                    <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Bottom Nav Bar (From Shared JSON) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-lowest shadow-[0_-4px_20px_rgba(26,79,138,0.08)] rounded-t-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm">Game</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="forum" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span class="font-label-sm text-label-sm">FinGuru</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+        }
+        @media (min-width: 768px) {
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translate(0, 10px) scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(0, 0) scale(1);
+                }
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</body></html>

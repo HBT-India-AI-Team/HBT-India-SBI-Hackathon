@@ -1,0 +1,72 @@
+[
+  {
+    "id": "sip",
+    "category": "fin_wiki",
+    "title": "SIP (Systematic Investment Plan)",
+    "tags": ["sip", "mutual funds", "investing", "rupee cost averaging", "wealth"],
+    "summary": "A way to invest a fixed amount in a mutual fund at regular intervals (usually monthly) instead of a lump sum.",
+    "body": "A Systematic Investment Plan (SIP) lets you invest a fixed amount into a mutual fund scheme at regular intervals — most commonly monthly. Because you buy more units when prices are low and fewer when prices are high, SIPs give you 'rupee cost averaging', which smooths out market volatility over time. SIPs also build financial discipline and benefit from the power of compounding over long horizons. You can start with as little as ₹500/month with most fund houses in India, pause/step-up the amount, and there is no penalty for stopping. SIP returns are not guaranteed — they depend on the underlying fund's performance.",
+    "source_url": "https://www.sebi.gov.in/sebiweb/other/OtherAction.do?doRecognisedFpi=yes&intmId=13",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "nav",
+    "category": "fin_wiki",
+    "title": "NAV (Net Asset Value)",
+    "tags": ["nav", "mutual funds", "net asset value", "units"],
+    "summary": "The per-unit price of a mutual fund, calculated at the end of each trading day.",
+    "body": "Net Asset Value (NAV) is the price of one unit of a mutual fund scheme. It is calculated as (total market value of the fund's assets minus its liabilities) divided by the number of outstanding units, and is published once per business day after markets close. When you invest in a mutual fund, the number of units you receive depends on that day's NAV. A higher NAV does not mean a fund is 'expensive' or better — what matters is the percentage growth in NAV over time, not its absolute value.",
+    "source_url": "https://www.amfiindia.com/investor-corner/knowledge-center/what-is-nav.html",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "tds",
+    "category": "fin_wiki",
+    "title": "TDS (Tax Deducted at Source)",
+    "tags": ["tds", "tax", "income tax", "form 26as", "deduction"],
+    "summary": "Tax collected by the payer at the time of making certain payments (salary, interest, etc.) and deposited with the government on your behalf.",
+    "body": "Tax Deducted at Source (TDS) is a mechanism where the person making a specified payment (an employer, a bank paying interest, etc.) deducts tax before paying you and deposits it with the Income Tax Department against your PAN. For example, banks deduct TDS on fixed-deposit interest above ₹40,000 per year (₹50,000 for senior citizens) at 10% if your PAN is on record. TDS already paid shows up in your Form 26AS / AIS and is adjusted against your final tax liability when you file your return — if excess was deducted, you claim a refund. Submitting Form 15G/15H can prevent TDS on interest if your income is below the taxable limit.",
+    "source_url": "https://www.incometax.gov.in/iec/foportal/help/individual/return-applicable-1",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "kyc",
+    "category": "fin_wiki",
+    "title": "KYC (Know Your Customer)",
+    "tags": ["kyc", "identity", "aadhaar", "pan", "verification", "ckyc"],
+    "summary": "The mandatory identity-verification process banks and financial firms use before opening accounts or allowing investments.",
+    "body": "Know Your Customer (KYC) is the RBI/SEBI-mandated process of verifying your identity and address before you can open a bank account, invest in mutual funds, or use most financial services in India. It typically needs a PAN and an Aadhaar (or other officially valid documents). India has a Central KYC (CKYC) registry so that once you are KYC-verified, the record can be reused across institutions. eKYC via Aadhaar (with OTP or biometrics) and Video KYC now let you complete KYC fully online. KYC exists to prevent fraud, money laundering, and identity theft.",
+    "source_url": "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=11566",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "credit_score",
+    "category": "fin_wiki",
+    "title": "Credit Score (CIBIL)",
+    "tags": ["credit score", "cibil", "loan", "creditworthiness", "credit report"],
+    "summary": "A 3-digit number (300–900 in India) that summarises your creditworthiness based on your borrowing and repayment history.",
+    "body": "A credit score is a 3-digit number, ranging from 300 to 900 in India, that lenders use to judge how reliably you repay debt. It is computed by credit bureaus — CIBIL, Experian, Equifax, CRIF High Mark — from your credit report: repayment history, credit utilisation, length of credit history, credit mix, and recent enquiries. A score of 750+ is generally considered good and improves your chances of loan/credit-card approval at better interest rates. You are entitled to one free credit report per bureau per year. Paying EMIs and card bills on time, keeping credit-card utilisation low, and avoiding too many loan applications at once all help improve your score.",
+    "source_url": "https://www.cibil.com/faq/what-is-credit-score",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "expense_ratio",
+    "category": "fin_wiki",
+    "title": "Expense Ratio",
+    "tags": ["expense ratio", "mutual funds", "ter", "cost", "fees"],
+    "summary": "The annual fee a mutual fund charges to manage your money, expressed as a percentage of assets.",
+    "body": "The expense ratio (or Total Expense Ratio, TER) is the annual cost of owning a mutual fund, charged as a percentage of the money you have invested. It covers fund management fees, administration, and distribution costs, and is deducted from the fund's NAV — so you never pay it as a separate bill, but it quietly reduces your returns. SEBI caps TERs (for example, actively managed equity funds are capped on a sliding scale by fund size). 'Direct' plans have lower expense ratios than 'Regular' plans because they cut out distributor commissions. Over long horizons, even a 1% difference in expense ratio can meaningfully affect your final corpus.",
+    "source_url": "https://www.sebi.gov.in/sebi_data/faqfiles/mar-2021/1616croll.html",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "fixed_deposit",
+    "category": "fin_wiki",
+    "title": "Fixed Deposit (FD)",
+    "tags": ["fixed deposit", "fd", "term deposit", "interest", "savings"],
+    "summary": "A deposit where you lock a lump sum with a bank for a fixed tenure at a pre-agreed interest rate.",
+    "body": "A Fixed Deposit (FD), also called a term deposit, is one of the safest savings instruments in India: you deposit a lump sum with a bank for a fixed period (7 days to 10 years) at an interest rate agreed upfront, which does not change for the tenure even if market rates fall. Senior citizens usually get an extra ~0.50% p.a. FD interest is taxable and banks deduct TDS on interest above ₹40,000/year (₹50,000 for senior citizens). FDs offer guaranteed, predictable returns but lower liquidity — breaking one early usually incurs a small penalty. Deposits up to ₹5 lakh per bank are insured by DICGC.",
+    "source_url": "https://www.rbi.org.in/scripts/FAQView.aspx?Id=68",
+    "last_verified_at": "2026-08-01"
+  }
+]

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru Chat - YONO 3.0</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-bright": "#f9f9ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "inverse-primary": "#a5c8ff",
+                        "outline": "#737781",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-secondary-fixed": "#191c1e",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9dadf",
+                        "outline-variant": "#c2c6d1",
+                        "surface-container": "#ededf3",
+                        "on-tertiary-fixed": "#2f1500",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "surface-tint": "#2f5f9b",
+                        "inverse-surface": "#2e3035",
+                        "surface-variant": "#e2e2e8",
+                        "surface": "#f9f9ff",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#582c00",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#d4e3ff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "on-background": "#1a1c20",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "background": "#f9f9ff",
+                        "primary-container": "#1a4f8a",
+                        "inverse-on-surface": "#f0f0f6",
+                        "secondary": "#5b5f61",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f3f3f9",
+                        "primary": "#00386b",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#9ac2ff",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#424750",
+                        "on-surface": "#1a1c20",
+                        "tertiary-container": "#793f00",
+                        "on-secondary-container": "#626567",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary-container": "#e0e3e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "sm": "12px",
+                        "card-gap": "16px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-sm": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #f9f9ff;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .chat-container::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen bg-background">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-50 bg-surface shadow-sm transition-transform shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex items-center justify-between px-container-margin py-md">
+<!-- Leading: Avatar -->
+<button aria-label="User profile avatar" class="active:scale-95 transition-transform hover:bg-surface-container-low rounded-full p-1">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-high" data-alt="A small circular avatar showing a professional, modern lifestyle portrait of a young person in light-mode bright setting, soft lighting, financial context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0QxFllBtsWBhXTgXbV5lxi0NBstg0VYi9Tk_GBlc_aC_Ym_rRUfTQGEyn_Vs8hi27gjYSPz_M2ZrLPSH9ZrF7ztBrdyuC9Mcz0YRQMrv3ITM3M3zS6bFpl4c0SHuqlBG3YqwUm5-QlUaj9g265FbtutWvJcrUUauvbkmr5oACjmk9rEu4VVVPAuFo6ngyBzqQQkuOV2KGRkO7QUaAEE00WwQnbQaTUdKRgcRHyKs8t2qnjJJMw7hFdQ"/>
+</button>
+<!-- Headline / Brand -->
+<div class="text-center">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">YONO 3.0</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">FinGuru Assistant</p>
+</div>
+<!-- Trailing: Icon -->
+<button aria-label="notifications" class="active:scale-95 transition-transform hover:bg-surface-container-low rounded-full p-2 text-primary">
+<span class="material-symbols-outlined" data-icon="notifications" data-weight="fill" style="font-variation-settings: 'FILL' 1;">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Chat Canvas -->
+<main class="flex-1 w-full max-w-2xl mx-auto px-container-margin py-lg chat-container flex flex-col gap-lg">
+<!-- User Message -->
+<div class="flex w-full mt-2 space-x-3 max-w-md ml-auto justify-end">
+<div>
+<div class="bg-primary-container text-on-primary-container p-4 rounded-xl rounded-tr-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<p class="font-body-md text-body-md">Can you analyze my recent tech stock investments and suggest a rebalancing strategy for next quarter?</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex justify-end mt-1">10:42 AM</span>
+</div>
+</div>
+<!-- FinGuru Response (Wait State) -->
+<div class="flex w-full mt-2 space-x-3 max-w-md">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface p-4 rounded-xl rounded-tl-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] relative overflow-hidden">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-container mt-0.5 animate-pulse" data-icon="hourglass_empty">hourglass_empty</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-semibold">Got it — I'll dig into this and notify you when I have a good answer.</p>
+<div class="mt-xs pt-xs border-t border-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant" data-icon="schedule">schedule</span>
+<p class="font-label-md text-label-md text-on-surface-variant">Usually ready within a day</p>
+</div>
+</div>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">10:43 AM</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on desktop, shown on mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 backdrop-blur-md bg-surface/80 rounded-t-xl border-t border-outline-variant/30 shadow-[0px_-4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex justify-around items-center px-xs py-sm max-w-md mx-auto">
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm mt-1">Game</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 hover:bg-secondary-container/50 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="chat_bubble" data-weight="fill" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="font-label-sm text-label-sm mt-1">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Accounts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary hover:bg-secondary-container/50 active:scale-90 transition-all duration-200 p-2 rounded-lg">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</div>
+</nav>
+<!-- Chat Input Area (Desktop & Mobile) -->
+<div class="fixed bottom-[80px] md:bottom-0 w-full bg-surface-container-lowest/90 backdrop-blur-md border-t border-surface-variant p-container-margin shadow-[0px_-4px_20px_rgba(26,79,138,0.05)] z-40">
+<div class="max-w-2xl mx-auto flex items-center gap-xs">
+<button class="p-2 text-primary-container hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<div class="flex-1 bg-surface-container-low rounded-full px-4 py-3 flex items-center border border-transparent focus-within:border-primary transition-colors">
+<input class="bg-transparent border-none outline-none w-full font-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-0 p-0" disabled="" placeholder="Message FinGuru..." type="text"/>
+</div>
+<button class="p-3 bg-surface-variant text-on-surface-variant rounded-full transition-colors opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="send" data-weight="fill" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</body></html>

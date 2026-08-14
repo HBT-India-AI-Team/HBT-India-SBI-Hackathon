@@ -1,0 +1,8 @@
+# .env.example (the checked-in template) stays tracked; the real .env (live
+# token) and this script's generated test output do not. __pycache__ is also
+# covered by the repo-root .gitignore, listed here for clarity since this is
+# a standalone reference client.
+.env
+__pycache__/
+*.pyc
+synthesized.wav

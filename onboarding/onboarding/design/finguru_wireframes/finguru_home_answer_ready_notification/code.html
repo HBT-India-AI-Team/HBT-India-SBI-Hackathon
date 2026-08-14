@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-bright": "#f9f9ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "inverse-primary": "#a5c8ff",
+                        "outline": "#737781",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-secondary-fixed": "#191c1e",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9dadf",
+                        "outline-variant": "#c2c6d1",
+                        "surface-container": "#ededf3",
+                        "on-tertiary-fixed": "#2f1500",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "surface-tint": "#2f5f9b",
+                        "inverse-surface": "#2e3035",
+                        "surface-variant": "#e2e2e8",
+                        "surface": "#f9f9ff",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#582c00",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#d4e3ff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "on-background": "#1a1c20",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "background": "#f9f9ff",
+                        "primary-container": "#1a4f8a",
+                        "inverse-on-surface": "#f0f0f6",
+                        "secondary": "#5b5f61",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f3f3f9",
+                        "primary": "#00386b",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#9ac2ff",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#424750",
+                        "on-surface": "#1a1c20",
+                        "tertiary-container": "#793f00",
+                        "on-secondary-container": "#626567",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary-container": "#e0e3e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "sm": "12px",
+                        "card-gap": "16px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-sm": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container relative pb-[80px]">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-surface shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex items-center justify-between px-container-margin py-md">
+<div class="flex items-center gap-sm cursor-pointer active:scale-95 transition-transform hover:bg-surface-container-low p-2 rounded-full">
+<img alt="User Profile" class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-high" data-alt="A small, circular profile picture of a young professional wearing modern glasses and a casual blue button-down shirt. The lighting is bright and warm, matching the app's clean aesthetic. The background is a soft, blurred studio grey." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_VaAdGP5ZXfUNLdzP8InLWSUgd6L1jY9i43M3OwIodR_ncbKOwHhl5BxvSkFLGowe3zSikyFsfWifR-8vtNr4T6gACYaU5mq3YXKzzEgXEok7f022JtxjI7YRAFT4kXN8Txu5kKxS_q19D1D3s_7RmK2tv49AAgLsmSCNV-520xWRfvbFeoxvr974WZXO99XTU6jeM3zk1lkRlZICLwuU-9lKIhiQMcFWbmnbKe1qtnj9-Q8VTpnZ0w"/>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">YONO 3.0</h1>
+<button class="text-primary hover:bg-surface-container-low p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Scrollable Content -->
+<main class="flex-1 overflow-y-auto w-full max-w-md mx-auto">
+<div class="px-container-margin py-lg flex flex-col gap-lg">
+<!-- Search Bar -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant z-10" data-icon="search">search</span>
+<input class="w-full bg-surface-container border-none rounded-full py-4 pl-12 pr-4 font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:bg-surface-lowest transition-all shadow-[0px_4px_20px_rgba(26,79,138,0.05)]" placeholder="Ask FinGuru about markets..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-on-primary p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="mic" data-weight="fill" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+</div>
+<!-- Prominent Notification Banner -->
+<div class="bg-tertiary-fixed rounded-xl p-card-gap flex items-center justify-between border-2 border-tertiary-fixed-dim shadow-[0px_4px_20px_rgba(26,79,138,0.05)] cursor-pointer active:scale-[0.98] transition-transform">
+<div class="flex items-start gap-sm">
+<div class="bg-surface p-2 rounded-full flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-tertiary-container" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-tertiary-fixed">FinGuru found an answer</h3>
+<p class="font-body-md text-body-md text-on-tertiary-fixed-variant leading-tight mt-1">to your question about <strong>ESG Funds</strong></p>
+</div>
+</div>
+<span class="material-symbols-outlined text-tertiary-container" data-icon="arrow_forward">arrow_forward</span>
+</div>
+<!-- Suggested Topics (Chips) -->
+<section class="flex flex-col gap-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Suggested for you</h2>
+<div class="flex gap-sm overflow-x-auto pb-2 scrollbar-hide -mx-container-margin px-container-margin snap-x">
+<button class="snap-start shrink-0 flex flex-col items-center gap-2 w-[80px] group active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary-container" data-icon="show_chart">show_chart</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center leading-tight">Market<br/>Trends</span>
+</button>
+<button class="snap-start shrink-0 flex flex-col items-center gap-2 w-[80px] group active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary-container" data-icon="savings">savings</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center leading-tight">Retirement<br/>Planning</span>
+</button>
+<button class="snap-start shrink-0 flex flex-col items-center gap-2 w-[80px] group active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary-container" data-icon="real_estate_agent">real_estate_agent</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center leading-tight">Real<br/>Estate</span>
+</button>
+<button class="snap-start shrink-0 flex flex-col items-center gap-2 w-[80px] group active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center group-hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary-container" data-icon="account_balance">account_balance</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center leading-tight">Tax<br/>Strategies</span>
+</button>
+</div>
+</section>
+<!-- Trending Cards (Bento style) -->
+<section class="flex flex-col gap-sm">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Trending Topics</h2>
+<button class="font-label-md text-label-md text-primary hover:underline">View all</button>
+</div>
+<div class="grid grid-cols-2 gap-card-gap">
+<!-- Large Card -->
+<div class="col-span-2 bg-surface rounded-xl p-card-gap shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-surface-variant relative overflow-hidden flex flex-col justify-end min-h-[160px] active:scale-[0.98] transition-transform cursor-pointer group">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" data-alt="Abstract, high-quality 3D rendering of interconnected glowing nodes forming a network web against a dark blue background. The light is soft and cinematic, representing artificial intelligence and modern global finance networks. Bright white accents highlight key connection points." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4HaEE14u68AWEr19sZrffDaDfZTpW81TWLGNL3le551ERx1rx2mMZjwSYzqiNHpSB2DondBm3BafaDBXl1FUW3s4SUo4ghURFC2BHewRTuoMG5AXZt6xm9Tw1rXRZRmndA_pBVUab9QIr4AhNKFiBXzcMx22Cz_zuRorRMCsYVxky0Va5SlT5cJJODcWofsYstlClAaAvVXo5ssAgNfCKPxnoy3_zf2FZ2nao-RjF4LTNbPRie2_T_Q"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+</div>
+<div class="relative z-10">
+<span class="inline-block bg-primary text-on-primary font-label-sm text-label-sm px-2 py-1 rounded-md mb-2">AI in Finance</span>
+<h3 class="font-body-lg text-body-lg text-white font-bold leading-tight">How artificial intelligence is reshaping investment strategies in 2024.</h3>
+</div>
+</div>
+<!-- Small Card 1 -->
+<div class="bg-surface rounded-xl p-card-gap shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-surface-variant flex flex-col gap-xs active:scale-[0.98] transition-transform cursor-pointer hover:bg-surface-container-low">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mb-1">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="currency_exchange">currency_exchange</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface">Global Currencies</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant line-clamp-2">Understanding recent shifts in foreign exchange markets.</p>
+</div>
+<!-- Small Card 2 -->
+<div class="bg-surface rounded-xl p-card-gap shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-surface-variant flex flex-col gap-xs active:scale-[0.98] transition-transform cursor-pointer hover:bg-surface-container-low">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center mb-1">
+<span class="material-symbols-outlined text-tertiary-container" data-icon="eco">eco</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface">Green Bonds</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant line-clamp-2">The rise of sustainable fixed-income investments.</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 backdrop-blur-md bg-surface/80 rounded-t-xl">
+<div class="flex justify-around items-center px-xs py-sm">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-200 hover:bg-secondary-container/50">
+<span class="material-symbols-outlined mb-1" data-icon="home" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:bg-secondary-container/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined mb-1" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm">Game</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:bg-secondary-container/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined mb-1" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-label-sm text-label-sm">Chat</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:bg-secondary-container/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined mb-1" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:bg-secondary-container/50 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</div>
+</nav>
+<style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

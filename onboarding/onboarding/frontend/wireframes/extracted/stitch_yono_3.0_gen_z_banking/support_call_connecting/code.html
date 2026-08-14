@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Support Call - Connecting</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "inverse-on-surface": "#f0f0f6",
+                        "primary": "#00386b",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-dim": "#d9dadf",
+                        "on-surface": "#1a1c20",
+                        "inverse-primary": "#a5c8ff",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed": "#2f1500",
+                        "secondary-container": "#e0e3e6",
+                        "secondary-fixed": "#e0e3e6",
+                        "tertiary": "#582c00",
+                        "inverse-surface": "#2e3035",
+                        "surface-container-low": "#f3f3f9",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-container-highest": "#e2e2e8",
+                        "outline-variant": "#c2c6d1",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary": "#5b5f61",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c20",
+                        "on-error": "#ffffff",
+                        "surface-container": "#ededf3",
+                        "on-surface-variant": "#424750",
+                        "on-secondary-container": "#626567",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-variant": "#e2e2e8",
+                        "surface-tint": "#2f5f9b",
+                        "surface": "#f9f9ff",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#d4e3ff",
+                        "outline": "#737781",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-secondary-fixed": "#191c1e",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#9ac2ff",
+                        "on-error-container": "#93000a",
+                        "background": "#f9f9ff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "primary-container": "#1a4f8a",
+                        "tertiary-container": "#793f00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "sm": "12px",
+                        "card-gap": "16px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "md": "16px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Quicksand"],
+                        "headline-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pulse-ring {
+            animation: pulse 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.2; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-screen overflow-hidden flex flex-col relative">
+<!-- Simulated background chat screen (blurred) -->
+<div class="absolute inset-0 z-0 bg-cover bg-center" data-alt="A blurred, generic modern chat interface background in light mode. Soft blue and white chat bubbles, a top app bar, and a bottom input field. The overall scene is out of focus to serve as a backdrop for a foreground overlay. Clean, minimal, tech-native Gen Z financial app style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuByO2gafwpNV7yTJc6BiBwqdAINV9XAOxgihDQIeA05SLm5H0Fih6qacWHRnniFkB3I-JXFm-g9aajFL8uqLwHIpSr8Zd55vxUj-OX8E5AonlHUPFxxSnOzW1SCD-gqz5Hfxylihk4SYMyElx_ZTr1o_fwqshkrfy0N9Tx5BRfYsVW4svt8qkAwMLCwdW7GnVrggTTDoE1if3dM0wsOvieRTxaucidceUoVtfBMD2jDzH0zYpVp5MywLg')">
+<!-- Overlay blur and dim -->
+<div class="absolute inset-0 bg-surface/80 backdrop-blur-md"></div>
+</div>
+<!-- Main Call Overlay Content -->
+<div class="relative z-10 flex flex-col items-center justify-between h-full w-full py-xl px-container-margin">
+<!-- Top Spacer -->
+<div class="h-16 w-full flex justify-between items-center text-primary">
+<!-- Intentional empty space for balance, could hold minimal status icons if needed, but keeping clean per requirements -->
+</div>
+<!-- Center: Avatar & Status -->
+<div class="flex flex-col items-center justify-center flex-1 w-full gap-lg relative">
+<!-- Animated Pulse Rings behind Avatar -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-48 h-48 rounded-full border-2 border-primary/30 pulse-ring absolute"></div>
+<div class="w-48 h-48 rounded-full border-2 border-primary/20 pulse-ring absolute" style="animation-delay: 0.5s;"></div>
+</div>
+<!-- Avatar -->
+<div class="w-32 h-32 rounded-full overflow-hidden shadow-[0px_4px_20px_rgba(26,79,138,0.15)] border-4 border-surface relative z-10">
+<img class="w-full h-full object-cover" data-alt="A close-up portrait of a professional, friendly support agent smiling warmly. High-quality corporate headshot with a light background. Soft, flattering lighting, conveying empathy and expertise in a modern financial context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2zJLGIIW8X9EeQb3uvQZKzuVRCA66bQJr0uGSHHmnCOieLDgTOO_HlkRYAJZUHwjSQZagY2Emu6U1EPd2G-RxAv89ZtB2CHV0DVC_LpJjBn-9nngM_b-C-xX4m61BPLURs6YJFzkWYcxmWgGpPTkYIEUtzMkTc3VODHD_O2aA8iLUKVsQ8BuduY4vc1B2gSm0pA7bdgB8h8VFzKwZLKtodpSiXlNnYdCwdvj1Lt9lxh67BmWOIQTHQA"/>
+</div>
+<!-- Connecting Text -->
+<div class="text-center mt-md z-10">
+<h1 class="font-headline-md text-headline-md text-primary mb-base">Support Agent</h1>
+<p class="font-body-lg text-body-lg text-secondary animate-pulse">Connecting...</p>
+</div>
+</div>
+<!-- Bottom: Controls -->
+<div class="w-full flex justify-center pb-xl pt-lg">
+<!-- End Call Button -->
+<button class="w-16 h-16 rounded-full bg-error text-on-error shadow-[0px_8px_24px_rgba(186,26,26,0.3)] flex items-center justify-center hover:bg-error/90 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="call_end" style="font-size: 32px; font-variation-settings: 'FILL' 1;">call_end</span>
+</button>
+</div>
+</div>
+</body></html>

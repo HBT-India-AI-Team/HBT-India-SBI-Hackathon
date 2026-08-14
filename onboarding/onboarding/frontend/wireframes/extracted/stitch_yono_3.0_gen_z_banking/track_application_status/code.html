@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Track Application</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#191c1e",
+                        "inverse-primary": "#a5c8ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1a4f8a",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d9dadf",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "inverse-on-surface": "#f0f0f6",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "surface-container": "#ededf3",
+                        "secondary": "#5b5f61",
+                        "primary-fixed": "#d4e3ff",
+                        "secondary-container": "#e0e3e6",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-tertiary-container": "#ffae6b",
+                        "surface": "#f9f9ff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "primary": "#00386b",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3035",
+                        "outline": "#737781",
+                        "on-surface": "#1a1c20",
+                        "on-background": "#1a1c20",
+                        "outline-variant": "#c2c6d1",
+                        "surface-container-low": "#f3f3f9",
+                        "on-secondary-container": "#626567",
+                        "on-surface-variant": "#424750",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "tertiary": "#582c00",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#793f00",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-bright": "#f9f9ff",
+                        "surface-container-high": "#e8e8ed",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-variant": "#e2e2e8",
+                        "background": "#f9f9ff",
+                        "secondary-fixed": "#e0e3e6",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "base": "4px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "card-gap": "16px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "headline-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky shadow-sm bg-surface dark:bg-inverse-surface z-50 shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex items-center justify-between px-container-margin py-md">
+<!-- Leading Element -->
+<button class="text-primary hover:bg-surface-container-low active:scale-95 transition-transform p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="arrow_back" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<!-- Headline -->
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold">Your Application</h1>
+<!-- Trailing Element (Hidden for alignment or use a placeholder) -->
+<div class="w-10"></div>
+</div>
+</header>
+<main class="px-container-margin py-lg max-w-md mx-auto flex flex-col gap-lg">
+<!-- Status Banner -->
+<section class="bg-surface-container-highest rounded-xl p-md flex items-center justify-between shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Application Status</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-base">Ref: #APP-8492-X</p>
+</div>
+<div class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-sm py-base rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm" data-icon="pending" style="font-variation-settings: 'FILL' 1;">pending</span>
+<span class="font-label-md text-label-md">Under Review</span>
+</div>
+</section>
+<!-- Timeline Card -->
+<section class="bg-surface-container-lowest rounded-xl p-lg shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-outline-variant/20">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-lg">Track Progress</h3>
+<div class="relative pl-xs">
+<!-- Vertical Line -->
+<div class="absolute left-[19px] top-6 bottom-6 w-0.5 bg-outline-variant z-0"></div>
+<!-- Active Line Fill (Progress to step 4) -->
+<div class="absolute left-[19px] top-6 h-[60%] w-0.5 bg-primary z-0"></div>
+<!-- Step 1: Consent (Completed) -->
+<div class="flex gap-md mb-lg relative z-10">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-sm" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Consent</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-base">Agreed to terms and conditions.</p>
+</div>
+</div>
+<!-- Step 2: Verify Mobile (Completed) -->
+<div class="flex gap-md mb-lg relative z-10">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-sm" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Verify Mobile</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-base">OTP verification successful.</p>
+</div>
+</div>
+<!-- Step 3: Confirm Identity (Completed) -->
+<div class="flex gap-md mb-lg relative z-10">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-on-primary text-sm" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Confirm Identity</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-base">Documents verified.</p>
+</div>
+</div>
+<!-- Step 4: Choose Product (Active) -->
+<div class="flex gap-md mb-lg relative z-10">
+<div class="w-8 h-8 rounded-full bg-primary-container border-2 border-primary flex items-center justify-center shrink-0 shadow-sm">
+<div class="w-3 h-3 bg-primary rounded-full"></div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-primary font-bold">Choose Product</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-base">Currently under review by our team. This usually takes 1-2 business days.</p>
+<!-- Action Required Callout -->
+<div class="mt-sm bg-primary-fixed p-sm rounded-lg flex gap-sm items-start">
+<span class="material-symbols-outlined text-on-primary-fixed-variant" data-icon="info" style="font-variation-settings: 'FILL' 1;">info</span>
+<p class="font-body-md text-body-md text-on-primary-fixed-variant text-sm">We might contact you if additional details are needed.</p>
+</div>
+</div>
+</div>
+<!-- Step 5: Account Setup (Pending) -->
+<div class="flex gap-md relative z-10">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-outline-variant flex items-center justify-center shrink-0">
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-outline">Account Setup</h4>
+<p class="font-body-md text-body-md text-outline text-sm mt-base">Finalizing your new account details.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Help Section -->
+<section class="text-center mt-sm">
+<p class="font-body-md text-body-md text-on-surface-variant">Need help with your application?</p>
+<button class="mt-base font-label-md text-label-md text-primary hover:underline underline-offset-4">Contact Support</button>
+</section>
+</main>
+</body></html>

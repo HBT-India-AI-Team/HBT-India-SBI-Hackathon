@@ -1,0 +1,15 @@
+# Backend-specific runtime data -- generated at run time, not source. See the
+# repo-root .gitignore for shared patterns (env files, __pycache__, etc; both
+# apply here automatically -- no need to repeat them).
+
+# SQLite DB (created by scripts/init_db.py / on first run)
+data/yono.db
+data/yono.db-journal
+data/yono.db-wal
+data/yono.db-shm
+
+# User-uploaded documents (backend/config.py creates this dir at import time)
+data/uploads/*
+
+# Rotating app logs (backend/config.py creates this dir at import time)
+data/logs/*

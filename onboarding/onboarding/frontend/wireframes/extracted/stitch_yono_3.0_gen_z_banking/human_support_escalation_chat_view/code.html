@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SBI YONO 3.0 - Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#191c1e",
+                      "secondary-fixed-dim": "#c4c7ca",
+                      "primary": "#00386b",
+                      "on-primary-container": "#9ac2ff",
+                      "on-primary-fixed": "#001c3a",
+                      "primary-container": "#1a4f8a",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#2f5f9b",
+                      "tertiary": "#582c00",
+                      "outline-variant": "#c2c6d1",
+                      "on-primary": "#ffffff",
+                      "on-background": "#1a1c20",
+                      "on-tertiary-container": "#ffae6b",
+                      "secondary": "#5b5f61",
+                      "on-surface-variant": "#424750",
+                      "on-primary-fixed-variant": "#0d4782",
+                      "surface-container-high": "#e8e8ed",
+                      "on-secondary-fixed-variant": "#44474a",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f3f9",
+                      "primary-fixed": "#d4e3ff",
+                      "on-error-container": "#93000a",
+                      "inverse-primary": "#a5c8ff",
+                      "inverse-on-surface": "#f0f0f6",
+                      "surface-bright": "#f9f9ff",
+                      "on-tertiary-fixed-variant": "#6e3900",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed": "#ffdcc3",
+                      "surface": "#f9f9ff",
+                      "tertiary-fixed-dim": "#ffb77e",
+                      "on-surface": "#1a1c20",
+                      "primary-fixed-dim": "#a5c8ff",
+                      "secondary-fixed": "#e0e3e6",
+                      "tertiary-container": "#793f00",
+                      "on-secondary-container": "#626567",
+                      "on-tertiary-fixed": "#2f1500",
+                      "inverse-surface": "#2e3035",
+                      "surface-dim": "#d9dadf",
+                      "secondary-container": "#e0e3e6",
+                      "surface-container": "#ededf3",
+                      "surface-container-highest": "#e2e2e8",
+                      "outline": "#737781",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e2e2e8",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f9f9ff",
+                      "error": "#ba1a1a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "12px",
+                      "md": "16px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "card-gap": "16px",
+                      "container-margin": "20px",
+                      "xs": "8px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": ["Quicksand"],
+                      "body-lg": ["Quicksand"],
+                      "label-md": ["Quicksand"],
+                      "display-lg": ["Quicksand"],
+                      "label-sm": ["Quicksand"],
+                      "body-md": ["Quicksand"],
+                      "headline-lg-mobile": ["Quicksand"],
+                      "headline-md": ["Quicksand"]
+              },
+              "fontSize": {
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "500"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Quicksand', sans-serif; background-color: #f9f9ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen flex flex-col antialiased">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky bg-surface shadow-[0px_4px_20px_rgba(26,79,138,0.05)] z-40">
+<div class="flex items-center justify-between px-container-margin py-md">
+<button class="p-2 text-primary hover:bg-surface-container-low rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="text-center">
+<h1 class="font-headline-sm text-headline-sm text-primary">YONO 3.0</h1>
+<p class="font-label-sm text-label-sm text-secondary">Assistant</p>
+</div>
+<button class="p-2 text-primary hover:bg-surface-container-low rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Progress Stepper -->
+<div class="bg-surface px-container-margin py-sm border-b border-outline-variant/30 sticky top-[72px] z-30">
+<div class="flex items-center justify-between">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md mb-1"><span class="material-symbols-outlined text-[16px]">check</span></div>
+<span class="font-label-sm text-label-sm text-secondary text-center leading-tight">Details</span>
+</div>
+<div class="flex-1 h-1 bg-primary mx-2"></div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md mb-1"><span class="material-symbols-outlined text-[16px]">check</span></div>
+<span class="font-label-sm text-label-sm text-secondary text-center leading-tight">OTP</span>
+</div>
+<div class="flex-1 h-1 bg-primary mx-2"></div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full border-2 border-primary text-primary flex items-center justify-center font-label-md text-label-md mb-1 bg-surface">3</div>
+<span class="font-label-sm text-label-sm text-primary text-center leading-tight">Confirm Identity</span>
+</div>
+</div>
+</div>
+<!-- Chat Canvas -->
+<main class="flex-1 overflow-y-auto px-container-margin py-lg flex flex-col gap-lg bg-surface-container-lowest">
+<!-- Assistant Message -->
+<div class="flex gap-md max-w-[85%]">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">smart_toy</span>
+</div>
+<div class="bg-surface-container p-md rounded-2xl rounded-tl-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<p class="font-body-md text-body-md text-on-surface">Hello! To proceed with your identity confirmation, I'll need you to verify a few details. Are you ready?</p>
+<span class="font-label-sm text-label-sm text-secondary mt-1 block">10:42 AM</span>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-md max-w-[85%] self-end flex-row-reverse">
+<div class="w-10 h-10 rounded-full overflow-hidden shrink-0">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A close up portrait photo of a young indian professional wearing casual smart clothes, smiling softly. The lighting is bright and modern, creating a clean light-mode aesthetic suitable for a banking app avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxbbLwxVv0owGYywS8bQdwR6kHIrRJUyRKcprLTQR8X9yPA8VlCjCRrbnVA5PxfBT4i0OZUN9VxNDkueFs42YkGE03pvtxgHzxgavIXOU3mI7RCznQmvjLwjesWSHGtZkj_EhFaVR63MLhucEwiJ8kyIdESRDGS5tM2lGkTiM8tOMXm1Wi9_-4y2PyZ6lbqeNvzCu1jEN6IVM8-fuygetQW9sZORcDszngpBISAkTS9usvL0tRpleeLQ"/>
+</div>
+<div class="bg-primary-container text-on-primary p-md rounded-2xl rounded-tr-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<p class="font-body-md text-body-md">Yes, I am ready.</p>
+<span class="font-label-sm text-label-sm text-on-primary/70 mt-1 block text-right">10:43 AM</span>
+</div>
+</div>
+<!-- Assistant Message (Form/Card) -->
+<div class="flex gap-md max-w-[90%]">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">smart_toy</span>
+</div>
+<div class="bg-surface-container p-md rounded-2xl rounded-tl-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] w-full">
+<p class="font-body-md text-body-md text-on-surface mb-md">Great. Please confirm if the following PAN details are correct:</p>
+<div class="bg-surface p-md rounded-xl border border-outline-variant/30 mb-md">
+<p class="font-label-sm text-label-sm text-secondary mb-1">PAN Number</p>
+<p class="font-body-lg text-body-lg text-on-surface font-semibold mb-3">ABCDE1234F</p>
+<p class="font-label-sm text-label-sm text-secondary mb-1">Name on PAN</p>
+<p class="font-body-lg text-body-lg text-on-surface font-semibold">John Doe</p>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-sm rounded-full active:scale-95 transition-transform text-center shadow-sm">Yes, correct</button>
+<button class="flex-1 border-2 border-primary text-primary font-label-md text-label-md py-sm rounded-full active:scale-95 transition-transform text-center">No, update</button>
+</div>
+<span class="font-label-sm text-label-sm text-secondary mt-2 block">10:43 AM</span>
+</div>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="bg-surface border-t border-outline-variant/30 pb-sm pt-xs px-container-margin shadow-[0px_-4px_20px_rgba(26,79,138,0.05)]">
+<!-- Persistent Help Link -->
+<div class="flex justify-center mb-xs">
+<button class="flex items-center gap-1 text-primary font-label-sm text-label-sm hover:underline active:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+                Need help? Talk to us
+            </button>
+</div>
+<!-- Input Bar -->
+<div class="flex items-end gap-sm bg-surface-container-low rounded-3xl p-1 border border-outline-variant/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<button class="p-3 text-secondary hover:text-primary transition-colors rounded-full shrink-0">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 resize-none font-body-md text-body-md py-3 text-on-surface placeholder:text-secondary max-h-[100px]" placeholder="Type a message..." rows="1"></textarea>
+<button class="p-3 text-on-primary bg-primary rounded-full hover:bg-primary-container transition-colors shrink-0 mb-1 mr-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</body></html>

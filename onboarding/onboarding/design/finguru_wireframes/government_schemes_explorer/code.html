@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Government Schemes Explorer - YONO 3.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#5b5f61",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb77e",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f3f9",
+                      "on-secondary-fixed-variant": "#44474a",
+                      "on-primary-fixed-variant": "#0d4782",
+                      "on-primary-container": "#9ac2ff",
+                      "primary": "#00386b",
+                      "on-error": "#ffffff",
+                      "secondary-container": "#e0e3e6",
+                      "on-surface-variant": "#424750",
+                      "on-secondary-fixed": "#191c1e",
+                      "surface-tint": "#2f5f9b",
+                      "tertiary-container": "#793f00",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#f0f0f6",
+                      "secondary-fixed-dim": "#c4c7ca",
+                      "surface": "#f9f9ff",
+                      "primary-fixed": "#d4e3ff",
+                      "on-tertiary-container": "#ffae6b",
+                      "on-tertiary-fixed": "#2f1500",
+                      "surface-variant": "#e2e2e8",
+                      "on-surface": "#1a1c20",
+                      "surface-bright": "#f9f9ff",
+                      "surface-dim": "#d9dadf",
+                      "on-primary-fixed": "#001c3a",
+                      "surface-container-highest": "#e2e2e8",
+                      "inverse-primary": "#a5c8ff",
+                      "on-tertiary-fixed-variant": "#6e3900",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#582c00",
+                      "outline": "#737781",
+                      "error": "#ba1a1a",
+                      "primary-container": "#1a4f8a",
+                      "on-secondary": "#ffffff",
+                      "inverse-surface": "#2e3035",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-container": "#626567",
+                      "secondary-fixed": "#e0e3e6",
+                      "surface-container": "#ededf3",
+                      "on-background": "#1a1c20",
+                      "tertiary-fixed": "#ffdcc3",
+                      "background": "#f9f9ff",
+                      "surface-container-high": "#e8e8ed",
+                      "outline-variant": "#c2c6d1",
+                      "primary-fixed-dim": "#a5c8ff",
+                      "finguru-gold": "#D4A017"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px",
+                      "card": "16px"
+              },
+              "spacing": {
+                      "lg": "24px",
+                      "container-margin": "20px",
+                      "base": "4px",
+                      "xl": "32px",
+                      "card-gap": "16px",
+                      "md": "16px",
+                      "xs": "8px",
+                      "sm": "12px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Quicksand"
+                      ],
+                      "label-md": [
+                              "Quicksand"
+                      ],
+                      "body-lg": [
+                              "Quicksand"
+                      ],
+                      "headline-lg-mobile": [
+                              "Quicksand"
+                      ],
+                      "display-lg": [
+                              "Quicksand"
+                      ],
+                      "body-md": [
+                              "Quicksand"
+                      ],
+                      "label-sm": [
+                              "Quicksand"
+                      ],
+                      "headline-sm": [
+                              "Quicksand"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .card-shadow {
+            box-shadow: 0px 4px 20px rgba(26, 79, 138, 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen pb-[90px]">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-dim shadow-sm z-40">
+<div class="flex items-center justify-between px-container-margin h-16 w-full">
+<button aria-label="Back" class="text-primary dark:text-primary-fixed active:scale-95 transition-transform hover:bg-surface-container-high rounded-full p-2">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed font-bold tracking-tight">Government Schemes</h1>
+<div class="w-10 h-10"></div> <!-- Placeholder for balance -->
+</div>
+</header>
+<main class="w-full max-w-4xl mx-auto">
+<!-- Filter Row -->
+<section class="mt-md mb-lg">
+<div class="flex overflow-x-auto hide-scrollbar px-container-margin space-x-sm pb-2">
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-primary-container text-on-primary-container font-label-md transition-colors active:scale-95">All</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-md hover:bg-surface-variant transition-colors active:scale-95">Savings</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-md hover:bg-surface-variant transition-colors active:scale-95">Insurance</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-md hover:bg-surface-variant transition-colors active:scale-95">Pension</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full bg-surface-container-high text-on-surface-variant font-label-md hover:bg-surface-variant transition-colors active:scale-95">Housing</button>
+</div>
+</section>
+<!-- Scheme List -->
+<section class="px-container-margin space-y-md">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-card p-5 card-shadow active:scale-[0.98] transition-transform cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-primary-container opacity-10 rounded-bl-full"></div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Sukanya Samriddhi Yojana</h3>
+<p class="font-body-md text-on-surface-variant text-sm mb-3">High-interest savings scheme for the girl child's education and marriage.</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">
+<span class="material-symbols-outlined text-[14px] mr-1">face_3</span> Girl child
+                            </span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">
+<span class="material-symbols-outlined text-[14px] mr-1">child_care</span> Under 10 yrs
+                            </span>
+</div>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-card p-5 card-shadow active:scale-[0.98] transition-transform cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-finguru-gold opacity-10 rounded-bl-full"></div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Public Provident Fund (PPF)</h3>
+<p class="font-body-md text-on-surface-variant text-sm mb-3">Long-term investment scheme offering attractive returns with tax benefits.</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">
+<span class="material-symbols-outlined text-[14px] mr-1">person</span> Any Indian Citizen
+                            </span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">
+<span class="material-symbols-outlined text-[14px] mr-1">savings</span> Min ₹500/yr
+                            </span>
+</div>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-card p-5 card-shadow active:scale-[0.98] transition-transform cursor-pointer relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-16 h-16 bg-primary-container opacity-10 rounded-bl-full"></div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Pradhan Mantri Jeevan Jyoti Bima</h3>
+<p class="font-body-md text-on-surface-variant text-sm mb-3">One-year life insurance scheme renewable from year to year.</p>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">
+<span class="material-symbols-outlined text-[14px] mr-1">group</span> 18-50 yrs
+                            </span>
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">
+<span class="material-symbols-outlined text-[14px] mr-1">account_balance</span> Bank Account
+                            </span>
+</div>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar - Hidden on this linear/transactional screen as per rules, but included if it's considered a main destination. Based on "Government Schemes Explorer", it might be a sub-page. I will omit it to prioritize canvas as per "Task-Focused" rule. -->
+</body></html>

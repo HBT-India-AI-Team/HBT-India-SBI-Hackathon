@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru - Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary": "#ffffff",
+                      "on-primary-fixed": "#001c3a",
+                      "on-secondary-fixed-variant": "#5c4300",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-high": "#eae8e7",
+                      "secondary-fixed": "#ffdfa0",
+                      "primary-fixed-dim": "#a5c8ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#e1e3e4",
+                      "inverse-primary": "#a5c8ff",
+                      "surface-container-low": "#f5f3f3",
+                      "tertiary-container": "#4c4f50",
+                      "error": "#ba1a1a",
+                      "tertiary": "#353839",
+                      "on-primary-container": "#9ac2ff",
+                      "on-tertiary-container": "#bfc0c2",
+                      "on-tertiary-fixed-variant": "#454748",
+                      "on-secondary-container": "#715300",
+                      "outline": "#737781",
+                      "inverse-on-surface": "#f2f0f0",
+                      "primary-fixed": "#d4e3ff",
+                      "on-primary-fixed-variant": "#0d4782",
+                      "surface-tint": "#2f5f9b",
+                      "surface-container-highest": "#e4e2e2",
+                      "surface-bright": "#fbf9f8",
+                      "on-tertiary-fixed": "#191c1d",
+                      "outline-variant": "#c2c6d1",
+                      "background": "#fbf9f8",
+                      "surface": "#fbf9f8",
+                      "on-secondary-fixed": "#261a00",
+                      "primary": "#00386b",
+                      "on-error": "#ffffff",
+                      "secondary": "#795900",
+                      "surface-dim": "#dbd9d9",
+                      "error-container": "#ffdad6",
+                      "inverse-surface": "#303030",
+                      "secondary-fixed-dim": "#f6be39",
+                      "surface-variant": "#e4e2e2",
+                      "on-secondary": "#ffffff",
+                      "on-surface-variant": "#424750",
+                      "on-background": "#1b1c1c",
+                      "on-surface": "#1b1c1c",
+                      "primary-container": "#1a4f8a",
+                      "surface-container": "#efeded",
+                      "tertiary-fixed-dim": "#c5c7c8",
+                      "secondary-container": "#ffc641"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "20px",
+                      "lg": "40px",
+                      "base": "8px",
+                      "xl": "64px",
+                      "sm": "12px",
+                      "xs": "4px",
+                      "margin-mobile": "16px",
+                      "md": "24px",
+                      "margin-desktop": "48px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Quicksand"
+                      ],
+                      "label-md": [
+                              "Quicksand"
+                      ],
+                      "label-sm": [
+                              "Quicksand"
+                      ],
+                      "headline-md": [
+                              "Quicksand"
+                      ],
+                      "headline-lg": [
+                              "Quicksand"
+                      ],
+                      "display-lg": [
+                              "Quicksand"
+                      ],
+                      "body-lg": [
+                              "Quicksand"
+                      ],
+                      "body-md": [
+                              "Quicksand"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "40px",
+                              {
+                                      "lineHeight": "48px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          .pb-safe {
+              padding-bottom: env(safe-area-inset-bottom);
+          }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F2F4F7] text-on-surface font-body-md min-h-screen flex flex-col relative pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant shadow-sm flex justify-between items-center px-margin-mobile py-base w-full z-50 sticky top-0 md:hidden">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined text-[24px]">lightbulb</span>
+<h1 class="font-headline-md text-headline-md font-bold text-secondary-container">FinGuru</h1>
+</div>
+<div class="flex items-center">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, circular, high-resolution portrait photograph of a smiling customer in a well-lit, modern setting, suitable for a mobile app user profile avatar. The background should be slightly blurred to focus on the friendly face, emphasizing trust and approachability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxPzgt54oTFyTWfYj6mmAc-XIE2LzRIlkoTxg9f_iFJeBP8p4r5ewSUyvcbBkmg0jDKAA78x1faIw_RX2HzYvCd46AeMrGgbU_c_pekOXMelNSmcfAg0Mi4M42qH_WyYcv2AyCk2DdqGUJCk1R0Zy7F1T61AbPgsI4slQisOOahJ4XrJoLPGQDpbmKAg7TbVXCmf3GGwqmJBt7CYS8PDI4wJxaS5gRF-z_NgBNc1WJj_ESMeDWNCYKUQ"/>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 max-w-3xl mx-auto w-full px-margin-mobile py-md flex flex-col gap-lg">
+<!-- Chat Area -->
+<div class="flex flex-col gap-md pb-24">
+<!-- User Message -->
+<div class="flex justify-end w-full">
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-md py-sm max-w-[85%] shadow-sm">
+<p class="font-body-md text-body-md">What are the current FD rates for senior citizens?</p>
+</div>
+</div>
+<!-- Guru Message with Citation -->
+<div class="flex w-full gap-sm items-start">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex-shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-on-secondary-container">lightbulb</span>
+</div>
+<div class="flex flex-col gap-sm max-w-[85%]">
+<div class="bg-surface text-on-surface rounded-2xl rounded-tl-sm px-md py-md shadow-[0_4px_20px_rgba(26,79,138,0.08)] relative border border-outline-variant/30">
+<button class="absolute top-sm right-sm text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">volume_up</span>
+</button>
+<p class="font-body-md text-body-md text-on-surface mb-sm pr-md">
+                            Currently, the State Bank of India (SBI) offers a special higher interest rate on Fixed Deposits (FDs) for senior citizens. 
+                        </p>
+<p class="font-body-md text-body-md text-on-surface mb-sm">
+                            For tenures of 1 year to less than 2 years, the rate is <b>7.30% p.a.</b><br/>
+                            For a specialized 400-day term deposit (Amrit Kalash), senior citizens can avail a rate of <b>7.60% p.a.</b>
+</p>
+<div class="mt-md pt-sm border-t border-surface-variant flex flex-wrap items-center gap-xs">
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-sm py-1 rounded-full flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">gavel</span>
+                                Per RBI guidelines
+                            </span>
+<span class="text-outline font-label-sm text-label-sm ml-auto">Last verified: Jul 2026</span>
+</div>
+</div>
+<!-- Follow-up Chips -->
+<div class="flex flex-wrap gap-xs mt-xs">
+<button class="border border-secondary text-secondary font-label-sm text-label-sm px-sm py-xs rounded-full hover:bg-secondary hover:text-on-secondary transition-colors">
+                            How to apply?
+                        </button>
+<button class="border border-secondary text-secondary font-label-sm text-label-sm px-sm py-xs rounded-full hover:bg-secondary hover:text-on-secondary transition-colors">
+                            Compare with SIP
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Chat Input Area (Fixed above Bottom Nav) -->
+<div class="fixed bottom-[72px] md:bottom-0 left-0 w-full bg-surface-container-lowest border-t border-outline-variant/20 px-margin-mobile py-sm z-40 md:static md:w-auto md:max-w-3xl md:mx-auto md:bg-transparent md:border-none md:p-0 md:mt-auto">
+<div class="flex items-center gap-sm bg-surface shadow-sm rounded-full border border-outline-variant px-sm py-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<input class="flex-1 bg-transparent border-none outline-none focus:ring-0 text-body-md text-on-surface px-sm py-sm placeholder:text-outline-variant" placeholder="Ask FinGuru..." type="text"/>
+<button class="text-outline hover:text-primary p-2 transition-colors">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="bg-primary text-on-primary w-10 h-10 rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-lowest shadow-[0_-4px_20px_rgba(26,79,138,0.08)] rounded-t-lg md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1">sports_esports</span>
+<span class="font-label-sm text-label-sm">Game</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined mb-1 text-secondary font-headline-lg">forum</span>
+<span class="font-label-sm text-label-sm">FinGuru</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+</body></html>

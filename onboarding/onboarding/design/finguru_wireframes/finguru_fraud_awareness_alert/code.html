@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru - Fraud Alert</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#ffae6b",
+                        "inverse-surface": "#2e3035",
+                        "tertiary": "#582c00",
+                        "secondary-container": "#e0e3e6",
+                        "on-surface": "#1a1c20",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#f0f0f6",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary-fixed": "#001c3a",
+                        "primary-container": "#1a4f8a",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "surface-dim": "#d9dadf",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container-low": "#f3f3f9",
+                        "inverse-primary": "#a5c8ff",
+                        "primary-fixed": "#d4e3ff",
+                        "primary": "#00386b",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "on-background": "#1a1c20",
+                        "outline-variant": "#c2c6d1",
+                        "background": "#f9f9ff",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-surface-variant": "#424750",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#793f00",
+                        "surface": "#f9f9ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#626567",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-container": "#ededf3",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "outline": "#737781",
+                        "secondary": "#5b5f61"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "card-gap": "16px",
+                        "base": "4px",
+                        "container-margin": "20px",
+                        "xs": "8px",
+                        "sm": "12px",
+                        "margin-mobile": "20px" /* Fallback for JSON requirement */
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
+        body { font-family: 'Quicksand', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Hide scrollbar for seamless chat flow */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen w-full flex justify-center overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile App Container -->
+<div class="w-full max-w-md h-full flex flex-col relative bg-surface shadow-2xl overflow-hidden">
+<!-- TopAppBar (From JSON Blueprint) -->
+<header class="flex justify-between items-center px-margin-mobile py-base w-full z-50 bg-surface dark:bg-surface-dim shadow-sm docked full-width top-0 border-b border-outline-variant">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high dark:hover:bg-tertiary-container transition-colors active:scale-95 duration-100 text-on-surface-variant dark:text-outline">
+<span class="material-symbols-outlined" data-icon="lightbulb">lightbulb</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-secondary-container dark:text-secondary-fixed">
+                FinGuru
+            </h1>
+<button class="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-primary-container transition-colors active:scale-95 duration-100 shadow-sm flex items-center justify-center">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A clean, modern headshot of a young professional user smiling softly. Warm, inviting lighting capturing a minimalist light-mode aesthetic with pastel background tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAabHagJrTXELxpGVs43JFGZKun0WKChxKLoCsyIzW-YBbNlryyPjo4L1WS0vpwubXNyhRmfnqi1eDewwSO34xxwCF8FljCq4GqbzI3IkZkDhQNd6KCgIPHU-AinRt6QlnSGPqdDN5XyBSKFibaxTz_trRaWVcIfWp66or8S_j5SpW3CmiplpcEscvmRrKbC7o6DhdEYz6ikd3wVz2esK1KL4d9200BVUHDaG55M7FIEW8wf-S2B35Egg"/>
+</button>
+</header>
+<!-- Main Chat Canvas -->
+<main class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-lg px-container-margin py-lg pb-32">
+<!-- FinGuru Greeting Bubble -->
+<div class="flex items-end gap-sm w-full max-w-[85%]">
+<div class="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-sm bg-surface-container-high flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A highly detailed 3D render of a friendly, futuristic robotic owl mascot serving as a financial guide. Modern, minimalist, bright light-mode aesthetic utilizing deep blues and crisp whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDq4Pg5I03NzjJOD4lv08kxmOfBH8R7HaGncpUxEnFpw9NsICQL3OZRNLwK7ynTGR1vVya5KY8EM7viBFvhWf_aH299bcruPvVoPUWrk6iAapzaE0CZPrsLcEsXRqLDzsDmwGYUcd9nSgmHtEJqPhmLhwWBmKt-JAXAvBYXfYFT4DLUbb4AdIIS1ODnSDZUwyFClQubmMBMbgkVizvSImFmLv_DinSaPBBY7FjhK2U8q3DbY2szAlrn_g"/>
+</div>
+<div class="bg-surface-container text-on-surface px-md py-sm rounded-xl rounded-bl-none shadow-sm font-body-md text-body-md border border-outline-variant/30">
+                    Hello! I'm FinGuru. I see you're looking into some new investment opportunities today. Anything specific I can help analyze?
+                </div>
+</div>
+<!-- User Message Bubble -->
+<div class="flex items-end gap-sm w-full max-w-[85%] self-end justify-end">
+<div class="bg-primary-container text-on-primary-container px-md py-sm rounded-xl rounded-br-none shadow-sm font-body-md text-body-md">
+                    Yeah, someone DM'd me about a new crypto fund. They guarantee 15% returns weekly if I wire funds today. Sounds amazing right?
+                </div>
+</div>
+<!-- FinGuru FRAUD ALERT Bubble -->
+<div class="flex items-end gap-sm w-full max-w-[92%] mt-md">
+<div class="w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-sm bg-surface-container-high flex items-center justify-center mb-auto">
+<img class="w-full h-full object-cover" data-alt="A highly detailed 3D render of a friendly, futuristic robotic owl mascot serving as a financial guide. Modern, minimalist, bright light-mode aesthetic utilizing deep blues and crisp whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh7vLZ3m8YZ8FSqVGmOEWsVYkOoBGDFr3vA0ECcPXHbgAOg5H5J2RsSAZ6ll7StLw_MgAU2HcH_ceP2XtQVCPn5o6ISJ5Pcc8hszpPlfocSJAJrf2VvcfrOXp7UWjQNdo27FDuh6Ewbm-iH06I_C3SUWX2RTSSAjZhkY6Gvl45Mb2Ow_1gold5Nk0NjDmWB9vuY8yb9Vol_4BlJFjB4fIVlRyoBHjfNuGodCdg8yLiE9bK1H111z6LWQ"/>
+</div>
+<div class="bg-error-container text-on-error-container p-md rounded-xl rounded-tl-none shadow-[0_4px_20px_rgba(186,26,26,0.15)] flex flex-col gap-sm relative overflow-hidden">
+<!-- Subtle ambient glow for the warning card -->
+<div class="absolute -top-10 -right-10 w-24 h-24 bg-error/10 blur-xl rounded-full"></div>
+<div class="flex items-start gap-sm z-10">
+<span class="material-symbols-outlined text-error icon-fill shrink-0" data-icon="warning">warning</span>
+<p class="font-body-md text-body-md font-bold leading-tight pt-1">
+                            Heads up — schemes promising "guaranteed high returns" are a common fraud pattern. Here's what to watch for:
+                        </p>
+</div>
+<div class="flex flex-col gap-xs mt-2 pl-xs border-l-2 border-error/30 z-10">
+<div class="flex items-center gap-xs">
+<div class="w-1.5 h-1.5 rounded-full bg-error shrink-0"></div>
+<span class="font-body-md text-body-md">Unrealistic return rates</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-1.5 h-1.5 rounded-full bg-error shrink-0"></div>
+<span class="font-body-md text-body-md">Pressure to act quickly</span>
+</div>
+<div class="flex items-center gap-xs">
+<div class="w-1.5 h-1.5 rounded-full bg-error shrink-0"></div>
+<span class="font-body-md text-body-md">Vague company details</span>
+</div>
+</div>
+<div class="mt-xs pt-xs border-t border-error/20 z-10 flex gap-sm">
+<button class="bg-error text-on-error px-4 py-2 rounded-full font-label-md text-label-md shadow-sm hover:bg-error/90 active:scale-95 transition-all">
+                            Report User
+                        </button>
+<button class="bg-surface/50 text-on-error-container px-4 py-2 rounded-full font-label-md text-label-md hover:bg-surface/80 active:scale-95 transition-all">
+                            Learn More
+                        </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Chat Input Area (Fixed above navigation) -->
+<div class="absolute bottom-[80px] w-full px-container-margin py-sm bg-gradient-to-t from-surface via-surface to-transparent z-40">
+<div class="relative flex items-center bg-surface-container-high rounded-full shadow-sm pr-2">
+<input class="w-full bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant px-lg py-3 rounded-l-full" placeholder="Type a message..." type="text"/>
+<button class="w-10 h-10 bg-primary container flex items-center justify-center rounded-full text-primary hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined icon-fill" data-icon="send">send</span>
+</button>
+</div>
+</div>
+<!-- BottomNavBar (From JSON Blueprint) -->
+<!-- Logic Note: Active state applied to "FinGuru" (Index 2) based on page intent -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-lowest dark:bg-surface-dim shadow-[0_-4px_20px_rgba(26,79,138,0.08)] docked full-width bottom-0 rounded-t-lg max-w-md mx-auto">
+<!-- Home: Inactive -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<!-- Game: Inactive -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm mt-1">Game</span>
+</button>
+<!-- FinGuru: ACTIVE (matches page title and context) -->
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-full px-4 py-1 scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-[24px] icon-fill" data-icon="forum">forum</span>
+<span class="font-label-sm text-label-sm mt-1">FinGuru</span>
+</button>
+<!-- Accounts: Inactive -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Accounts</span>
+</button>
+<!-- Profile: Inactive -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+</div>
+</body></html>

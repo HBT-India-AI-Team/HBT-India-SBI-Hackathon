@@ -1,0 +1,42 @@
+# Repo-wide ignores. Git applies these at every directory level, so
+# subfolder .gitignore files only need to add what's specific to them
+# (runtime data, generated artifacts) -- not repeat these patterns.
+
+# --- Secrets ---------------------------------------------------------------
+# Real .env files hold live API keys/tokens and must never be committed.
+# .env.example files (checked-in templates with placeholder values) are fine.
+.env
+.env.*
+!.env.example
+
+# --- Python ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Node / frontend tooling ------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+
+# --- Logs ----------------------------------------------------------------
+*.log
+logs/
+
+# --- OS / editor cruft ---------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# --- Local-only overrides --------------------------------------------
+*.local

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "scheme_ssy",
+    "category": "govt_scheme",
+    "title": "Sukanya Samriddhi Yojana (SSY)",
+    "tags": ["savings", "girl child", "small savings", "80c", "ssy"],
+    "summary": "High-interest small-savings scheme for a girl child's education and marriage.",
+    "body": "Sukanya Samriddhi Yojana (SSY) is a government-backed small-savings scheme for the girl child. As of the Apr–Jun 2026 quarter it earns 8.2% p.a., compounded yearly. A parent/legal guardian can open the account any time before the girl turns 10 (one account per girl, generally up to two per family). You deposit a minimum of ₹250 and up to ₹1.5 lakh per financial year for 15 years; the account matures 21 years from opening. Up to 50% of the balance can be withdrawn after she turns 18 or passes Class 10. SSY enjoys EEE tax treatment (deposits qualify under Section 80C, interest and maturity are tax-free).",
+    "source_url": "https://www.nsiindia.gov.in/(S(...))/InternalPage.aspx?Id_Pk=89",
+    "eligibility_tags": ["Girl child", "Under 10 yrs", "Min ₹250/yr"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_ppf",
+    "category": "govt_scheme",
+    "title": "Public Provident Fund (PPF)",
+    "tags": ["savings", "long term", "80c", "ppf", "tax free"],
+    "summary": "Long-term, tax-free government savings scheme with EEE benefits.",
+    "body": "The Public Provident Fund (PPF) is a 15-year government-backed savings scheme. For Q2 FY2026-27 it pays 7.1% p.a. (unchanged since April 2020), compounded yearly and fully tax-free. You can invest a minimum of ₹500 and a maximum of ₹1.5 lakh per financial year. PPF is a fully EEE instrument: contributions qualify for deduction under Section 80C (old regime), and both interest and maturity proceeds are tax-free under both tax regimes. The account can be extended in 5-year blocks after maturity, and partial withdrawals/loans are allowed after set lock-in periods.",
+    "source_url": "https://www.nsiindia.gov.in/InternalPage.aspx?Id_Pk=55",
+    "eligibility_tags": ["Any Indian citizen", "Min ₹500/yr", "15-yr lock-in"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_apy",
+    "category": "govt_scheme",
+    "title": "Atal Pension Yojana (APY)",
+    "tags": ["pension", "retirement", "unorganised sector", "apy"],
+    "summary": "Government pension scheme guaranteeing a fixed monthly pension from age 60.",
+    "body": "Atal Pension Yojana (APY) gives a guaranteed monthly pension of ₹1,000, ₹2,000, ₹3,000, ₹4,000 or ₹5,000 from age 60, based on your chosen slab and the age you join. Any Indian citizen aged 18–40 with a savings/post-office account can enrol; since October 2022, income-tax payers are not eligible. Contributions are auto-debited monthly and depend on entry age and pension slab — e.g. for a ₹5,000 pension, joining at 18 costs about ₹210/month, rising to about ₹1,318/month if you join at 40. Joining early keeps your contribution much lower. On the subscriber's death the spouse continues to receive the pension, and the corpus is returned to nominees.",
+    "source_url": "https://www.npscra.nsdl.co.in/scheme-details.php",
+    "eligibility_tags": ["Age 18-40", "Non-taxpayer", "Bank account"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_nps",
+    "category": "govt_scheme",
+    "title": "National Pension System (NPS)",
+    "tags": ["pension", "retirement", "market-linked", "nps", "80ccd"],
+    "summary": "Voluntary, market-linked retirement savings scheme regulated by PFRDA.",
+    "body": "The National Pension System (NPS) is a voluntary, market-linked retirement scheme regulated by PFRDA, open to Indian citizens aged 18–70. You contribute during your working years into a mix of equity and debt, and at 60 you can withdraw up to 60% tax-free as a lump sum while at least 40% must buy an annuity that pays a monthly pension. NPS offers extra tax deduction of up to ₹50,000 under Section 80CCD(1B), over and above the ₹1.5 lakh 80C limit. Returns are not guaranteed as they depend on market performance, but costs are among the lowest of any retirement product in India.",
+    "source_url": "https://www.npscra.nsdl.co.in/",
+    "eligibility_tags": ["Age 18-70", "Any citizen", "Extra ₹50k 80CCD(1B)"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_pmkisan",
+    "category": "govt_scheme",
+    "title": "PM-KISAN (Kisan Samman Nidhi)",
+    "tags": ["income support", "farmers", "dbt", "pm-kisan"],
+    "summary": "Income-support scheme paying eligible farmer families ₹6,000 a year in three installments.",
+    "body": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) provides ₹6,000 per year to eligible landholding farmer families, paid as three equal ₹2,000 installments (April–July, August–November, December–March) directly into bank accounts via DBT. Eligibility requires owning cultivable agricultural land and being an Indian citizen; institutional landowners, income-tax payers, professionals (CAs, doctors), and government employees are excluded. Completing PM-KISAN eKYC is mandatory to keep receiving installments.",
+    "source_url": "https://pmkisan.gov.in/",
+    "eligibility_tags": ["Landholding farmer", "eKYC required", "Not a taxpayer"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_pmjdy",
+    "category": "govt_scheme",
+    "title": "Pradhan Mantri Jan Dhan Yojana (PMJDY)",
+    "tags": ["savings", "financial inclusion", "zero balance", "rupay", "pmjdy"],
+    "summary": "Financial-inclusion scheme offering zero-balance bank accounts with insurance and overdraft.",
+    "body": "Pradhan Mantri Jan Dhan Yojana (PMJDY) is the national financial-inclusion mission providing a zero-balance bank account to every household. Benefits include a free RuPay debit card, accident insurance cover of ₹2 lakh, and an overdraft facility of up to ₹10,000. There is no minimum balance requirement, and accounts link seamlessly to Direct Benefit Transfer (DBT) for government schemes and pensions. Recent updates allow Video-KYC account opening. Any Indian resident can open a PMJDY account with basic KYC.",
+    "source_url": "https://pmjdy.gov.in/scheme",
+    "eligibility_tags": ["Any Indian resident", "Zero balance", "₹2L accident cover"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_pmay",
+    "category": "govt_scheme",
+    "title": "Pradhan Mantri Awas Yojana (PMAY)",
+    "tags": ["housing", "home loan", "subsidy", "clss", "pmay"],
+    "summary": "Central housing scheme giving subsidy/assistance to build or buy a home (urban and rural).",
+    "body": "Pradhan Mantri Awas Yojana (PMAY) helps families without a pucca house build or buy one, through PMAY-Gramin (rural) and PMAY-Urban (cities). Income categories: EWS up to ₹3 lakh, LIG up to ₹6 lakh, MIG-I up to ₹12 lakh, MIG-II up to ₹18 lakh a year. Urban beneficiaries can get interest subsidy on home loans (CLSS) and support for beneficiary-led/affordable-housing construction; rural beneficiary-led construction provides ₹2.50 lakh subsidy in four stage-linked installments. PMAY 2.0 (launched 1 September 2024) adds 3 crore more houses through 2029.",
+    "source_url": "https://pmaymis.gov.in/",
+    "eligibility_tags": ["No pucca house", "EWS/LIG/MIG", "Income-linked"],
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "scheme_pmjjby",
+    "category": "govt_scheme",
+    "title": "Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY)",
+    "tags": ["insurance", "life insurance", "term cover", "pmjjby"],
+    "summary": "Low-cost government term life-insurance scheme renewable yearly.",
+    "body": "Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY) is a one-year renewable term life-insurance scheme offering a life cover of ₹2 lakh on death from any cause, for an annual premium of ₹436 (auto-debited from your bank account). It is open to bank/post-office account holders aged 18–50, with cover continuing (on renewal) up to age 55. Enrolment needs an Aadhaar-linked account and a simple self-declaration of good health. It is one of the cheapest ways to get basic life cover in India.",
+    "source_url": "https://www.jansuraksha.gov.in/Files/PMJJBY/English/Rules.pdf",
+    "eligibility_tags": ["Age 18-50", "Bank account", "₹436/yr premium"],
+    "last_verified_at": "2026-08-01"
+  }
+]

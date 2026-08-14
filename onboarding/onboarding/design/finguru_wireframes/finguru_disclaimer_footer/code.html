@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#ffae6b",
+                        "inverse-surface": "#2e3035",
+                        "tertiary": "#582c00",
+                        "secondary-container": "#e0e3e6",
+                        "on-surface": "#1a1c20",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#f0f0f6",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary-fixed": "#001c3a",
+                        "primary-container": "#1a4f8a",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "surface-dim": "#d9dadf",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container-low": "#f3f3f9",
+                        "inverse-primary": "#a5c8ff",
+                        "primary-fixed": "#d4e3ff",
+                        "primary": "#00386b",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "on-background": "#1a1c20",
+                        "outline-variant": "#c2c6d1",
+                        "background": "#f9f9ff",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-surface-variant": "#424750",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#793f00",
+                        "surface": "#f9f9ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#626567",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-container": "#ededf3",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "outline": "#737781",
+                        "secondary": "#5b5f61"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "xl": "32px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "card-gap": "16px",
+                        "base": "4px",
+                        "container-margin": "20px",
+                        "xs": "8px",
+                        "sm": "12px"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"]
+                    },
+                    fontSize: {
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "500" }],
+                        "body-lg": ["18px", { lineHeight: "26px", fontWeight: "500" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "700" }],
+                        "display-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "600" }],
+                        "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "headline-lg-mobile": ["28px", { lineHeight: "36px", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Quicksand', sans-serif; }
+        /* Hide scrollbar for clean UI but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background w-full h-screen overflow-hidden flex flex-col text-on-surface">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-container-margin py-sm w-full z-50 bg-surface border-b border-outline-variant shadow-sm absolute top-0">
+<button class="text-primary hover:bg-surface-container-high transition-colors p-xs rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="lightbulb" data-weight="fill" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-secondary-container">FinGuru</h1>
+<div class="h-8 w-8 rounded-full overflow-hidden bg-surface-container shrink-0 border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="A close-up portrait of a professional young woman smiling confidently, wearing a crisp white collared shirt against a clean, light grey studio background. The lighting is soft and flattering, highlighting a modern, approachable aesthetic suitable for a high-end financial app profile picture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsYT1Lta_tLiFTrFWWZh90HbR8-2qFmyFaM_CB2vKHHjeucaWQYtyMjMFYJXphCScxbwxXqX3IID8vr-5YbcYqd42IxSlR4Ws9Dt5xuVT-HohtK55Lwiuc62bPVaOqAwmjsC3WpDE7yOOVM6TeQ-aXT2zFacwePcIPeW80bFNiFBzSofEAHw4aAiAKvCxYgjGJdaKwLn8WzFWvjePIYHeMe4EHxbNo3DA0yeh6OoKElEFn6UNVZL6NYw"/>
+</div>
+</header>
+<!-- Chat Canvas -->
+<main class="flex-1 overflow-y-auto no-scrollbar px-container-margin pt-[80px] pb-[180px] flex flex-col gap-lg bg-surface-bright">
+<!-- Date Divider -->
+<div class="flex justify-center my-sm">
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-3 py-1 rounded-full">Today, 10:42 AM</span>
+</div>
+<!-- User Message -->
+<div class="flex justify-end animate-[slideInRight_0.3s_ease-out]">
+<div class="bg-primary-container text-on-primary-container p-md rounded-[20px] rounded-tr-[4px] max-w-[85%] shadow-sm">
+<p class="font-body-md text-body-md">What's the main difference between an ETF and a mutual fund? I'm trying to decide where to put my savings.</p>
+</div>
+</div>
+<!-- FinGuru Response -->
+<div class="flex justify-start items-end gap-sm animate-[slideInLeft_0.4s_ease-out]">
+<div class="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-on-tertiary-container text-sm" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container text-on-surface p-md rounded-[20px] rounded-tl-[4px] max-w-[85%] shadow-[0_4px_20px_rgba(26,79,138,0.05)] border border-outline-variant/20">
+<p class="font-body-md text-body-md mb-sm">Great question! Both are excellent ways to diversify, but they operate differently. Here is a quick breakdown:</p>
+<div class="space-y-sm">
+<div class="bg-surface p-sm rounded-lg border border-outline-variant/30">
+<h4 class="font-label-md text-label-md text-primary mb-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="show_chart">show_chart</span> Trading
+                        </h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-[14px] leading-snug">ETFs trade like stocks throughout the day. Mutual funds trade only once at the end of the day at a set price.</p>
+</div>
+<div class="bg-surface p-sm rounded-lg border border-outline-variant/30">
+<h4 class="font-label-md text-label-md text-primary mb-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="account_balance">account_balance</span> Management
+                        </h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-[14px] leading-snug">Mutual funds are often actively managed by professionals aiming to beat the market. ETFs usually passively track an index.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Area (Disclaimer + Input + Nav) -->
+<div class="absolute bottom-0 w-full flex flex-col bg-surface shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-50">
+<!-- Persistent Disclaimer -->
+<div class="bg-surface-variant/50 px-container-margin py-xs flex items-center gap-2 border-t border-outline-variant/20 backdrop-blur-sm">
+<span class="material-symbols-outlined text-outline text-[16px] shrink-0" data-icon="info">info</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant flex-1 leading-tight">
+                FinGuru gives educational information, not personalized investment advice. 
+                <a class="text-tertiary-container hover:text-tertiary font-bold ml-1 transition-colors" href="#">Learn more</a>
+</p>
+</div>
+<!-- Input Bar -->
+<div class="px-container-margin py-sm flex items-center gap-sm bg-surface">
+<button class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant/50 rounded-[24px] px-4 py-2 flex items-center gap-2 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<input class="bg-transparent border-none outline-none w-full font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-0 p-0" placeholder="Ask FinGuru..." type="text"/>
+<button class="text-outline hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]" data-icon="mic">mic</span>
+</button>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-md hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="send" data-weight="fill" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+<!-- BottomNavBar -->
+<nav class="flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-lowest shadow-[0_-4px_20px_rgba(26,79,138,0.08)] rounded-t-lg w-full">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1 text-[24px]" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1 text-[24px]" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm">Game</span>
+</button>
+<!-- ACTIVE NAV ITEM -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-5 py-1.5 scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined mb-1 text-[24px]" data-icon="forum" data-weight="fill" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span class="font-label-sm text-label-sm">FinGuru</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1 text-[24px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1 text-[24px]" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+</div>
+<style>
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</body></html>

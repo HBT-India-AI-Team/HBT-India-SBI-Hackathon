@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Support Call - Active | YONO 3.0</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "inverse-on-surface": "#f0f0f6",
+                        "primary": "#00386b",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-dim": "#d9dadf",
+                        "on-surface": "#1a1c20",
+                        "inverse-primary": "#a5c8ff",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed": "#2f1500",
+                        "secondary-container": "#e0e3e6",
+                        "secondary-fixed": "#e0e3e6",
+                        "tertiary": "#582c00",
+                        "inverse-surface": "#2e3035",
+                        "surface-container-low": "#f3f3f9",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-container-highest": "#e2e2e8",
+                        "outline-variant": "#c2c6d1",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary": "#5b5f61",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c20",
+                        "on-error": "#ffffff",
+                        "surface-container": "#ededf3",
+                        "on-surface-variant": "#424750",
+                        "on-secondary-container": "#626567",
+                        "surface-container-high": "#e8e8ed",
+                        "surface-variant": "#e2e2e8",
+                        "surface-tint": "#2f5f9b",
+                        "surface": "#f9f9ff",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#d4e3ff",
+                        "outline": "#737781",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-secondary-fixed": "#191c1e",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#9ac2ff",
+                        "on-error-container": "#93000a",
+                        "background": "#f9f9ff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "primary-container": "#1a4f8a",
+                        "tertiary-container": "#793f00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "sm": "12px",
+                        "card-gap": "16px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "md": "16px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Quicksand"],
+                        "headline-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pulse-ring {
+            animation: pulse 2s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .timer-glow {
+            text-shadow: 0 0 10px rgba(165, 200, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased h-screen w-screen overflow-hidden font-body-md relative">
+<!-- Background overlay (Dimmed) -->
+<div class="absolute inset-0 bg-inverse-surface/80 backdrop-blur-sm z-0"></div>
+<!-- Main Content Container -->
+<main class="relative z-10 h-full flex flex-col justify-between items-center py-xl px-container-margin">
+<!-- Top Section (Empty for balance, could hold minimal header info if needed) -->
+<div class="w-full flex justify-between items-start">
+<span aria-label="Minimize call" class="material-symbols-outlined text-inverse-on-surface cursor-pointer" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+<span aria-label="More options" class="material-symbols-outlined text-inverse-on-surface" data-icon="more_vert">more_vert</span>
+</div>
+<!-- Center Section: Avatar and Timer -->
+<div class="flex flex-col items-center gap-lg">
+<div class="text-center space-y-sm mb-md">
+<h2 class="font-headline-md text-headline-md text-inverse-on-surface">YONO Support</h2>
+<p class="font-body-md text-body-md text-surface-dim">Connected</p>
+</div>
+<!-- Avatar with Pulse Effect -->
+<div class="relative flex justify-center items-center">
+<!-- Pulse rings -->
+<div class="absolute inset-0 rounded-full bg-primary-container opacity-30 pulse-ring"></div>
+<div class="absolute inset-0 rounded-full bg-primary-fixed-dim opacity-20 pulse-ring" style="animation-delay: 0.5s;"></div>
+<!-- Avatar Image -->
+<div class="relative w-32 h-32 rounded-full border-4 border-surface overflow-hidden shadow-xl z-10">
+<img alt="Support Agent Avatar" class="w-full h-full object-cover" data-alt="A professional support agent with a friendly expression, wearing a headset, set against a clean, modern, brightly lit office background reflecting the YONO brand's empathetic expert persona. The lighting is soft and flattering, creating a trustworthy and approachable vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDldzFL5ss40SGPAj8R9byO92FLvX0f4Ys6Qh1Sne08OYFtM-JMYQyeLkhF7k0_gR_r659f8_wC9Pi8wE2LCMNPIb_-NTRsLkTarVADkglZo-IgHa389xfooklT_6lYOG-4VAo0xCmW6xt20_1mJsg3iHeLi14N-jl3ElD4zW7IP5F_nEXT7wU60cBvAciU1uzMMrFNMwDUAsv0k7hGBSIlS3FkKNq6SQZIzWjdkWHGK4WzR30Ho4PwqA"/>
+</div>
+</div>
+<!-- Running Call Timer -->
+<div class="mt-lg">
+<span class="font-display-lg text-display-lg text-inverse-on-surface timer-glow tracking-widest tabular-nums" id="call-timer">00:14</span>
+</div>
+</div>
+<!-- Bottom Section: Call Controls -->
+<div class="w-full flex flex-col items-center gap-xl pb-lg">
+<!-- Secondary Controls -->
+<div class="flex justify-center gap-xl">
+<button aria-label="Mute" class="flex flex-col items-center gap-xs group">
+<div class="w-14 h-14 rounded-full bg-surface-container-high/20 backdrop-blur-md flex items-center justify-center transition-all duration-300 group-hover:bg-surface-container-high/40 group-active:scale-95">
+<span class="material-symbols-outlined text-inverse-on-surface text-[28px]" data-icon="mic">mic</span>
+</div>
+</button>
+<button aria-label="Speaker" class="flex flex-col items-center gap-xs group">
+<div class="w-14 h-14 rounded-full bg-surface-container-high/20 backdrop-blur-md flex items-center justify-center transition-all duration-300 group-hover:bg-surface-container-high/40 group-active:scale-95">
+<span class="material-symbols-outlined text-inverse-on-surface text-[28px]" data-icon="volume_up">volume_up</span>
+</div>
+</button>
+</div>
+<!-- Primary Action: End Call -->
+<button aria-label="End call" class="w-20 h-20 rounded-full bg-error flex items-center justify-center shadow-lg shadow-error/30 hover:bg-error/90 active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined text-on-error text-[36px]" data-icon="call_end">call_end</span>
+</button>
+</div>
+</main>
+<script>
+        // Simple timer logic for demonstration
+        let seconds = 14;
+        const timerElement = document.getElementById('call-timer');
+        
+        setInterval(() => {
+            seconds++;
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            timerElement.textContent = `${mins}:${secs}`;
+        }, 1000);
+    </script>
+</body></html>

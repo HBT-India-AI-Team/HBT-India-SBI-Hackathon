@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#001c3a",
+                        "on-secondary-fixed-variant": "#5c4300",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#eae8e7",
+                        "secondary-fixed": "#ffdfa0",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#e1e3e4",
+                        "inverse-primary": "#a5c8ff",
+                        "surface-container-low": "#f5f3f3",
+                        "tertiary-container": "#4c4f50",
+                        "error": "#ba1a1a",
+                        "tertiary": "#353839",
+                        "on-primary-container": "#9ac2ff",
+                        "on-tertiary-container": "#bfc0c2",
+                        "on-tertiary-fixed-variant": "#454748",
+                        "on-secondary-container": "#715300",
+                        "outline": "#737781",
+                        "inverse-on-surface": "#f2f0f0",
+                        "primary-fixed": "#d4e3ff",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-tint": "#2f5f9b",
+                        "surface-container-highest": "#e4e2e2",
+                        "surface-bright": "#fbf9f8",
+                        "on-tertiary-fixed": "#191c1d",
+                        "outline-variant": "#c2c6d1",
+                        "background": "#fbf9f8",
+                        "surface": "#fbf9f8",
+                        "on-secondary-fixed": "#261a00",
+                        "primary": "#00386b",
+                        "on-error": "#ffffff",
+                        "secondary": "#795900",
+                        "surface-dim": "#dbd9d9",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#303030",
+                        "secondary-fixed-dim": "#f6be39",
+                        "surface-variant": "#e4e2e2",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#424750",
+                        "on-background": "#1b1c1c",
+                        "on-surface": "#1b1c1c",
+                        "primary-container": "#1a4f8a",
+                        "surface-container": "#efeded",
+                        "tertiary-fixed-dim": "#c5c7c8",
+                        "secondary-container": "#ffc641"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "20px",
+                        "lg": "40px",
+                        "base": "8px",
+                        "xl": "64px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "md": "24px",
+                        "margin-desktop": "48px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-md": ["Quicksand"],
+                        "headline-lg": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Quicksand', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile py-base w-full z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant shadow-sm docked full-width top-0 sticky top-0 hidden md:flex">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary-container dark:text-secondary-fixed text-[32px]">lightbulb</span>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-secondary-container dark:text-secondary-fixed">FinGuru</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant dark:text-outline">India's BankGPT</p>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close up, vibrant portrait of a friendly smiling person with warm lighting against a blurred background, meant to be used as a user profile avatar in a light mode app. The colors are slightly saturated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0eFz5Up3FHxs76ZQ8RLCmOn0fA9kCsZXvKx47mC6ActabrLqD2VSwhXlDBFU9oCbZOpcpVIuXY_OOBOjwYUQp_J1Cwhp7THl_qhanTZfQQGxjx76dx4wyljYh7xz_aMRXq40wB18cJbwcda9wTDbsHnDgFvMbExKdGIETR4kbw3u-c42B1LI-e2hrXKYZMq3eWMwbHsjeCE_Gj5J0BSKWvHihX3ED6bDcFjmm2jvO35R2-4wFYkWBJQ"/>
+</div>
+</div>
+</header>
+<!-- Mobile Header Placeholder (if TopAppBar is hidden md:flex) -->
+<header class="flex md:hidden justify-between items-center px-margin-mobile py-base w-full z-50 bg-surface border-b border-outline-variant shadow-sm sticky top-0">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary-container text-[32px]">lightbulb</span>
+<div>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile font-bold text-secondary-container">FinGuru</h1>
+</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close up, vibrant portrait of a friendly smiling person with warm lighting against a blurred background, meant to be used as a user profile avatar in a light mode app. The colors are slightly saturated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsQ0MSLc1EKgaJioTW4kmsrn8RIr4QRJcDY4aqaKFQp7cMXkOAHznKx9Cgugo8rsoBEA_SEetOlBpEdG4igZeFtRzM21xKqcpmfSbMfMfF1dXHpXrYb463WQ_7Z7rn01nskVEA8vvQm2MkcGMGDxCYvFIK6KpLRbfHuC-EdpqjEOurTR_mWPtMl9Iszn2H4KZgjktTvM1Eu53js-lCU5zAK_6CDzRfhzReUGdcZfd6woZr4cdil25XcQ"/>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pb-[100px] md:pb-lg w-full max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-md flex flex-col gap-xl">
+<!-- Search Section -->
+<section class="w-full flex flex-col items-center pt-lg">
+<h2 class="text-headline-md md:text-headline-lg font-headline-md md:font-headline-lg text-center mb-md text-primary">How can I guide you today?</h2>
+<div class="relative w-full max-w-2xl group">
+<div class="absolute inset-0 bg-primary opacity-5 rounded-full blur-xl group-hover:opacity-10 transition-opacity duration-300"></div>
+<div class="relative bg-surface-container-lowest shadow-lg rounded-full flex items-center px-md py-sm border-2 border-transparent hover:border-primary-container transition-colors duration-300">
+<span class="material-symbols-outlined text-on-surface-variant mr-sm">search</span>
+<input class="flex-grow bg-transparent border-none outline-none text-body-lg font-body-lg text-on-surface placeholder-outline-variant focus:ring-0" placeholder="Ask me anything about money..." type="text"/>
+<button class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center hover:scale-105 transition-transform duration-200">
+<span class="material-symbols-outlined" data-weight="fill">mic</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Trending Section -->
+<section class="w-full">
+<h3 class="text-body-lg font-body-lg font-bold mb-md text-on-surface flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary">trending_up</span> Trending this week
+            </h3>
+<div class="flex gap-md overflow-x-auto hide-scrollbar pb-sm snap-x">
+<!-- Chip Card 1 -->
+<div class="snap-start flex-none w-64 bg-surface-container-lowest shadow-sm rounded-DEFAULT p-md flex flex-col gap-sm border border-outline-variant/30 hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-secondary-container/20 to-transparent rounded-bl-full"></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</div>
+<h4 class="text-label-md font-label-md text-on-surface">New Income Tax Slabs</h4>
+<p class="text-label-sm font-label-sm text-outline">Understand the budget 2024 updates.</p>
+</div>
+<!-- Chip Card 2 -->
+<div class="snap-start flex-none w-64 bg-surface-container-lowest shadow-sm rounded-DEFAULT p-md flex flex-col gap-sm border border-outline-variant/30 hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-secondary-container/20 to-transparent rounded-bl-full"></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<h4 class="text-label-md font-label-md text-on-surface">PMJDY Scheme</h4>
+<p class="text-label-sm font-label-sm text-outline">Jan Dhan Yojana benefits explained.</p>
+</div>
+<!-- Chip Card 3 -->
+<div class="snap-start flex-none w-64 bg-surface-container-lowest shadow-sm rounded-DEFAULT p-md flex flex-col gap-sm border border-outline-variant/30 hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-secondary-container/20 to-transparent rounded-bl-full"></div>
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">show_chart</span>
+</div>
+<h4 class="text-label-md font-label-md text-on-surface">SIP vs FD</h4>
+<p class="text-label-sm font-label-sm text-outline">Which is better for long term?</p>
+</div>
+</div>
+</section>
+<!-- Category Grid (Bento style) -->
+<section class="w-full">
+<h3 class="text-body-lg font-body-lg font-bold mb-md text-on-surface">Explore Knowledge</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="bg-surface-container-lowest rounded-lg p-md shadow-sm border-l-4 border-secondary flex items-start gap-md hover:-translate-y-1 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div>
+<h4 class="text-body-md font-body-md font-bold text-on-surface mb-xs">Fin Wiki</h4>
+<p class="text-label-sm font-label-sm text-outline">A-Z of financial terms simplified.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-md shadow-sm border-l-4 border-primary flex items-start gap-md hover:-translate-y-1 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<div>
+<h4 class="text-body-md font-body-md font-bold text-on-surface mb-xs">Products</h4>
+<p class="text-label-sm font-label-sm text-outline">Compare loans, cards, and accounts.</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-md shadow-sm border-l-4 border-secondary-container flex items-start gap-md hover:-translate-y-1 transition-transform cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<h4 class="text-body-md font-body-md font-bold text-on-surface mb-xs">Govt Schemes</h4>
+<p class="text-label-sm font-label-sm text-outline">Find schemes you are eligible for.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Community Section -->
+<section class="w-full bg-surface-container-low rounded-xl p-md md:p-lg border border-outline-variant/20 relative overflow-hidden">
+<!-- Decorative background element -->
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary-fixed/30 rounded-full blur-3xl pointer-events-none"></div>
+<h3 class="text-body-lg font-body-lg font-bold mb-md text-on-surface flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">forum</span> What others are asking
+            </h3>
+<div class="flex flex-col gap-sm">
+<button class="bg-surface-container-lowest hover:bg-surface-bright text-left px-md py-sm rounded-DEFAULT shadow-sm text-body-md font-body-md text-on-surface flex items-center justify-between group transition-colors">
+                    "How much emergency fund should I keep?"
+                    <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward_ios</span>
+</button>
+<button class="bg-surface-container-lowest hover:bg-surface-bright text-left px-md py-sm rounded-DEFAULT shadow-sm text-body-md font-body-md text-on-surface flex items-center justify-between group transition-colors">
+                    "Best credit card for travel rewards?"
+                    <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward_ios</span>
+</button>
+<button class="bg-surface-container-lowest hover:bg-surface-bright text-left px-md py-sm rounded-DEFAULT shadow-sm text-body-md font-body-md text-on-surface flex items-center justify-between group transition-colors">
+                    "Explain mutual funds to a beginner."
+                    <span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">arrow_forward_ios</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-lowest dark:bg-surface-dim shadow-[0_-4px_20px_rgba(26,79,138,0.08)] shadow-lg docked full-width rounded-t-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">sports_esports</span>
+<span class="font-label-sm text-label-sm mt-1">Game</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-full px-4 py-1 scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-weight="fill">forum</span>
+<span class="font-label-sm text-label-sm mt-1">FinGuru</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Accounts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

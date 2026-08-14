@@ -1,0 +1,40 @@
+{
+  "savings_account": {
+    "name": "Savings Account",
+    "customer_type": "individual",
+    "requirements": [
+      { "type": "mobile_otp", "label": "Verify your mobile number", "format_hint": "10-digit mobile number", "mapped_step": 1, "depends_on": [], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "pan", "label": "PAN verification", "format_hint": "ABCDE1234F", "mapped_step": 2, "depends_on": ["mobile_otp"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "document", "label": "Upload PAN Card photo", "format_hint": "image/pdf upload", "mapped_step": 2, "depends_on": ["pan"], "applicable_if": null, "escalation_threshold": 2, "doc_name": "PAN Card photo" },
+      { "type": "product_confirm", "label": "Confirm product selection", "format_hint": "yes/no", "mapped_step": 3, "depends_on": ["pan"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "review_submit", "label": "Submit application for review", "format_hint": "yes/no", "mapped_step": 5, "depends_on": ["product_confirm", "document"], "applicable_if": null, "escalation_threshold": 2 }
+    ]
+  },
+  "msme_current_account": {
+    "name": "MSME Current Account",
+    "customer_type": "business",
+    "requirements": [
+      { "type": "mobile_otp", "label": "Verify your mobile number", "format_hint": "10-digit mobile number", "mapped_step": 1, "depends_on": [], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "pan", "label": "Authorized signatory PAN verification", "format_hint": "ABCDE1234F", "mapped_step": 2, "depends_on": ["mobile_otp"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "business_pan", "label": "Business PAN verification", "format_hint": "ABCDE1234F", "mapped_step": 2, "depends_on": ["mobile_otp"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "gstin", "label": "GSTIN verification", "format_hint": "22AAAAA0000A1Z5", "mapped_step": 2, "depends_on": ["business_pan"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "authorized_signatory", "label": "Authorized signatory details", "format_hint": "full name", "mapped_step": 2, "depends_on": ["pan"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "document", "label": "Upload PAN Card photo", "format_hint": "image/pdf upload", "mapped_step": 3, "depends_on": ["pan"], "applicable_if": null, "escalation_threshold": 2, "doc_name": "PAN Card photo" },
+      { "type": "document", "label": "Upload GST Certificate", "format_hint": "image/pdf upload", "mapped_step": 3, "depends_on": ["gstin"], "applicable_if": null, "escalation_threshold": 2, "doc_name": "GST Certificate" },
+      { "type": "product_confirm", "label": "Confirm product selection", "format_hint": "yes/no", "mapped_step": 4, "depends_on": ["gstin", "authorized_signatory"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "review_submit", "label": "Submit application for review", "format_hint": "yes/no", "mapped_step": 5, "depends_on": ["product_confirm"], "applicable_if": null, "escalation_threshold": 2 }
+    ]
+  },
+  "minor_savings_account": {
+    "name": "Minor Savings Account (Guardian-operated)",
+    "customer_type": "minor",
+    "requirements": [
+      { "type": "mobile_otp", "label": "Verify your (minor's) mobile number", "format_hint": "10-digit mobile number", "mapped_step": 1, "depends_on": [], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "guardian_consent", "label": "Guardian consent", "format_hint": "guardian mobile number + relationship", "mapped_step": 2, "depends_on": ["mobile_otp"], "applicable_if": "customer_type=minor", "escalation_threshold": 2 },
+      { "type": "guardian_mobile_otp", "label": "Verify guardian's mobile number", "format_hint": "10-digit mobile number", "mapped_step": 2, "depends_on": ["guardian_consent"], "applicable_if": "customer_type=minor", "escalation_threshold": 2 },
+      { "type": "document", "label": "Upload Guardian ID proof", "format_hint": "image/pdf upload", "mapped_step": 3, "depends_on": ["guardian_mobile_otp"], "applicable_if": "customer_type=minor", "escalation_threshold": 2, "doc_name": "Guardian ID proof" },
+      { "type": "product_confirm", "label": "Confirm product selection", "format_hint": "yes/no", "mapped_step": 4, "depends_on": ["guardian_mobile_otp"], "applicable_if": null, "escalation_threshold": 2 },
+      { "type": "review_submit", "label": "Submit application for review", "format_hint": "yes/no", "mapped_step": 5, "depends_on": ["product_confirm", "document"], "applicable_if": null, "escalation_threshold": 2 }
+    ]
+  }
+}

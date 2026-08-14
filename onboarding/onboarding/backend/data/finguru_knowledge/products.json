@@ -1,0 +1,42 @@
+[
+  {
+    "id": "product_savings_account",
+    "category": "product",
+    "title": "SBI Savings Account (Zero-Balance Digital)",
+    "tags": ["savings account", "sbi", "product_id:savings_account", "zero balance", "debit card"],
+    "summary": "A digital-first SBI savings account you can open in minutes with just PAN + Aadhaar KYC — no minimum balance.",
+    "body": "The SBI Zero-Balance Digital Savings Account is opened fully online through YONO with mobile-OTP + PAN verification and an uploaded PAN card, with no monthly minimum-balance requirement. It comes with an instant virtual debit card and earns interest on your balance. Onboarding requirements (in YONO 3.0): verify mobile number, PAN verification, upload PAN card photo, confirm product, and submit for review. This entry mirrors the same product defined in product_requirements.json (product_id: savings_account) rather than duplicating the requirement list.",
+    "source_url": "https://sbi.co.in/web/personal-banking/accounts/saving-account",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "product_msme_current_account",
+    "category": "product",
+    "title": "SBI MSME Current Account",
+    "tags": ["current account", "msme", "business", "product_id:msme_current_account", "gstin"],
+    "summary": "A business current account for MSMEs with GSTIN-linked banking and digital invoicing tools.",
+    "body": "The SBI MSME Current Account is aimed at micro, small and medium enterprises. It offers GSTIN-linked business banking, free digital invoicing tools, and dedicated relationship support. YONO 3.0 onboarding for this product additionally verifies the authorized signatory's PAN, the business PAN, GSTIN, and authorized-signatory details, plus uploads of the PAN card and GST certificate. This entry mirrors product_requirements.json (product_id: msme_current_account).",
+    "source_url": "https://sbi.co.in/web/business/sme",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "product_minor_savings_account",
+    "category": "product",
+    "title": "SBI Minor Savings Account (Guardian-operated)",
+    "tags": ["minor account", "children", "guardian", "product_id:minor_savings_account", "pehla kadam"],
+    "summary": "A savings account for under-18 account holders, opened and co-verified by a guardian.",
+    "body": "The SBI Minor Savings Account is designed for account holders under 18, operated with guardian consent and co-verification. It is great for pocket-money and goal-based saving. YONO 3.0 onboarding verifies the minor's mobile number, captures guardian consent, verifies the guardian's mobile via OTP, and uploads guardian ID proof before product confirmation and review. This entry mirrors product_requirements.json (product_id: minor_savings_account).",
+    "source_url": "https://sbi.co.in/web/personal-banking/accounts/saving-account/savings-account-for-minors",
+    "last_verified_at": "2026-08-01"
+  },
+  {
+    "id": "product_sbi_fixed_deposit",
+    "category": "product",
+    "title": "SBI Fixed Deposit",
+    "tags": ["fixed deposit", "fd", "sbi", "amrit vrishti", "term deposit", "senior citizen"],
+    "summary": "SBI term deposits with guaranteed rates; senior citizens earn an extra ~0.50% p.a.",
+    "body": "SBI Fixed Deposits let you lock a lump sum for a chosen tenure at a guaranteed rate. As of rates effective 15 December 2025, regular SBI FDs earn roughly 3.05%–6.40% p.a. for the general public, with senior citizens getting an additional ~0.50% p.a. SBI's special 444-day 'Amrit Vrishti' scheme offered about 6.45% (general) / 6.95% (senior). Rates are revised periodically at the bank's discretion, so always confirm the current card rate before investing. (The earlier 400-day 'Amrit Kalash' special has been discontinued.)",
+    "source_url": "https://sbi.co.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits",
+    "last_verified_at": "2026-08-01"
+  }
+]

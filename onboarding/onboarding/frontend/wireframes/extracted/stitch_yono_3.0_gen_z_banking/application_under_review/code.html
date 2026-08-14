@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Application Under Review - YONO 3.0</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#191c1e",
+                        "inverse-primary": "#a5c8ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1a4f8a",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d9dadf",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "inverse-on-surface": "#f0f0f6",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "surface-container": "#ededf3",
+                        "secondary": "#5b5f61",
+                        "primary-fixed": "#d4e3ff",
+                        "secondary-container": "#e0e3e6",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-tertiary-container": "#ffae6b",
+                        "surface": "#f9f9ff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "primary": "#00386b",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3035",
+                        "outline": "#737781",
+                        "on-surface": "#1a1c20",
+                        "on-background": "#1a1c20",
+                        "outline-variant": "#c2c6d1",
+                        "surface-container-low": "#f3f3f9",
+                        "on-secondary-container": "#626567",
+                        "on-surface-variant": "#424750",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "tertiary": "#582c00",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#793f00",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-bright": "#f9f9ff",
+                        "surface-container-high": "#e8e8ed",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-variant": "#e2e2e8",
+                        "background": "#f9f9ff",
+                        "secondary-fixed": "#e0e3e6",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "base": "4px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "card-gap": "16px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "headline-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Quicksand', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface-container-low min-h-screen flex flex-col text-on-surface">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky shadow-sm bg-surface dark:bg-inverse-surface shadow-[0px_4px_20px_rgba(26,79,138,0.05)] z-40">
+<div class="flex items-center justify-between px-container-margin py-md">
+<div class="flex items-center gap-xs">
+<button class="p-xs rounded-full hover:bg-surface-container-low active:scale-95 transition-transform text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Application Status</h1>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col items-center justify-center px-container-margin py-xl pb-32">
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0px_4px_20px_rgba(26,79,138,0.05)] flex flex-col items-center text-center max-w-sm w-full mx-auto relative overflow-hidden">
+<!-- Subtle Background Accents -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-fixed opacity-30 rounded-bl-full -mr-16 -mt-16 pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 w-24 h-24 bg-tertiary-fixed opacity-30 rounded-tr-full -ml-12 -mb-12 pointer-events-none"></div>
+<!-- Icon -->
+<div class="w-24 h-24 rounded-full bg-primary-fixed flex items-center justify-center mb-lg relative z-10 shadow-sm animate-pulse-slow">
+<span class="material-symbols-outlined text-primary text-[48px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">hourglass_empty</span>
+</div>
+<!-- Text Content -->
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-sm relative z-10">Your application is under review</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-base relative z-10">
+                We're verifying your documents. Usually within 24 hours.
+            </p>
+<p class="font-body-md text-body-md text-secondary mb-xl relative z-10">
+                We'll notify you when it's ready
+            </p>
+<!-- Actions -->
+<div class="w-full flex flex-col gap-md relative z-10">
+<button class="w-full h-[56px] rounded-full bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center hover:bg-primary transition-colors active:scale-95 shadow-sm">
+                    Track status
+                </button>
+<button class="w-full h-[56px] rounded-full bg-transparent text-primary-container font-label-md text-label-md flex items-center justify-center hover:bg-surface-container-low transition-colors active:scale-95">
+                    Back to Home
+                </button>
+</div>
+</div>
+</main>
+<style>
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .9; transform: scale(0.98); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</body></html>

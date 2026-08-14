@@ -1,0 +1,6 @@
+# Lightweight laptop-side client deps -- no torch/ctranslate2/parler-tts here,
+# those only run on the server.
+requests==2.32.3
+websockets==14.1
+sounddevice==0.5.1
+numpy==1.26.4

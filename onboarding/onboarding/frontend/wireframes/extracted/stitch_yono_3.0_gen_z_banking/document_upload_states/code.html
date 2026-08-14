@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YONO 3.0 Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f9f9ff",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "inverse-on-surface": "#f0f0f6",
+                        "on-error-container": "#93000a",
+                        "secondary": "#5b5f61",
+                        "on-background": "#1a1c20",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f9f9ff",
+                        "primary": "#00386b",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "tertiary-container": "#793f00",
+                        "on-surface": "#1a1c20",
+                        "surface-tint": "#2f5f9b",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-primary-fixed": "#001c3a",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadf",
+                        "on-secondary-container": "#626567",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-primary-container": "#9ac2ff",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-container": "#ededf3",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "primary-fixed": "#d4e3ff",
+                        "surface-variant": "#e2e2e8",
+                        "on-surface-variant": "#424750",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e8e8ed",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e3035",
+                        "outline": "#737781",
+                        "inverse-primary": "#a5c8ff",
+                        "on-tertiary-container": "#ffae6b",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-container-low": "#f3f3f9",
+                        "primary-container": "#1a4f8a",
+                        "secondary-container": "#e0e3e6",
+                        "on-secondary-fixed": "#191c1e",
+                        "tertiary": "#582c00",
+                        "outline-variant": "#c2c6d1",
+                        "surface": "#f9f9ff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "base": "4px",
+                        "xs": "8px",
+                        "lg": "24px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "container-margin": "20px",
+                        "card-gap": "16px",
+                        "xl": "32px"
+                    },
+                    fontFamily: {
+                        "body-lg": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "headline-md": ["Quicksand"]
+                    },
+                    fontSize: {
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shadow-soft {
+            box-shadow: 0px 4px 20px rgba(26, 79, 138, 0.05);
+        }
+        .chat-bubble-bot {
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble-user {
+            border-bottom-right-radius: 4px;
+        }
+        
+        /* Custom Scrollbar for chat area */
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: rgba(115, 119, 129, 0.3);
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col items-center">
+<div class="w-full max-w-md bg-surface-container-lowest min-h-screen flex flex-col relative shadow-lg overflow-hidden">
+<!-- TopAppBar (Transactional - Close intent) -->
+<header class="bg-surface sticky top-0 z-50 flex items-center justify-between px-container-margin h-14 w-full">
+<button class="text-primary hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile text-primary font-bold">Open Account</h1>
+<div class="w-10"></div> <!-- Spacer for balance -->
+</header>
+<!-- Stepper -->
+<div class="px-container-margin py-md bg-surface border-b border-surface-variant z-40 sticky top-14">
+<div class="flex items-center justify-between relative">
+<!-- Line background -->
+<div class="absolute top-1/2 left-0 w-full h-[2px] bg-surface-variant -z-10 -translate-y-1/2"></div>
+<!-- Active progress line -->
+<div class="absolute top-1/2 left-0 w-1/2 h-[2px] bg-primary -z-10 -translate-y-1/2 transition-all duration-500"></div>
+<!-- Step 1: Done -->
+<div class="flex flex-col items-center gap-base bg-surface px-1">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-soft">
+<span class="material-symbols-outlined text-label-md" data-icon="check">check</span>
+</div>
+</div>
+<!-- Step 2: Done -->
+<div class="flex flex-col items-center gap-base bg-surface px-1">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-soft">
+<span class="material-symbols-outlined text-label-md" data-icon="check">check</span>
+</div>
+</div>
+<!-- Step 3: Active -->
+<div class="flex flex-col items-center gap-base bg-surface px-1">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-soft ring-4 ring-primary-container/20">
+<span class="font-label-md text-label-md">3</span>
+</div>
+</div>
+<!-- Step 4: Pending -->
+<div class="flex flex-col items-center gap-base bg-surface px-1">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center border border-outline-variant">
+<span class="font-label-md text-label-md">4</span>
+</div>
+</div>
+</div>
+<div class="text-center mt-sm">
+<p class="font-label-md text-label-md text-primary">Confirm Identity</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Step 3 of 4</p>
+</div>
+</div>
+<!-- Chat Canvas -->
+<main class="flex-1 overflow-y-auto chat-container p-container-margin pb-24 flex flex-col gap-lg">
+<!-- Intro Message -->
+<div class="flex gap-sm max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center text-on-primary-container mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl chat-bubble-bot shadow-soft text-on-surface">
+<p class="font-body-md text-body-md">Great! Now we need to verify your identity. Please upload a clear photo of your PAN Card.</p>
+</div>
+</div>
+<!-- SCENARIO 1: PENDING -->
+<div class="flex gap-sm max-w-[95%] self-end flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center text-on-surface-variant mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="person">person</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-md rounded-2xl chat-bubble-user shadow-soft border border-outline-variant/30 flex flex-col gap-sm">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-sm text-headline-sm-mobile text-on-surface">PAN Card</h3>
+<p class="font-label-md text-label-md text-on-surface-variant mt-base">Clear photo, all corners visible</p>
+</div>
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-lg text-outline">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+</div>
+</div>
+<button class="mt-xs w-full h-[48px] bg-primary text-on-primary rounded-full font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-primary-fixed-variant transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="photo_camera">photo_camera</span>
+                        Upload
+                    </button>
+</div>
+</div>
+<!-- Bot acknowledges upload -->
+<div class="flex gap-sm max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center text-on-primary-container mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl chat-bubble-bot shadow-soft text-on-surface">
+<p class="font-body-md text-body-md">Got it. Give me a moment to verify that.</p>
+</div>
+</div>
+<!-- SCENARIO 2: PROCESSING -->
+<div class="flex gap-sm max-w-[95%] self-end flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center text-on-surface-variant mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="person">person</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-md rounded-2xl chat-bubble-user shadow-soft border border-outline-variant/30 flex items-center gap-md">
+<div class="w-16 h-12 bg-surface-variant rounded flex items-center justify-center overflow-hidden relative">
+<!-- Simulated blurred image -->
+<div class="absolute inset-0 bg-gradient-to-br from-surface-dim to-outline-variant opacity-50"></div>
+<span class="material-symbols-outlined text-outline z-10 text-[20px]" data-icon="image">image</span>
+</div>
+<div class="flex-1 flex items-center gap-xs">
+<svg class="animate-spin h-5 w-5 text-primary" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+<p class="font-body-md text-body-md text-on-surface">Verifying...</p>
+</div>
+</div>
+</div>
+<!-- SCENARIO 4: REJECTED (Simulated sequence failure) -->
+<div class="flex gap-sm max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center text-on-primary-container mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl chat-bubble-bot shadow-soft text-on-surface">
+<p class="font-body-md text-body-md">Hmm, I couldn't read that clearly. The image might be blurry or glaring.</p>
+</div>
+</div>
+<div class="flex gap-sm max-w-[95%] self-end flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center text-on-surface-variant mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="person">person</span>
+</div>
+<div class="w-full bg-error-container/20 p-md rounded-2xl chat-bubble-user shadow-soft border border-error/30 flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex items-center gap-md">
+<div class="w-16 h-12 bg-surface-variant rounded flex items-center justify-center overflow-hidden relative opacity-70">
+<div class="absolute inset-0 bg-gradient-to-br from-surface-dim to-outline-variant opacity-50"></div>
+<span class="material-symbols-outlined text-outline z-10 text-[20px]" data-icon="image">image</span>
+</div>
+<div class="flex-1 flex items-start gap-xs">
+<span class="material-symbols-outlined text-error mt-[2px] text-[20px]" data-icon="error">error</span>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Couldn't verify</h3>
+<p class="font-label-sm text-label-sm text-error mt-base">Please try again</p>
+</div>
+</div>
+</div>
+<button class="mt-xs w-full h-[40px] border-1.5 border-primary text-primary-container rounded-full font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-primary-container/10 transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+                        Retry upload
+                    </button>
+</div>
+</div>
+<!-- SCENARIO 3: VERIFIED (Simulated final success) -->
+<div class="flex gap-sm max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center text-on-primary-container mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl chat-bubble-bot shadow-soft text-on-surface">
+<p class="font-body-md text-body-md">Perfect, that looks great! PAN verified successfully.</p>
+</div>
+</div>
+<div class="flex gap-sm max-w-[95%] self-end flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center text-on-surface-variant mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="person">person</span>
+</div>
+<div class="w-full bg-surface-container-lowest p-md rounded-2xl chat-bubble-user shadow-soft border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-16 h-12 bg-surface-variant rounded flex items-center justify-center overflow-hidden relative">
+<!-- Simulate clearer image -->
+<img alt="Uploaded PAN" class="w-full h-full object-cover opacity-80" data-alt="A clean, sharp close-up photo of a fictional Indian PAN Card lying on a minimal white desk. Bright, soft lighting, modern aesthetic. High quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy62qTo8jATjX6baOSkYCmXTQ1wSCzmzo72RV-ne9ckcjzTyCnCcyy_XwRrepul0F5qb-dWPP5q0cEjR2YAy6uO8bF6nMlNV-Gcr7zjRvSdUQGjqyoe6ktrycMdwpnDSSjtFcI_b1AEsXr92ipbZWFkxuDJ9LxsspW8rteTGUdH4U-_NuT_TW1f0vb_NoiXvkuIixq4Zb6ku--fk3HvqI9vzs3voBZ__iswpfqx67wpElfY9XYcknZEg"/>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">PAN Card</h3>
+<div class="flex items-center gap-[4px] mt-base text-green-700">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<span class="font-label-sm text-label-sm">Verified</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Final action for next step -->
+<div class="flex gap-sm max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center text-on-primary-container mt-auto mb-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl chat-bubble-bot shadow-soft flex flex-col gap-md border border-primary/10">
+<p class="font-body-md text-body-md text-on-surface">Ready to move to the final step: Product Selection?</p>
+<button class="w-full h-[48px] bg-primary text-on-primary rounded-full font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-primary-fixed-variant transition-colors active:scale-[0.98]">
+                        Continue
+                        <span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Anchor element to scroll to bottom if needed -->
+<div id="chat-anchor"></div>
+</main>
+<!-- Bottom Chat Input (Sticky) -->
+<div class="p-4 bg-surface/90 backdrop-blur-md border-t border-surface-variant sticky bottom-0 z-40 pb-safe shadow-[0px_-4px_20px_rgba(26,79,138,0.05)]">
+<div class="flex items-center gap-sm bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder-on-surface-variant py-2 px-0" disabled="" placeholder="Type a message or use actions above..." type="text"/>
+<button class="text-primary opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="send" data-weight="fill">send</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+        // Auto-scroll to bottom of chat
+        document.addEventListener("DOMContentLoaded", () => {
+            const chatMain = document.querySelector('main');
+            chatMain.scrollTop = chatMain.scrollHeight;
+        });
+    </script>
+</body></html>

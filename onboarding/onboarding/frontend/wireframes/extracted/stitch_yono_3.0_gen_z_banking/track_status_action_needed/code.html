@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Track Application</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#191c1e",
+                        "inverse-primary": "#a5c8ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1a4f8a",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d9dadf",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "inverse-on-surface": "#f0f0f6",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "surface-container": "#ededf3",
+                        "secondary": "#5b5f61",
+                        "primary-fixed": "#d4e3ff",
+                        "secondary-container": "#e0e3e6",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-tertiary-container": "#ffae6b",
+                        "surface": "#f9f9ff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "primary": "#00386b",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3035",
+                        "outline": "#737781",
+                        "on-surface": "#1a1c20",
+                        "on-background": "#1a1c20",
+                        "outline-variant": "#c2c6d1",
+                        "surface-container-low": "#f3f3f9",
+                        "on-secondary-container": "#626567",
+                        "on-surface-variant": "#424750",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "tertiary": "#582c00",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#793f00",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-bright": "#f9f9ff",
+                        "surface-container-high": "#e8e8ed",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-variant": "#e2e2e8",
+                        "background": "#f9f9ff",
+                        "secondary-fixed": "#e0e3e6",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "base": "4px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "card-gap": "16px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "headline-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Quicksand', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky shadow-sm bg-surface dark:bg-inverse-surface shadow-[0px_4px_20px_rgba(26,79,138,0.05)] z-50">
+<div class="flex items-center justify-between px-container-margin py-md">
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-on-surface" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Your Application</h1>
+</div>
+<button class="hover:bg-surface-container-low p-2 rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-3xl mx-auto px-container-margin py-lg space-y-lg pb-32">
+<!-- Status Header -->
+<div class="flex justify-between items-center bg-white p-md rounded-xl shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-error-container/50">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Application Status</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Reference #SBI-9942A</p>
+</div>
+<span class="bg-error-container text-on-error-container font-label-md text-label-md px-3 py-1.5 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="error">error</span>
+                Action Needed
+            </span>
+</div>
+<!-- Action Callout Card -->
+<div class="bg-error-container/30 border border-error/20 p-lg rounded-xl flex flex-col gap-md">
+<div class="flex items-start gap-md">
+<div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error" data-icon="id_card">id_card</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-error-container mb-1">Verification Failed</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">We couldn't verify your PAN card. The image provided was too blurry to read the details clearly.</p>
+<button class="w-full bg-[#1A4F8A] text-white font-label-md text-label-md py-3.5 px-6 rounded-full hover:bg-primary transition-colors flex items-center justify-center gap-2">
+<span>Resume</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Timeline Stepper -->
+<div class="bg-white p-lg rounded-xl shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-lg">Application Progress</h3>
+<div class="relative pl-6 border-l-2 border-surface-variant space-y-8 ml-4">
+<!-- Stage 1: Completed -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center ring-4 ring-white">
+<span class="material-symbols-outlined text-white text-[14px]" data-icon="check">check</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Basic Details</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Completed on Oct 24, 10:30 AM</p>
+</div>
+</div>
+<!-- Stage 2: Action Needed -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-error flex items-center justify-center ring-4 ring-white">
+<span class="material-symbols-outlined text-white text-[14px]" data-icon="priority_high">priority_high</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-error">Document Verification</h4>
+<p class="font-body-md text-body-md text-error/80 text-sm">Action required: Re-upload PAN Card</p>
+</div>
+</div>
+<!-- Stage 3: Pending -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center ring-4 ring-white">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-outline">Video KYC</h4>
+<p class="font-body-md text-body-md text-outline-variant text-sm">Pending document verification</p>
+</div>
+</div>
+<!-- Stage 4: Pending -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center ring-4 ring-white">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-outline">Credit Assessment</h4>
+<p class="font-body-md text-body-md text-outline-variant text-sm">Upcoming</p>
+</div>
+</div>
+<!-- Stage 5: Pending -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center ring-4 ring-white">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-outline">Final Approval</h4>
+<p class="font-body-md text-body-md text-outline-variant text-sm">Upcoming</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Hidden as this is a sub-page with a specific task context) -->
+<!-- Suppressed based on navigation logic: Sub-page implying focused journey/departure from global nav -->
+</body></html>

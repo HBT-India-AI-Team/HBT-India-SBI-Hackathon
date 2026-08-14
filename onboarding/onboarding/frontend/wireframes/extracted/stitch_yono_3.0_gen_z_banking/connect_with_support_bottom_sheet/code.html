@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YONO 3.0 Support Bottom Sheet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#191c1e",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "primary": "#00386b",
+                        "on-primary-container": "#9ac2ff",
+                        "on-primary-fixed": "#001c3a",
+                        "primary-container": "#1a4f8a",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#2f5f9b",
+                        "tertiary": "#582c00",
+                        "outline-variant": "#c2c6d1",
+                        "on-primary": "#ffffff",
+                        "on-background": "#1a1c20",
+                        "on-tertiary-container": "#ffae6b",
+                        "secondary": "#5b5f61",
+                        "on-surface-variant": "#424750",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-container-high": "#e8e8ed",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f3f9",
+                        "primary-fixed": "#d4e3ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#a5c8ff",
+                        "inverse-on-surface": "#f0f0f6",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "surface": "#f9f9ff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "on-surface": "#1a1c20",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "secondary-fixed": "#e0e3e6",
+                        "tertiary-container": "#793f00",
+                        "on-secondary-container": "#626567",
+                        "on-tertiary-fixed": "#2f1500",
+                        "inverse-surface": "#2e3035",
+                        "surface-dim": "#d9dadf",
+                        "secondary-container": "#e0e3e6",
+                        "surface-container": "#ededf3",
+                        "surface-container-highest": "#e2e2e8",
+                        "outline": "#737781",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e8",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f9f9ff",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "12px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "card-gap": "16px",
+                        "container-margin": "20px",
+                        "xs": "8px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "headline-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Quicksand', sans-serif; }
+        .bottom-sheet-enter {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-full overflow-hidden flex justify-center items-center relative">
+<!-- Dimmed Chat Background (Simulation) -->
+<div class="absolute inset-0 bg-surface-container-lowest p-container-margin flex flex-col gap-md opacity-40">
+<!-- Chat App Bar Simulation -->
+<header class="w-full top-0 sticky shadow-sm bg-surface flex items-center justify-between py-md px-xs rounded-lg mb-lg">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">Support Bot</span>
+</div>
+</header>
+<!-- Simulated Chat Messages -->
+<div class="flex flex-col gap-sm">
+<div class="bg-surface-container-high rounded-xl rounded-tl-none p-sm self-start max-w-[80%]">
+<p class="font-body-md text-body-md text-on-surface">Hello! How can I help you today with your YONO account?</p>
+</div>
+<div class="bg-primary text-on-primary rounded-xl rounded-tr-none p-sm self-end max-w-[80%]">
+<p class="font-body-md text-body-md">I need help with a recent transaction.</p>
+</div>
+<div class="bg-surface-container-high rounded-xl rounded-tl-none p-sm self-start max-w-[80%]">
+<p class="font-body-md text-body-md text-on-surface">I understand. I can connect you with an agent for more detailed assistance.</p>
+</div>
+</div>
+</div>
+<!-- Overlay -->
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm z-40"></div>
+<!-- Bottom Sheet -->
+<div class="absolute bottom-0 w-full md:w-[400px] bg-surface-container-lowest rounded-t-3xl shadow-[0px_-4px_20px_rgba(26,79,138,0.05)] z-50 bottom-sheet-enter flex flex-col">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-md pb-xs">
+<div class="w-[32px] h-[4px] bg-outline-variant/50 rounded-full"></div>
+</div>
+<!-- Content Container -->
+<div class="px-container-margin pb-xl pt-sm flex flex-col gap-lg">
+<!-- Header -->
+<div class="flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Connect with support</h2>
+<button class="p-xs rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- List Rows -->
+<div class="flex flex-col gap-sm">
+<!-- Chat Agent Row -->
+<button class="w-full flex items-center justify-between p-md bg-surface-container-lowest border border-outline-variant/30 rounded-xl hover:bg-surface-container-low hover:border-primary-container/30 transition-all group active:scale-[0.98] shadow-sm">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="chat" style="font-variation-settings: 'FILL' 1;">chat</span>
+</div>
+<div class="flex flex-col items-start text-left">
+<span class="font-body-lg text-body-lg text-on-surface font-bold">Chat with an agent</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Typically replies in 2 mins</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Callback Row -->
+<button class="w-full flex items-center justify-between p-md bg-surface-container-lowest border border-outline-variant/30 rounded-xl hover:bg-surface-container-low hover:border-primary-container/30 transition-all group active:scale-[0.98] shadow-sm">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="call" style="font-variation-settings: 'FILL' 1;">call</span>
+</div>
+<div class="flex flex-col items-start text-left">
+<span class="font-body-lg text-body-lg text-on-surface font-bold">Request a callback</span>
+<span class="font-body-md text-body-md text-on-surface-variant">We'll call you shortly</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

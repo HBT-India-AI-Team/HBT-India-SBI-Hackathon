@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>FinGuru Chat - SIP Handoff</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-container": "#ffae6b",
+                      "inverse-surface": "#2e3035",
+                      "tertiary": "#582c00",
+                      "secondary-container": "#e0e3e6",
+                      "on-surface": "#1a1c20",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#f0f0f6",
+                      "on-primary-container": "#9ac2ff",
+                      "surface-tint": "#2f5f9b",
+                      "on-primary-fixed": "#001c3a",
+                      "primary-container": "#1a4f8a",
+                      "primary-fixed-dim": "#a5c8ff",
+                      "surface-dim": "#d9dadf",
+                      "surface-variant": "#e2e2e8",
+                      "surface-container-low": "#f3f3f9",
+                      "inverse-primary": "#a5c8ff",
+                      "primary-fixed": "#d4e3ff",
+                      "primary": "#00386b",
+                      "on-primary-fixed-variant": "#0d4782",
+                      "on-background": "#1a1c20",
+                      "outline-variant": "#c2c6d1",
+                      "background": "#f9f9ff",
+                      "secondary-fixed": "#e0e3e6",
+                      "on-surface-variant": "#424750",
+                      "secondary-fixed-dim": "#c4c7ca",
+                      "on-primary": "#ffffff",
+                      "tertiary-container": "#793f00",
+                      "surface": "#f9f9ff",
+                      "error-container": "#ffdad6",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed": "#191c1e",
+                      "surface-container-lowest": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed-variant": "#44474a",
+                      "surface-container-highest": "#e2e2e8",
+                      "on-error": "#ffffff",
+                      "on-secondary-container": "#626567",
+                      "surface-container-high": "#e8e8ed",
+                      "surface-bright": "#f9f9ff",
+                      "on-tertiary-fixed-variant": "#6e3900",
+                      "tertiary-fixed": "#ffdcc3",
+                      "on-tertiary-fixed": "#2f1500",
+                      "surface-container": "#ededf3",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb77e",
+                      "outline": "#737781",
+                      "secondary": "#5b5f61"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xl": "32px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "card-gap": "16px",
+                      "base": "4px",
+                      "container-margin": "20px",
+                      "xs": "8px",
+                      "sm": "12px",
+                      "margin-mobile": "20px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Quicksand"],
+                      "body-md": ["Quicksand"],
+                      "body-lg": ["Quicksand"],
+                      "label-sm": ["Quicksand"],
+                      "display-lg": ["Quicksand"],
+                      "label-md": ["Quicksand"],
+                      "headline-sm": ["Quicksand"],
+                      "headline-lg-mobile": ["Quicksand"]
+              },
+              "fontSize": {
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "500"}],
+                      "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "500"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "700"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Quicksand', sans-serif; background-color: theme('colors.background'); }
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar { display: none; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .sbi-gradient {
+            background: linear-gradient(135deg, #FAD961 0%, #1a4f8a 100%);
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    </style>
+</head>
+<body class="text-on-background flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant shadow-sm docked full-width top-0 flex justify-between items-center px-margin-mobile py-base w-full z-50">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="lightbulb" style="font-variation-settings: 'FILL' 1;">lightbulb</span>
+<h1 class="text-headline-md font-headline-md font-bold text-secondary-container dark:text-secondary-fixed">FinGuru</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-variant flex items-center justify-center shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a young woman with a warm smile, well-lit against a soft, light-mode background. The color palette is minimal with subtle warm tones, conveying trust and approachability for a modern financial app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeUhK5juwgrNEatP54GHQSC84i5IFGN9sWSV7CkZ-vk77m-maW7Sh_mOjvizRrC_b_I0hYKmOoXnXf4X3WT0kE67wTPE_8klkiCmUmlabgQl43MC0lteltZrEnzxrZbfy6CYR995fNcHU8RL5HYoMQN84kcvXky6iWQJnE03VLknVD91W8KzH6OFtwfMejILBcdX2-au4Y19cGpMQyzCDePa_cMzVYELifS9xcDjVwkrwvv8pzfdN8oQ"/>
+</div>
+</header>
+<!-- Main Chat Canvas -->
+<main class="flex-1 overflow-y-auto p-container-margin flex flex-col gap-lg pb-32">
+<!-- Intro Message -->
+<div class="flex gap-sm max-w-[85%]">
+<div class="w-10 h-10 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-2xl rounded-tl-sm shadow-sm text-body-md font-body-md text-on-surface">
+                Based on your goals, a Systematic Investment Plan (SIP) in a diversified index fund looks like a great fit. It's a low-stress way to build wealth over time.
+            </div>
+</div>
+<!-- Handoff Card -->
+<div class="flex gap-sm w-full max-w-full">
+<div class="w-10 h-10 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center shadow-sm self-end mb-4">
+<img class="w-full h-full object-cover rounded-full" data-alt="A cute, modern 3D rendered mascot character resembling an owl, colored in deep heritage blue and soft gold. The mascot looks friendly and helpful, rendered against a transparent or solid light background, perfect for a financial assistant avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDm4Wcc4p2G2Qy_1HdaL0UsrqwcQ-XZUbteGkY9p1qLX8rDTtyiwZGnchSwZOMqHhPr_fZwFiiJ40oWkTPwWuBePA7T6-sMe133bfJL53bcL79zCflV3H3nkEU8AbHpkJnZ3_AXUwB_KuZCW7BJAdjBSCaDB-JhuhCzOt_L09FaY-GU7Lhl3qFnxRxOG4aHFlOncHhL7-DbhkGtLWfoKfWzlOffV4A3DXePXerD3OWKesAo5-v2dXurIw"/>
+</div>
+<div class="glass-card flex-1 p-lg rounded-xl shadow-[0_4px_20px_rgba(26,79,138,0.05)] border border-surface-variant relative overflow-hidden">
+<!-- Decorative background elements -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-fixed rounded-full opacity-20 blur-2xl"></div>
+<div class="relative z-10 flex flex-col gap-md">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-tertiary">rocket_launch</span>
+<h2 class="text-headline-sm font-headline-sm text-primary">Ready to start a SIP?</h2>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant">
+                        Let's get your account set up in minutes. We'll seamlessly securely transition you to our trusted partner to complete the process.
+                    </p>
+<div class="bg-surface-container p-md rounded-lg flex items-center gap-sm mt-xs">
+<span class="material-symbols-outlined text-secondary">shield_lock</span>
+<div class="text-label-md font-label-md text-on-surface">
+                            Secure Handoff to State Bank of India
+                        </div>
+</div>
+<button class="w-full sbi-gradient text-on-primary text-body-lg font-body-lg font-bold py-sm px-lg rounded-full shadow-md mt-sm flex items-center justify-center gap-sm hover:opacity-90 transition-opacity active:scale-95">
+                        Get Started with SBI
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-lowest dark:bg-surface-dim shadow-[0_-4px_20px_rgba(26,79,138,0.08)] rounded-t-lg">
+<!-- Home -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed cursor-pointer transition-colors">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</div>
+<!-- Game -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed cursor-pointer transition-colors">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm mt-1">Game</span>
+</div>
+<!-- FinGuru (Active) -->
+<div class="flex flex-col items-center justify-center bg-primary-container dark:bg-on-primary-fixed-variant text-on-primary-container dark:text-primary-fixed rounded-full px-4 py-1 scale-90 transition-transform duration-200 cursor-default">
+<span class="material-symbols-outlined" data-icon="forum" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span class="font-label-sm text-label-sm mt-1">FinGuru</span>
+</div>
+<!-- Accounts -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed cursor-pointer transition-colors">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm mt-1">Accounts</span>
+</div>
+<!-- Profile -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline px-4 py-1 hover:text-primary dark:hover:text-primary-fixed cursor-pointer transition-colors">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>SBI YONO 3.0 - Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#a5c8ff",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#626567",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "surface-container": "#ededf3",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-dim": "#d9dadf",
+                        "surface-container-high": "#e8e8ed",
+                        "on-tertiary-container": "#ffae6b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "primary": "#00386b",
+                        "surface": "#f9f9ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "background": "#f9f9ff",
+                        "inverse-on-surface": "#f0f0f6",
+                        "outline-variant": "#c2c6d1",
+                        "surface-tint": "#2f5f9b",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#191c1e",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#1a1c20",
+                        "secondary-fixed": "#e0e3e6",
+                        "tertiary": "#582c00",
+                        "surface-container-low": "#f3f3f9",
+                        "surface-bright": "#f9f9ff",
+                        "secondary": "#5b5f61",
+                        "primary-fixed": "#d4e3ff",
+                        "surface-variant": "#e2e2e8",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#e0e3e6",
+                        "outline": "#737781",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#001c3a",
+                        "tertiary-container": "#793f00",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "primary-container": "#1a4f8a",
+                        "on-surface-variant": "#424750",
+                        "inverse-surface": "#2e3035",
+                        "on-background": "#1a1c20",
+                        "on-primary-container": "#9ac2ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "md": "16px",
+                        "xs": "8px",
+                        "sm": "12px",
+                        "container-margin": "20px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "card-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "body-md": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+        .chat-scroll::-webkit-scrollbar { display: none; }
+        .chat-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col h-screen font-body-md text-body-md overflow-hidden">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-dim pt-safe z-50 transition-transform">
+<div class="flex items-center justify-between px-container-margin h-14 w-full">
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile text-primary dark:text-primary-fixed-dim flex-1 text-center font-bold tracking-tight pr-8">YONO Assistant</h1>
+</div>
+</header>
+<!-- Progress Stepper -->
+<div class="px-container-margin py-sm bg-surface w-full z-40 border-b border-outline-variant/30">
+<div class="flex items-center justify-between relative max-w-md mx-auto">
+<!-- Connecting Line -->
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-variant -z-10 rounded-full"></div>
+<!-- Active Connecting Line (up to step 3) -->
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1/2 h-1 bg-primary-container -z-10 rounded-full"></div>
+<!-- Step 1 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant absolute -bottom-4 whitespace-nowrap">Details</span>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant absolute -bottom-4 whitespace-nowrap">OTP</span>
+</div>
+<!-- Step 3 (Active) -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-8 h-8 rounded-full bg-surface border-2 border-primary-container text-primary-container flex items-center justify-center font-label-sm text-label-sm shadow-[0_0_10px_rgba(26,79,138,0.2)]">
+                    3
+                </div>
+<span class="font-label-sm text-[10px] text-primary-container font-bold absolute -bottom-4 whitespace-nowrap">Confirm Identity</span>
+</div>
+<!-- Step 4 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-6 h-6 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-sm text-label-sm">
+                    4
+                </div>
+<span class="font-label-sm text-[10px] text-on-surface-variant absolute -bottom-4 whitespace-nowrap">Done</span>
+</div>
+</div>
+<div class="h-4"></div> <!-- Spacing for absolute labels -->
+</div>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto chat-scroll p-container-margin flex flex-col gap-lg bg-surface relative z-0">
+<!-- Ambient Background Pattern (Subtle) -->
+<div class="absolute inset-0 pointer-events-none opacity-5" style="background-image: radial-gradient(var(--tw-colors-primary-container) 1px, transparent 1px); background-size: 24px 24px;"></div>
+<!-- System Message / Date -->
+<div class="flex justify-center mt-2">
+<span class="bg-surface-container-high px-3 py-1 rounded-full font-label-sm text-label-sm text-on-surface-variant">Today, 10:42 AM</span>
+</div>
+<!-- User Message (Simulated previous step) -->
+<div class="flex justify-end mb-2 relative z-10">
+<div class="bg-primary-container text-on-primary px-4 py-3 rounded-[16px] rounded-br-sm max-w-[85%] shadow-[0px_4px_20px_rgba(26,79,138,0.05)]">
+<p class="font-body-md text-body-md">Submitting identity documents...</p>
+</div>
+</div>
+<!-- Bot Error Message -->
+<div class="flex justify-start relative z-10">
+<div class="flex items-end gap-2 max-w-[85%]">
+<div class="w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0 mb-1 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">error</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-4 py-3 rounded-[16px] rounded-bl-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] flex flex-col gap-3">
+<p class="font-body-md text-body-md">Something went wrong on our end while verifying your identity. Let's try that again.</p>
+<!-- Retry Action Button inside Chat Bubble -->
+<button class="bg-primary-container text-on-primary w-full h-[48px] rounded-full font-label-md text-label-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-md">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+                        Retry Verification
+                    </button>
+</div>
+</div>
+</div>
+<!-- Spacer to ensure bottom content isn't hidden behind input -->
+<div class="h-4"></div>
+</main>
+<!-- Bottom Input Bar -->
+<footer class="w-full bg-surface/90 backdrop-blur-md border-t border-outline-variant/30 px-container-margin py-3 pb-safe z-50 flex items-end gap-2">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-primary-container hover:bg-surface-container-high transition-colors shrink-0 mb-1">
+<span class="material-symbols-outlined" data-weight="fill">add_circle</span>
+</button>
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant/50 rounded-[16px] flex items-center px-4 min-h-[48px] shadow-[0px_2px_10px_rgba(0,0,0,0.02)] focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all">
+<textarea class="w-full bg-transparent border-none focus:ring-0 resize-none font-body-md text-body-md text-on-surface py-3 max-h-[120px] placeholder:text-on-surface-variant/50" placeholder="Type your message..." rows="1" style="height: 48px;"></textarea>
+</div>
+<button class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center hover:opacity-90 transition-opacity shrink-0 mb-1 active:scale-95">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</footer>
+<!-- BottomNavBar (Suppressed as per rules: Transactional/Linear intent - 'Confirm Identity' step) -->
+<!-- Navigation shell is hidden to prioritize the focused task canvas. -->
+</body></html>

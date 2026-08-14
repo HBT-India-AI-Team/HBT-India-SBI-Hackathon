@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FinGuru - SIP Calculator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#5b5f61",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f3f9",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "on-primary-container": "#9ac2ff",
+                        "primary": "#00386b",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#e0e3e6",
+                        "on-surface-variant": "#424750",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-tint": "#2f5f9b",
+                        "tertiary-container": "#793f00",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f0f6",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface": "#f9f9ff",
+                        "primary-fixed": "#d4e3ff",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-tertiary-fixed": "#2f1500",
+                        "surface-variant": "#e2e2e8",
+                        "on-surface": "#1a1c20",
+                        "surface-bright": "#f9f9ff",
+                        "surface-dim": "#d9dadf",
+                        "on-primary-fixed": "#001c3a",
+                        "surface-container-highest": "#e2e2e8",
+                        "inverse-primary": "#a5c8ff",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#582c00",
+                        "outline": "#737781",
+                        "error": "#ba1a1a",
+                        "primary-container": "#1a4f8a",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2e3035",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#626567",
+                        "secondary-fixed": "#e0e3e6",
+                        "surface-container": "#ededf3",
+                        "on-background": "#1a1c20",
+                        "tertiary-fixed": "#ffdcc3",
+                        "background": "#f9f9ff",
+                        "surface-container-high": "#e8e8ed",
+                        "outline-variant": "#c2c6d1",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "finguru-gold": "#D4A017"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "card-gap": "16px",
+                        "md": "16px",
+                        "xs": "8px",
+                        "sm": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "headline-sm": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #D4A017;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e2e8;
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        .finguru-gold-track {
+             background: linear-gradient(to right, #D4A017 50%, #e2e2e8 50%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md h-screen flex flex-col antialiased">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim shadow-sm w-full top-0 sticky z-50 flex items-center justify-between px-container-margin h-16">
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="menu" data-weight="fill">menu</span>
+</button>
+<h1 class="font-display-lg text-display-lg text-primary dark:text-primary-fixed tracking-tight">YONO 3.0</h1>
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-container-high transition-colors active:scale-95 transition-transform p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications" data-weight="fill">notifications</span>
+</button>
+</header>
+<!-- Main Chat Content -->
+<main class="flex-1 overflow-y-auto p-container-margin pb-32 flex flex-col gap-lg">
+<!-- User Message -->
+<div class="flex justify-end">
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm px-md py-sm max-w-[80%] shadow-sm">
+<p class="font-body-md text-body-md">Can you help me understand how much I'd save with an SIP of ₹5000 for 10 years?</p>
+</div>
+</div>
+<!-- FinGuru Message -->
+<div class="flex gap-sm max-w-[90%]">
+<div class="w-10 h-10 rounded-full bg-finguru-gold flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="flex flex-col gap-sm w-full">
+<div class="bg-surface-container-lowest text-on-surface rounded-2xl rounded-tl-sm px-md py-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-surface-variant">
+<p class="font-body-md text-body-md">Sure! Here is a quick calculation based on your inputs. You can adjust the sliders below to see different scenarios.</p>
+</div>
+<!-- SIP Calculator Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-surface-variant p-md flex flex-col gap-lg">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="calculate">calculate</span>
+<h2 class="font-headline-sm text-headline-sm font-bold">SIP Calculator</h2>
+</div>
+<!-- Inputs -->
+<div class="flex flex-col gap-md">
+<!-- Monthly Investment -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-end">
+<label class="font-label-md text-label-md text-on-surface-variant">Monthly investment (₹)</label>
+<span class="font-body-lg text-body-lg font-bold text-finguru-gold" id="val-monthly">₹5,000</span>
+</div>
+<input class="w-full" id="slider-monthly" max="100000" min="500" oninput="updateCalculator()" step="500" type="range" value="5000"/>
+</div>
+<!-- Expected Return -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-end">
+<label class="font-label-md text-label-md text-on-surface-variant">Expected return (p.a)</label>
+<span class="font-body-lg text-body-lg font-bold text-finguru-gold" id="val-return">12%</span>
+</div>
+<input class="w-full" id="slider-return" max="30" min="1" oninput="updateCalculator()" step="1" type="range" value="12"/>
+</div>
+<!-- Time Period -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-end">
+<label class="font-label-md text-label-md text-on-surface-variant">Time period</label>
+<span class="font-body-lg text-body-lg font-bold text-finguru-gold" id="val-time">10 Yr</span>
+</div>
+<input class="w-full" id="slider-time" max="40" min="1" oninput="updateCalculator()" step="1" type="range" value="10"/>
+</div>
+</div>
+<!-- Results Section -->
+<div class="bg-surface-container rounded-lg p-sm flex flex-col gap-md">
+<div class="flex flex-col items-center gap-base">
+<span class="font-label-md text-label-md text-on-surface-variant">Estimated Value</span>
+<span class="font-headline-md text-headline-md font-bold text-primary" id="val-estimated">₹11,61,695</span>
+</div>
+<!-- Visual Breakdown Bar -->
+<div class="w-full h-3 rounded-full flex overflow-hidden shadow-inner">
+<div class="bg-primary h-full" id="bar-invested" style="width: 51.6%;"></div>
+<div class="bg-finguru-gold h-full" id="bar-returns" style="width: 48.4%;"></div>
+</div>
+<!-- Legend -->
+<div class="flex justify-between px-xs">
+<div class="flex flex-col gap-base">
+<div class="flex items-center gap-xs">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Invested</span>
+</div>
+<span class="font-body-md text-body-md font-semibold text-on-surface" id="val-total-invested">₹6,00,000</span>
+</div>
+<div class="flex flex-col gap-base items-end">
+<div class="flex items-center gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Est. Returns</span>
+<div class="w-3 h-3 rounded-full bg-finguru-gold"></div>
+</div>
+<span class="font-body-md text-body-md font-semibold text-on-surface" id="val-total-returns">₹5,61,695</span>
+</div>
+</div>
+</div>
+<button class="bg-primary text-on-primary w-full py-3 rounded-full font-label-md text-label-md active:scale-95 transition-transform flex items-center justify-center gap-xs">
+                        Invest Now <span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface/80 dark:bg-surface-container/80 backdrop-blur-md shadow-[0px_-4px_20px_rgba(26,79,138,0.05)] fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe z-50 rounded-t-xl hidden md:hidden">
+<!-- Assuming FinGuru intent based on chat -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm">Game</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label-sm text-label-sm">FinGuru</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<nav class="bg-surface/80 dark:bg-surface-container/80 backdrop-blur-md shadow-[0px_-4px_20px_rgba(26,79,138,0.05)] fixed bottom-0 w-full z-50 rounded-t-xl left-0 flex justify-around items-center px-4 py-3 pb-safe md:flex hidden md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="sports_esports">sports_esports</span>
+<span class="font-label-sm text-label-sm">Game</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full px-4 py-1 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+<span class="font-label-sm text-label-sm">FinGuru</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-sm text-label-sm">Accounts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        function updateCalculator() {
+            const P = parseFloat(document.getElementById('slider-monthly').value);
+            const r = parseFloat(document.getElementById('slider-return').value) / 12 / 100;
+            const n = parseFloat(document.getElementById('slider-time').value) * 12;
+
+            document.getElementById('val-monthly').innerText = '₹' + P.toLocaleString('en-IN');
+            document.getElementById('val-return').innerText = (r * 12 * 100).toFixed(0) + '%';
+            document.getElementById('val-time').innerText = (n / 12).toFixed(0) + ' Yr';
+
+            const M = P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+            const totalInvested = P * n;
+            const estReturns = M - totalInvested;
+
+            document.getElementById('val-estimated').innerText = '₹' + Math.round(M).toLocaleString('en-IN');
+            document.getElementById('val-total-invested').innerText = '₹' + Math.round(totalInvested).toLocaleString('en-IN');
+            document.getElementById('val-total-returns').innerText = '₹' + Math.round(estReturns).toLocaleString('en-IN');
+
+            const investedPercent = (totalInvested / M) * 100;
+            const returnsPercent = (estReturns / M) * 100;
+
+            document.getElementById('bar-invested').style.width = investedPercent + '%';
+            document.getElementById('bar-returns').style.width = returnsPercent + '%';
+            
+            // Update slider track colors (simple visual effect)
+            const inputs = ['monthly', 'return', 'time'];
+            inputs.forEach(id => {
+                const el = document.getElementById(`slider-${id}`);
+                const min = el.min;
+                const max = el.max;
+                const val = el.value;
+                const percent = ((val - min) / (max - min)) * 100;
+                el.style.background = `linear-gradient(to right, #D4A017 ${percent}%, #e2e2e8 ${percent}%)`;
+            });
+        }
+        
+        // Initial setup for slider tracks
+        updateCalculator();
+    </script>
+</body></html>

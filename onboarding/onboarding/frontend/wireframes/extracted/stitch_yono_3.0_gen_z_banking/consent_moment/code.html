@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>SBI YONO 3.0 - Consent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c2c6d1",
+                        "on-secondary-fixed": "#191c1e",
+                        "tertiary-container": "#793f00",
+                        "on-background": "#1a1c20",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-tint": "#2f5f9b",
+                        "secondary-fixed": "#e0e3e6",
+                        "primary-container": "#1a4f8a",
+                        "surface": "#f9f9ff",
+                        "on-secondary-container": "#626567",
+                        "surface-container-low": "#f3f3f9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#ededf3",
+                        "surface-dim": "#d9dadf",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#a5c8ff",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#582c00",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "surface-container-high": "#e8e8ed",
+                        "inverse-on-surface": "#f0f0f6",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-primary-fixed": "#001c3a",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9ff",
+                        "primary": "#00386b",
+                        "surface-variant": "#e2e2e8",
+                        "outline": "#737781",
+                        "primary-fixed": "#d4e3ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2e3035",
+                        "on-error-container": "#93000a",
+                        "secondary": "#5b5f61",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "on-surface": "#1a1c20",
+                        "on-surface-variant": "#424750",
+                        "secondary-container": "#e0e3e6",
+                        "background": "#f9f9ff",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "sm": "12px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "card-gap": "16px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "lg": "24px",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Quicksand", "sans-serif"],
+                        "body-md": ["Quicksand", "sans-serif"],
+                        "headline-md": ["Quicksand", "sans-serif"],
+                        "headline-sm": ["Quicksand", "sans-serif"],
+                        "headline-lg-mobile": ["Quicksand", "sans-serif"],
+                        "label-md": ["Quicksand", "sans-serif"],
+                        "label-sm": ["Quicksand", "sans-serif"],
+                        "body-lg": ["Quicksand", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Quicksand', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col antialiased w-full overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim w-full top-0 sticky z-40 transition-shadow">
+<div class="flex items-center justify-between px-container-margin h-14 w-full max-w-md mx-auto">
+<button aria-label="Close" class="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform hover:bg-surface-container-high text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 400;">close</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile text-primary dark:text-primary-fixed-dim absolute left-1/2 transform -translate-x-1/2 whitespace-nowrap">Open Account</h1>
+<div class="w-10 h-10"></div> <!-- Spacer for centering -->
+</div>
+<!-- Progress Stepper (Mobile specific layout) -->
+<div class="px-container-margin pb-3 pt-1 max-w-md mx-auto w-full">
+<div class="flex items-center justify-between relative">
+<!-- Track -->
+<div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-full h-1 bg-surface-variant rounded-full z-0"></div>
+<div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1/5 h-1 bg-primary rounded-full z-0 transition-all duration-300"></div>
+<!-- Steps -->
+<div class="relative z-10 flex flex-col items-center gap-1 group">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm shadow-[0px_4px_10px_rgba(26,79,138,0.2)]">1</div>
+<span class="font-label-sm text-[10px] text-primary absolute -bottom-4 whitespace-nowrap">Consent</span>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-1 group opacity-50">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant border-2 border-surface-variant flex items-center justify-center font-label-sm text-label-sm">2</div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-1 group opacity-50">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant border-2 border-surface-variant flex items-center justify-center font-label-sm text-label-sm">3</div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-1 group opacity-50">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant border-2 border-surface-variant flex items-center justify-center font-label-sm text-label-sm">4</div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-1 group opacity-50">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant border-2 border-surface-variant flex items-center justify-center font-label-sm text-label-sm">5</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Chat Thread) -->
+<main class="flex-1 overflow-y-auto px-container-margin pt-lg pb-[100px] max-w-md mx-auto w-full flex flex-col gap-lg hide-scrollbar">
+<!-- YONO Greeting / Timestamp -->
+<div class="flex justify-center mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full">Today, 10:42 AM</span>
+</div>
+<!-- Bot Bubble -->
+<div class="flex gap-sm items-end max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<!-- Micro interaction highlight -->
+<div class="absolute inset-0 bg-white/20 animate-pulse opacity-0"></div>
+</div>
+<div class="bg-surface-container-low rounded-2xl rounded-bl-sm p-4 text-on-surface shadow-[0px_2px_8px_rgba(26,79,138,0.03)] border border-surface-variant/50">
+<p class="font-body-md text-body-md">First, I need your permission to access some details to make this quick and seamless.</p>
+</div>
+</div>
+<!-- Interactive Consent Card (Bento Style) -->
+<div class="flex gap-sm items-end w-full">
+<div class="w-8 h-8 shrink-0"></div> <!-- Spacer for alignment with bot -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-outline-variant/50 flex flex-col gap-md w-full relative overflow-hidden transform transition-transform duration-300 hover:-translate-y-1">
+<!-- Ambient background glow for card -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary-fixed rounded-full blur-3xl opacity-30 pointer-events-none"></div>
+<div class="flex items-start gap-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0 text-primary-container">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm-mobile text-on-surface">Your data, your control</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">We'll need your mobile number and PAN for verification.</p>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-2 border border-surface-variant">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+<span class="font-label-md text-label-md">Identity Verification</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+<span class="font-label-md text-label-md">Secure Profile Creation</span>
+</div>
+</div>
+<button class="text-primary font-label-md text-label-md text-left flex items-center gap-1 group w-fit focus:outline-none focus:underline">
+                    Read full terms 
+                    <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<div class="flex flex-col gap-xs mt-2">
+<button class="w-full h-14 bg-primary text-on-primary rounded-full font-label-md text-label-md flex items-center justify-center active:scale-[0.98] transition-transform shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        I agree
+                    </button>
+<button class="w-full h-14 bg-transparent text-primary border-[1.5px] border-primary rounded-full font-label-md text-label-md flex items-center justify-center active:scale-[0.98] transition-transform hover:bg-primary-fixed/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        What does this mean?
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Input Bar (Chat Style) -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/90 dark:bg-surface-dim/90 backdrop-blur-md border-t border-surface-variant/50 p-3 pb-[calc(12px+env(safe-area-inset-bottom))] z-40 transition-transform">
+<div class="max-w-md mx-auto flex items-center gap-sm bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant/30 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<button aria-label="Menu" class="text-on-surface-variant hover:text-primary transition-colors p-1 flex-shrink-0">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 py-2 min-w-0" disabled="" placeholder="Type a message..." type="text"/>
+<button aria-label="Send" class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant opacity-50 cursor-not-allowed flex-shrink-0">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Navigation Suppressed: Linear/Transactional Intent (Step 1 of Setup) -->
+<script>
+        // Simple micro-interaction for the chat input to simulate readiness
+        document.addEventListener('DOMContentLoaded', () => {
+            const agreeBtn = document.querySelector('button.bg-primary');
+            const inputField = document.querySelector('input[type="text"]');
+            const sendBtn = document.querySelector('button[aria-label="Send"]');
+            
+            agreeBtn.addEventListener('click', () => {
+                // Simulate action state
+                agreeBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm mr-2">progress_activity</span> Processing...';
+                agreeBtn.style.opacity = '0.9';
+                
+                // In a real flow, this would transition to the next step/screen
+                setTimeout(() => {
+                    agreeBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-1">check</span> Agreed';
+                    agreeBtn.classList.remove('bg-primary');
+                    agreeBtn.classList.add('bg-tertiary-container', 'text-on-primary');
+                }, 1000);
+            });
+        });
+    </script>
+</body></html>

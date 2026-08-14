@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YONO 3.0 Chat Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed": "#191c1e",
+                      "secondary-fixed-dim": "#c4c7ca",
+                      "primary": "#00386b",
+                      "on-primary-container": "#9ac2ff",
+                      "on-primary-fixed": "#001c3a",
+                      "primary-container": "#1a4f8a",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#2f5f9b",
+                      "tertiary": "#582c00",
+                      "outline-variant": "#c2c6d1",
+                      "on-primary": "#ffffff",
+                      "on-background": "#1a1c20",
+                      "on-tertiary-container": "#ffae6b",
+                      "secondary": "#5b5f61",
+                      "on-surface-variant": "#424750",
+                      "on-primary-fixed-variant": "#0d4782",
+                      "surface-container-high": "#e8e8ed",
+                      "on-secondary-fixed-variant": "#44474a",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f3f9",
+                      "primary-fixed": "#d4e3ff",
+                      "on-error-container": "#93000a",
+                      "inverse-primary": "#a5c8ff",
+                      "inverse-on-surface": "#f0f0f6",
+                      "surface-bright": "#f9f9ff",
+                      "on-tertiary-fixed-variant": "#6e3900",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed": "#ffdcc3",
+                      "surface": "#f9f9ff",
+                      "tertiary-fixed-dim": "#ffb77e",
+                      "on-surface": "#1a1c20",
+                      "primary-fixed-dim": "#a5c8ff",
+                      "secondary-fixed": "#e0e3e6",
+                      "tertiary-container": "#793f00",
+                      "on-secondary-container": "#626567",
+                      "on-tertiary-fixed": "#2f1500",
+                      "inverse-surface": "#2e3035",
+                      "surface-dim": "#d9dadf",
+                      "secondary-container": "#e0e3e6",
+                      "surface-container": "#ededf3",
+                      "surface-container-highest": "#e2e2e8",
+                      "outline": "#737781",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e2e2e8",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f9f9ff",
+                      "error": "#ba1a1a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "12px",
+                      "md": "16px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "card-gap": "16px",
+                      "container-margin": "20px",
+                      "xs": "8px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": [
+                              "Quicksand"
+                      ],
+                      "body-lg": [
+                              "Quicksand"
+                      ],
+                      "label-md": [
+                              "Quicksand"
+                      ],
+                      "display-lg": [
+                              "Quicksand"
+                      ],
+                      "label-sm": [
+                              "Quicksand"
+                      ],
+                      "body-md": [
+                              "Quicksand"
+                      ],
+                      "headline-lg-mobile": [
+                              "Quicksand"
+                      ],
+                      "headline-md": [
+                              "Quicksand"
+                      ]
+              },
+              "fontSize": {
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+          .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+          }
+      </style>
+</head>
+<body class="h-full bg-background font-body-md text-on-surface flex flex-col items-center">
+<div class="w-full max-w-md h-full flex flex-col relative overflow-hidden bg-surface-container-lowest">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky shadow-sm bg-surface flex items-center justify-between px-container-margin py-md z-10">
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary">YONO 3.0</span>
+<span class="font-label-sm text-label-sm text-secondary">Assistant</span>
+</div>
+</div>
+<button class="text-primary hover:bg-surface-container-low p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Stepper -->
+<div class="px-container-margin py-md bg-surface-container-lowest border-b border-surface-variant z-10">
+<div class="flex items-center justify-between text-center relative">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-variant -z-10 -translate-y-1/2"></div>
+<div class="absolute top-1/2 left-0 w-1/2 h-0.5 bg-primary -z-10 -translate-y-1/2"></div>
+<div class="flex flex-col items-center gap-1 bg-surface-container-lowest px-2">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Start</span>
+</div>
+<div class="flex flex-col items-center gap-1 bg-surface-container-lowest px-2">
+<div class="w-6 h-6 rounded-full border-2 border-primary bg-surface-container-lowest text-primary flex items-center justify-center font-label-sm text-label-sm">2</div>
+<span class="font-label-md text-label-md text-primary">Verify Mobile</span>
+</div>
+<div class="flex flex-col items-center gap-1 bg-surface-container-lowest px-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant text-secondary flex items-center justify-center font-label-sm text-label-sm">3</div>
+<span class="font-label-sm text-label-sm text-secondary">Done</span>
+</div>
+</div>
+</div>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto px-container-margin py-lg flex flex-col gap-lg pb-32">
+<!-- Assistant Message -->
+<div class="flex gap-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-sm">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1 max-w-[85%]">
+<div class="bg-surface-container px-md py-sm rounded-2xl rounded-tl-sm text-on-surface font-body-md text-body-md shadow-sm">
+                        Hello! We need to verify your mobile number to proceed with the setup.
+                    </div>
+<span class="font-label-sm text-label-sm text-secondary px-1">10:42 AM</span>
+</div>
+</div>
+<!-- WhatsApp Card (The Focus) -->
+<div class="flex gap-sm w-full justify-center mt-md">
+<div class="bg-surface-container-lowest rounded-xl border border-surface-variant shadow-[0px_4px_20px_rgba(26,79,138,0.05)] p-md w-full max-w-[300px] flex flex-col items-center text-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#25D366]/10 flex items-center justify-center mb-1">
+<span class="material-symbols-outlined text-[#25D366]" style="font-size: 28px;">chat</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Prefer WhatsApp?</h3>
+<p class="font-body-md text-body-md text-secondary">Continue this conversation on WhatsApp instead</p>
+</div>
+<button class="w-full bg-[#25D366] text-white rounded-full h-[48px] font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-[#20b858] transition-colors active:scale-95">
+                        Continue on WhatsApp
+                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+<button class="font-label-md text-label-md text-primary hover:underline active:opacity-70 transition-opacity">
+                        Stay here
+                    </button>
+</div>
+</div>
+</main>
+<!-- Chat Input (Disabled state implied by the card focus) -->
+<div class="absolute bottom-0 w-full bg-surface-container-lowest border-t border-surface-variant p-sm flex items-center gap-sm pb-safe">
+<button class="p-2 text-secondary hover:bg-surface-container rounded-full transition-colors" disabled="">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="flex-1 bg-surface-container h-12 rounded-full px-4 flex items-center opacity-50">
+<span class="font-body-md text-body-md text-secondary">Type a message...</span>
+</div>
+<button class="w-12 h-12 rounded-full bg-surface-variant text-secondary flex items-center justify-center transition-colors" disabled="">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</body></html>

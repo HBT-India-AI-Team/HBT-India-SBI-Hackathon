@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YONO 3.0 - Onboarding Consent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "on-primary": "#ffffff",
+                            "on-tertiary": "#ffffff",
+                            "background": "#f9f9ff",
+                            "on-secondary-fixed-variant": "#44474a",
+                            "inverse-on-surface": "#f0f0f6",
+                            "on-error-container": "#93000a",
+                            "secondary": "#5b5f61",
+                            "on-background": "#1a1c20",
+                            "error": "#ba1a1a",
+                            "surface-bright": "#f9f9ff",
+                            "primary": "#00386b",
+                            "tertiary-fixed-dim": "#ffb77e",
+                            "tertiary-container": "#793f00",
+                            "on-surface": "#1a1c20",
+                            "surface-tint": "#2f5f9b",
+                            "surface-container-lowest": "#ffffff",
+                            "tertiary-fixed": "#ffdcc3",
+                            "on-tertiary-fixed": "#2f1500",
+                            "on-primary-fixed": "#001c3a",
+                            "error-container": "#ffdad6",
+                            "surface-dim": "#d9dadf",
+                            "on-secondary-container": "#626567",
+                            "secondary-fixed": "#e0e3e6",
+                            "on-primary-container": "#9ac2ff",
+                            "on-primary-fixed-variant": "#0d4782",
+                            "surface-container": "#ededf3",
+                            "on-tertiary-fixed-variant": "#6e3900",
+                            "primary-fixed": "#d4e3ff",
+                            "surface-variant": "#e2e2e8",
+                            "on-surface-variant": "#424750",
+                            "surface-container-highest": "#e2e2e8",
+                            "on-secondary": "#ffffff",
+                            "surface-container-high": "#e8e8ed",
+                            "on-error": "#ffffff",
+                            "inverse-surface": "#2e3035",
+                            "outline": "#737781",
+                            "inverse-primary": "#a5c8ff",
+                            "on-tertiary-container": "#ffae6b",
+                            "primary-fixed-dim": "#a5c8ff",
+                            "secondary-fixed-dim": "#c4c7ca",
+                            "surface-container-low": "#f3f3f9",
+                            "primary-container": "#1a4f8a",
+                            "secondary-container": "#e0e3e6",
+                            "on-secondary-fixed": "#191c1e",
+                            "tertiary": "#582c00",
+                            "outline-variant": "#c2c6d1",
+                            "surface": "#f9f9ff"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "base": "4px",
+                            "xs": "8px",
+                            "lg": "24px",
+                            "sm": "12px",
+                            "md": "16px",
+                            "container-margin": "20px",
+                            "card-gap": "16px",
+                            "xl": "32px"
+                    },
+                    "fontFamily": {
+                            "body-lg": [
+                                    "Quicksand"
+                            ],
+                            "headline-lg-mobile": [
+                                    "Quicksand"
+                            ],
+                            "label-md": [
+                                    "Quicksand"
+                            ],
+                            "display-lg": [
+                                    "Quicksand"
+                            ],
+                            "body-md": [
+                                    "Quicksand"
+                            ],
+                            "label-sm": [
+                                    "Quicksand"
+                            ],
+                            "headline-sm": [
+                                    "Quicksand"
+                            ],
+                            "headline-md": [
+                                    "Quicksand"
+                            ]
+                    },
+                    "fontSize": {
+                            "body-lg": [
+                                    "18px",
+                                    {
+                                            "lineHeight": "26px",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "headline-lg-mobile": [
+                                    "28px",
+                                    {
+                                            "lineHeight": "36px",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "label-md": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "20px",
+                                            "letterSpacing": "0.01em",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "display-lg": [
+                                    "32px",
+                                    {
+                                            "lineHeight": "40px",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "body-md": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "24px",
+                                            "fontWeight": "500"
+                                    }
+                            ],
+                            "label-sm": [
+                                    "12px",
+                                    {
+                                            "lineHeight": "16px",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "headline-sm": [
+                                    "20px",
+                                    {
+                                            "lineHeight": "28px",
+                                            "fontWeight": "600"
+                                    }
+                            ],
+                            "headline-md": [
+                                    "24px",
+                                    {
+                                            "lineHeight": "32px",
+                                            "fontWeight": "700"
+                                    }
+                            ]
+                    }
+            },
+                },
+        }
+    </script>
+</head>
+<body class="bg-background h-full flex flex-col font-body-md text-on-surface overflow-hidden">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface flex items-center justify-between px-container-margin h-14 z-50">
+<button aria-label="Close" class="text-primary active:scale-95 transition-transform flex items-center justify-center p-2 rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold">Open Account</h1>
+<div class="w-10"></div> <!-- Placeholder for balance -->
+</header>
+<!-- Progress Stepper -->
+<div class="px-container-margin py-xs bg-surface border-b border-surface-variant flex justify-between items-center z-40">
+<div class="flex space-x-2 items-center flex-1">
+<div class="h-2 flex-1 bg-primary rounded-full"></div>
+<div class="h-2 w-2 bg-primary rounded-full shrink-0"></div>
+<div class="h-2 flex-1 bg-surface-container-high rounded-full"></div>
+<div class="h-2 flex-1 bg-surface-container-high rounded-full"></div>
+<div class="h-2 flex-1 bg-surface-container-high rounded-full"></div>
+</div>
+<span class="ml-4 font-label-sm text-label-sm text-secondary">Step 2 of 5</span>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto px-container-margin py-lg pb-32">
+<div class="max-w-md mx-auto space-y-lg">
+<!-- Chat Bubble (System) -->
+<div class="flex items-start space-x-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-md rounded-xl rounded-tl-none border border-outline-variant/30 shadow-[0px_4px_20px_rgba(26,79,138,0.02)]">
+<p class="font-body-md text-body-md text-on-surface">Hi! Let's get this account set up. Since this is for a minor, we need a little help from a guardian.</p>
+</div>
+</div>
+<!-- Chat Bubble (Action Required) -->
+<div class="flex items-start space-x-3 mt-lg">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="priority_high">priority_high</span>
+</div>
+<!-- Action Card -->
+<div class="w-full bg-surface-container-lowest border-2 border-primary-container/20 rounded-xl p-md shadow-[0px_4px_20px_rgba(26,79,138,0.05)] relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<h2 class="font-headline-sm text-headline-sm text-primary mb-xs">Guardian Consent Required</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-lg">A parent or legal guardian must provide consent and verify their relationship to proceed.</p>
+<form class="space-y-md">
+<!-- Input Field -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-xs" for="mobile">Guardian's mobile number</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-body-md text-body-md">+91</span>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 px-3 py-3 pl-12 rounded-t-DEFAULT font-body-md text-body-md transition-colors" id="mobile" placeholder="000 000 0000" type="tel"/>
+</div>
+</div>
+<!-- Document Upload -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-xs">Proof of relationship</label>
+<button class="w-full flex items-center justify-between p-sm border border-dashed border-outline-variant rounded-lg bg-surface-container-lowest hover:bg-surface-container-low transition-colors" type="button">
+<div class="flex items-center space-x-3">
+<span class="material-symbols-outlined text-secondary" data-icon="upload_file">upload_file</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Upload document</span>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="add_circle">add_circle</span>
+</button>
+<p class="font-label-sm text-label-sm text-secondary mt-2">Birth certificate or official guardianship papers (PDF, JPG, PNG)</p>
+</div>
+</form>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-md border-t border-outline-variant/30 p-container-margin pb-safe z-50">
+<div class="max-w-md mx-auto">
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-full font-label-md text-label-md flex items-center justify-center space-x-2 active:scale-[0.98] transition-transform shadow-md">
+<span>Guardian, tap to consent</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</body></html>

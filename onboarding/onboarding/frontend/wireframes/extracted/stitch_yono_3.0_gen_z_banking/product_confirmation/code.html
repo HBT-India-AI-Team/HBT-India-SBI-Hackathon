@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>SBI YONO 3.0 - Product Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c2c6d1",
+                        "on-secondary-fixed": "#191c1e",
+                        "tertiary-container": "#793f00",
+                        "on-background": "#1a1c20",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-tint": "#2f5f9b",
+                        "secondary-fixed": "#e0e3e6",
+                        "primary-container": "#1a4f8a",
+                        "surface": "#f9f9ff",
+                        "on-secondary-container": "#626567",
+                        "surface-container-low": "#f3f3f9",
+                        "on-error": "#ffffff",
+                        "surface-container": "#ededf3",
+                        "surface-dim": "#d9dadf",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#a5c8ff",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#582c00",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "surface-container-high": "#e8e8ed",
+                        "inverse-on-surface": "#f0f0f6",
+                        "on-tertiary-container": "#ffae6b",
+                        "on-primary-fixed": "#001c3a",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9ff",
+                        "primary": "#00386b",
+                        "surface-variant": "#e2e2e8",
+                        "outline": "#737781",
+                        "primary-fixed": "#d4e3ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2e3035",
+                        "on-error-container": "#93000a",
+                        "secondary": "#5b5f61",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "on-surface": "#1a1c20",
+                        "on-surface-variant": "#424750",
+                        "secondary-container": "#e0e3e6",
+                        "background": "#f9f9ff",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "sm": "12px",
+                        "base": "4px",
+                        "xl": "32px",
+                        "card-gap": "16px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "headline-md": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "body-lg": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-surface-dim z-50">
+<div class="flex items-center justify-between px-container-margin h-14 w-full">
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm-mobile text-primary dark:text-primary-fixed-dim flex-1 text-center font-bold tracking-tight">Open Account</h1>
+<div class="w-10"></div> <!-- Spacer for balance -->
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col px-container-margin pb-[80px] overflow-y-auto no-scrollbar">
+<!-- Progress Stepper -->
+<div class="flex items-center justify-between w-full py-md mt-sm mb-lg">
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md z-10 relative">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+</div>
+<div class="h-1 bg-primary flex-1 -mx-4 z-0"></div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md z-10 relative">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+</div>
+<div class="h-1 bg-primary flex-1 -mx-4 z-0"></div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md z-10 relative">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+</div>
+<div class="h-1 bg-primary flex-1 -mx-4 z-0"></div>
+<div class="flex flex-col items-center flex-1">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-primary text-primary flex items-center justify-center shadow-md z-10 relative">
+<span class="font-label-md text-label-md">4</span>
+</div>
+</div>
+</div>
+<!-- Chat Area -->
+<div class="flex flex-col gap-lg flex-1">
+<!-- Bot Message -->
+<div class="flex items-end gap-sm self-start max-w-[85%]">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="bg-surface-container-low text-on-surface p-md rounded-2xl rounded-bl-sm shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-surface-container-highest">
+<p class="font-body-md text-body-md">Based on your Savings Quest performance, this looks like the best fit for you!</p>
+</div>
+</div>
+<!-- Product Card -->
+<div class="self-start w-full max-w-[90%] ml-12">
+<div class="bg-surface-container-lowest rounded-xl p-lg shadow-[0px_4px_20px_rgba(26,79,138,0.05)] border border-outline-variant/30 flex flex-col gap-md relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-fixed/20 rounded-bl-full -mr-10 -mt-10 blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-base">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-wider">Recommended</span>
+<h2 class="font-headline-sm text-headline-sm-mobile text-on-surface">Zero Balance Digital Savings Account</h2>
+</div>
+<div class="w-12 h-12 bg-primary-container rounded-full flex items-center justify-center text-on-primary-container flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+</div>
+</div>
+<div class="h-[1px] w-full bg-surface-variant"></div>
+<ul class="flex flex-col gap-sm">
+<li class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">No monthly maintenance fees</span>
+</li>
+<li class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Instant virtual debit card</span>
+</li>
+<li class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Earn 3.5% interest p.a.</span>
+</li>
+</ul>
+<div class="flex flex-col gap-sm mt-sm">
+<button class="w-full h-14 bg-primary text-on-primary font-label-md text-label-md rounded-full shadow-md active:scale-95 transition-transform duration-200">
+                            Yes, this one
+                        </button>
+<button class="w-full h-14 bg-transparent border-2 border-primary text-primary font-label-md text-label-md rounded-full active:scale-95 transition-transform duration-200">
+                            Show other options
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Input Area (Chat style) -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-md border-t border-outline-variant/30 px-container-margin py-md pb-safe z-50">
+<div class="flex items-center gap-sm bg-surface-container-low rounded-full px-md py-sm border border-surface-variant">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-on-surface font-body-md text-body-md placeholder-on-surface-variant/50 p-0" placeholder="Type a message..." type="text"/>
+<button class="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</body></html>
