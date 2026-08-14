@@ -8,6 +8,69 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-14 · Stream sentences to the client over SSE; stop calling TTS ourselves
+
+`94b6945` — 5 files, +237/−97
+
+Voice is entirely the client's: they do synthesis, playback and the audio
+channel. This side produces text and hands it over early.
+
+The previous version had this backend POST each sentence to the speech
+service, which was wrong for the architecture. The browser owns the speaker,
+so a WAV generated here had nowhere to go -- setting VOICE_TTS_URL would have
+synthesised audio and discarded it, adding load and latency for nothing.
+Removed, along with its three env vars, so nobody can configure that failure.
+
+Replaced by POST /agents/{agent_id}/invoke/stream: same body, same X-API-Key,
+text/event-stream response. `sentence` events as each one is finished, then a
+`done` event carrying exactly the object /invoke returns, so a client can
+treat the sentences as an early preview and `done` as authoritative.
+
+Verified end to end against the running backend on a real turn:
+
+    +12060ms  SENTENCE 1: A good way to manage your ₹85,000 ... 50-30-20 rule.
+    +12421ms  SENTENCE 2: ... ₹42,500 for needs ... ₹17,000 toward savings.
+    +12670ms  SENTENCE 3: ... do you already have an emergency fund set up?
+    +12680ms  DONE  lang=English  347 chars
+
+620ms of head start, every rupee figure intact. Small, for the reason in
+DECISIONS #18: the tool loop is 81% of a turn and streaming the answer cannot
+touch it.
+
+The sink is now a ContextVar rather than an argument. It is chosen at the
+HTTP edge and consumed six frames down inside a stage shared with every other
+agent; threading a callable through all of that would put a speech concern
+into signatures that have nothing to do with speech. The worker thread is
+started with copy_context().run so the value follows it -- a ContextVar does
+not cross a thread boundary on its own, and getting that wrong looks exactly
+like "streaming produced no sentences".
+
+A test asserts by AST that this module imports no HTTP client at all, so the
+TTS call cannot come back by accident.
+
+## 2026-08-14 · Read the speech endpoint per call, not at import
+
+`a36dde8` — 2 files, +61/−9
+
+VOICE_TTS_URL was captured at module import, so it froze at whatever the
+environment held the first time speech_stream was touched. Adding it to .env
+would have appeared to do nothing until someone worked out a restart was
+needed -- and a test could not point it anywhere at all.
+
+That is the same silent no-op this subsystem has now shipped three times: a
+language key that matched nothing, an evidence nesting read at the wrong
+level, a flag nested a level below where it was looked for. All configured
+correctly, all doing nothing, none raising.
+
+Sentences also now carry "VOICE_TTS_URL not set" as their error rather than
+being silently skipped, so the trace distinguishes "nowhere to send" from
+"send failed" -- which is the state every machine without a GPU peer is in,
+including this one.
+
+## 2026-08-14 · Regenerate changelog
+
+`3ea2707` — 1 file, +57/−11
+
 ## 2026-08-14 · Stream the spoken answer, forwarding each sentence as it completes
 
 `62f3cfb` — 7 files, +889/−7
@@ -577,34 +640,3 @@ hand-edit of agent.yaml.
 
 Flips draft/routable in agent.yaml and saves, instead of requiring someone
 to hand-edit two YAML lines to get a generated agent out of draft status.
-
-## 2026-08-07 · Add a chat interface (internal + embeddable) and redesign the admin UI
-
-`577b495` — 18 files, +986/−154
-
-Free-text conversation now maps to an agent's real rule fields (extracted
-via LLM against each skill's gates/factors, since input_schema alone never
-carries real field names) with session persistence so multi-turn context
-survives a server restart. Same engine powers the Playground's new
-chat-first mode and a standalone GET /embed/{agent_id} page a client site
-can iframe directly — no CORS needed since it's same-origin. Raw JSON/form
-testing stays available under an "Advanced" toggle.
-
-Also a visual pass on the admin UI (Dashboard, AgentEditor, Sidebar, ui.tsx
-primitives) for more breathing room and a consistent type/spacing system.
-
-## 2026-08-07 · Open up for LAN demo access
-
-`eb49981` — 2 files, +6/−7
-
-CORS wide open on the public API (invoke needs to be callable from a
-second device's browser JS), and run_backend.ps1 binds to 0.0.0.0 so
-the server is reachable over WiFi, not just localhost.
-
-## 2026-08-06 · Add per-agent API keys for the public invoke endpoint
-
-`661afd4` — 8 files, +271/−7
-
-Every agent now gets a key on creation; POST /agents/{id}/invoke requires
-it via X-API-Key. A new "Integrate" tab in the editor shows the key plus
-a copy-pasteable fetch() snippet for embedding the agent elsewhere.
