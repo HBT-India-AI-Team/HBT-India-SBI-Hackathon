@@ -8,6 +8,63 @@ commit message is the source of truth; this is a readable view of it.
 
 ---
 
+## 2026-08-14 · Stream the spoken answer, forwarding each sentence as it completes
+
+`62f3cfb` — 7 files, +889/−7
+
+In voice mode the answer call now streams and every finished sentence goes to
+the speech service immediately, instead of the listener waiting for the whole
+reply and then hearing a monologue.
+
+MEASURED FIRST, because the result changes what anyone should do next. One
+real voice turn, 17.6s end to end:
+
+    tool loop (2 calls)   14,309ms   81%
+    answer generation      3,243ms   18%
+
+First sentence reached the endpoint 2,631ms into the answer phase, so this
+bought ~600ms of a 17.6-second turn. Under 4%. The implementation is right;
+the latency is not where the design assumed. Anyone trying to make voice feel
+faster should be working on the tool loop.
+
+Two hazards that are most of the work here, both of which produce bad audio
+rather than an exception:
+
+* The stream is JSON, not prose. `format` is still applied, so what arrives
+  is {"language":"Tamil","content_type":"text","content":"... — splitting
+  those tokens directly would send `{"language":"Tamil"` to a speech engine.
+  JsonStringField walks the partial document and yields only that field,
+  handling escapes that straddle chunk boundaries.
+
+* Not every full stop ends a sentence. This agent's output is money:
+  ₹1,06,398.02 split naively becomes "₹1,06,398." and "02", two utterances
+  and a wrong number spoken to someone who cannot see the screen. A
+  terminator only ends a sentence when a boundary follows, so a decimal never
+  does. Rs./Mr./etc are handled too. Terminators are . ! ? plus the
+  Devanagari danda । and ॥ -- note those are Hindi, not Tamil, which
+  conventionally uses the ASCII stop; both are accepted.
+
+Async as asked, over asyncio.to_thread since no async HTTP client is
+installed and DECISIONS #3 keeps this service dependency-free. Each sentence
+is dispatched with create_task, so a slow speech box cannot stall token
+reading -- there is a test that fails if it ever does.
+
+No retry on a stream, unlike _post_chat: by the time one fails part of it has
+been spoken, and replaying repeats audio the listener heard. It falls back to
+the non-streaming path, which retries. A dead speech service degrades to
+text-only rather than losing the answer.
+
+Only voice streams. On screen the whole answer appears at once, so streaming
+would buy nothing and give up that retry.
+
+Tests: +23, mostly on the two pure pieces, including every chunk size from 1
+byte upward -- token boundaries are arbitrary and can land mid-number or
+mid-escape.
+
+## 2026-08-13 · Regenerate changelog
+
+`2da931a` — 1 file, +53/−0
+
 ## 2026-08-13 · Add Sarvam AI for Indic language identification, and pin the reply language
 
 `0e8e67e` — 6 files, +550/−10
@@ -551,14 +608,3 @@ the server is reachable over WiFi, not just localhost.
 Every agent now gets a key on creation; POST /agents/{id}/invoke requires
 it via X-API-Key. A new "Integrate" tab in the editor shows the key plus
 a copy-pasteable fetch() snippet for embedding the agent elsewhere.
-
-## 2026-08-06 · Add Skill-Driven Agent Runtime platform
-
-`9e75235` — 190 files, +15503/−0
-
-Backend (FastAPI + agent_platform runtime/pipeline), the admin/editor
-frontend (React), demo agents and skill packages, and tests.
-
-## 2026-08-06 · Initial commit
-
-`ec6ae1b` — 1 file, +2/−0
