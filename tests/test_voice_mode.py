@@ -50,6 +50,56 @@ def test_flags_are_read_at_whichever_level_the_caller_nests_them():
     assert pipeline_stages._style_enabled(our_chat_route) is False
 
 
+def test_the_language_is_found_under_either_name_at_either_level():
+    """`language` is what the client sends. `lang` is accepted too, because
+    when asked which one their client used, the frontend team did not know --
+    and being wrong here fails in two directions at once, per the test below.
+    """
+    for key in ("language", "lang"):
+        assert pipeline_stages._request_flag(
+            {"evidence": {"question": "…", key: "ta"}}, *pipeline_stages._LANGUAGE_KEYS) == "ta"
+        assert pipeline_stages._request_flag(
+            {"evidence": {"question": "…"}, key: "ta"},
+            *pipeline_stages._LANGUAGE_KEYS) == "ta"
+
+
+def test_a_routing_key_is_never_shown_to_the_model_as_content():
+    """The reason every spelling must be listed, not just the one we read.
+
+    _build_text_prompt renders every key it does not recognise straight into
+    the user prompt. `lang` was unlisted, so a client sending it got the
+    language ignored *and* a literal "lang: ta" line appended to its own
+    question -- one missing string breaking two things, with no error. The
+    same omission for `style` moved tool selection, reproducibly.
+    """
+    class _Skill:
+        instructions_text = "instructions"
+        shared_text = ""
+        task_prompt_text = ""
+
+    raw_input = {"evidence": {"question": "FD rate enna?", "style": True,
+                              "voice": True, "language": "ta", "lang": "ta"}}
+    _, user_prompt = pipeline_stages._build_text_prompt(_Skill(), raw_input)
+
+    assert user_prompt == "evidence: {'question': 'FD rate enna?'}"
+    for routing_key in ("language", "lang", "style", "voice"):
+        assert routing_key not in user_prompt
+
+
+def test_language_codes_the_client_actually_sends_become_names():
+    """"The user is writing in ta" asks the model to know a code table.
+    "Tamil" does not. Bare two-letter codes are what the client sends."""
+    from capabilities_impl import sarvam
+
+    assert sarvam.language_name("en") == "English"
+    assert sarvam.language_name("ta") == "Tamil"
+    assert sarvam.language_name("hi") == "Hindi"
+    # Both separators, because Android's Locale.toString() gives "ta_IN" and
+    # the web platform gives "ta-IN".
+    assert sarvam.language_name("ta-IN") == "Tamil"
+    assert sarvam.language_name("ta_IN") == "Tamil"
+
+
 def test_the_message_is_found_under_either_name():
     """`message` is what our chat route calls it, `question` is what the
     voice client calls it. Neither is more correct and neither is ours to

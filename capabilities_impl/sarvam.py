@@ -49,6 +49,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 from typing import Any
 
@@ -102,7 +103,10 @@ def language_name(code: str) -> str:
     cleaned = code.strip()
     if cleaned in _LANGUAGE_NAMES:
         return _LANGUAGE_NAMES[cleaned][1]
-    bare = cleaned.split("-")[0].lower()
+    # `-` and `_` both, because a mobile client is as likely to send either:
+    # Android's Locale.toString() produces "ta_IN", the web platform produces
+    # "ta-IN", and neither side agreed on one with us.
+    bare = re.split(r"[-_]", cleaned)[0].lower()
     for sarvam_code, (short, name) in _LANGUAGE_NAMES.items():
         if short == bare:
             return name

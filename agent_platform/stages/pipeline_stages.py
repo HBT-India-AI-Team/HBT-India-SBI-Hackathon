@@ -306,13 +306,29 @@ def reason_llm(ctx, bundle, logger) -> None:
         ctx.llm_output = None
 
 
+# What different callers name the reply language. Both are in production and
+# neither is ours to rename -- the frontend team did not know which of the two
+# their own client sends, which is reason enough to accept both rather than
+# make a demo depend on remembering.
+_LANGUAGE_KEYS = ("language", "lang")
+
+
 # Keys that steer the runtime and are not content. _build_text_prompt renders
 # every *other* key straight into the user prompt, so anything added to
 # raw_input and left out of this set is shown to the model as though the user
 # had typed it. "style" was: the prompt carried a literal "style: True" line,
 # and the tool loop -- which style is not even supposed to reach -- started
 # picking different tools because of it. Reproducibly, 3 runs out of 3.
-_TEXT_ROUTING_KEYS = {"skill_id", "skill_ids", "correlation_id", "style", "voice", "language"}
+#
+# Spellings a caller might reasonably pick are ALL listed, not just the one
+# we happen to read. Missing an alias is worse than a no-op: `lang` was not
+# here, so a client sending it got the language ignored *and* a literal
+# "lang: ta" line appended to the question -- broken twice, silently, from
+# one missing string.
+_TEXT_ROUTING_KEYS = {
+    "skill_id", "skill_ids", "correlation_id", "style", "voice",
+    *_LANGUAGE_KEYS,
+}
 
 
 def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
@@ -344,8 +360,9 @@ def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
 _MESSAGE_KEYS = ("message", "question")
 
 
-def _request_flag(raw_input, name: str):
-    """A runtime flag, at whichever level the caller nested it.
+def _request_flag(raw_input, *names: str):
+    """A runtime flag, at whichever level the caller nested it, under
+    whichever of `names` they spelled it.
 
     Three shapes are live and all three are legitimate:
 
@@ -358,12 +375,19 @@ def _request_flag(raw_input, name: str):
     `voice: true` did nothing at all -- the flag was set, sent, and read at a
     level it was never at. Returns None when absent, which each caller reads
     as its own default.
+
+    Level is checked outside spelling, so a caller sending `lang` at the top
+    level and `language` inside evidence gets the top-level one -- same
+    precedence every other flag already has, rather than a new rule per name.
     """
     if not isinstance(raw_input, dict):
         return None
     for candidate in (raw_input, raw_input.get("evidence")):
-        if isinstance(candidate, dict) and name in candidate:
-            return candidate[name]
+        if not isinstance(candidate, dict):
+            continue
+        for name in names:
+            if name in candidate:
+                return candidate[name]
     return None
 
 
@@ -547,7 +571,7 @@ def _language_section(ctx, logger) -> tuple[str, str | None]:
     except ImportError:
         sarvam = None
 
-    declared = _request_flag(ctx.raw_input, "language")
+    declared = _request_flag(ctx.raw_input, *_LANGUAGE_KEYS)
     code = declared.strip() if isinstance(declared, str) and declared.strip() else None
     source = "declared by the caller"
     if code and sarvam is not None:
