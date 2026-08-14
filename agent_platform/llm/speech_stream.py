@@ -47,6 +47,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from agent_platform.llm.streaming import JsonStringField, SentenceSplitter
+from agent_platform.llm.tts_text import clean_for_speech
 
 logger = logging.getLogger(__name__)
 
@@ -138,12 +139,18 @@ async def stream_to_speech(
     temperature: float = 0.0,
     language: str | None = None,
     sink: Callable[[str, str | None], None] | None = None,
+    normalize: bool = False,
 ) -> StreamResult:
     """Stream the answer, speaking each sentence as it completes.
 
     `sink` overrides the HTTP forwarder — used by tests, and by any caller
     that would rather push over an already-open WebSocket than open a
     connection per sentence.
+
+    `normalize` strips markdown, list markers and brackets from each sentence
+    before it goes out. Off by default and switched on only in voice mode:
+    this same stream feeds the on-screen provisional bubble when voice is off,
+    and stripping `**bold**` out of *that* would be damage, not cleanup.
 
     Returns everything the non-streaming path returns, plus per-sentence
     timings, so the caller can validate the answer exactly as before.
@@ -165,6 +172,15 @@ async def stream_to_speech(
     raw_parts: list[str] = []
 
     def dispatch(text: str) -> None:
+        if normalize:
+            # Cleaned here, at the single point a sentence is finalized, so
+            # every path out -- SSE, socket, test sink -- gets the same text.
+            # Only what is *spoken* is cleaned: result.raw and the parsed
+            # `content` keep what the model actually wrote, which is what
+            # makes the leak visible in logs instead of silently papered over.
+            text = clean_for_speech(text)
+            if not text:
+                return                          # nothing left but markup
         event = SentenceEvent(index=len(result.sentences) + 1, text=text,
                               elapsed_ms=round((time.perf_counter() - t0) * 1000, 1))
         result.sentences.append(event)

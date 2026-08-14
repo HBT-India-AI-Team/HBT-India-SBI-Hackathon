@@ -476,6 +476,27 @@ _VOICE_BRIEF = (
     "points, no numbered lists, no headings, no tables. If there are several "
     "options, say them in a sentence — \"there are two good options: SCSS at "
     "8.2 percent, or a senior citizen FD at 6.75\" — not as a list.\n\n"
+    # Brackets survive the "no markdown" rule above, because a parenthesis is
+    # ordinary prose punctuation rather than markup. Spoken, an engine either
+    # reads them out or drops the pause, so the aside lands mid-clause.
+    "**No brackets or parentheses.** If a detail needs saying, say it in the "
+    "sentence — \"the equated monthly instalment, or EMI, works out to…\", not "
+    "\"the EMI (equated monthly instalment) works out to…\".\n\n"
+    # This one is ours before it is the speech engine's: sentences are cut on
+    # a terminator followed by whitespace, so a reply written without final
+    # punctuation does not split at all and arrives as one long chunk, which
+    # is exactly the wait streaming exists to remove.
+    "**End every sentence with `.`, `!` or `?`.** Each one is dispatched to be "
+    "spoken the moment it is finished, and that is how the end is found. A "
+    "sentence with no closing punctuation is not spoken on its own.\n\n"
+    # Written for the Tamil path but true generally: the register guide already
+    # says to use the everyday loanword, and this stops the model "correcting"
+    # it into a dictionary calque no listener uses.
+    "**Keep English words that are genuinely the everyday word** — bank and "
+    "product names, and terms like loan, EMI, KYC, FD. Say them as they are "
+    "said, inside the sentence structure of the user's own language. Do not "
+    "translate them into a formal equivalent nobody uses, and do not switch "
+    "whole clauses into English.\n\n"
     "**Two to four sentences.** Someone listening cannot skim, scroll back, "
     "or skip ahead, and a long answer is a long wait. Lead with the answer "
     "itself, then at most one sentence of why. Stop there.\n\n"
@@ -578,7 +599,8 @@ def _has_sentence_sink() -> bool:
 
 
 def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
-                   language, ctx, logger) -> tuple[dict | None, dict | None, dict | None]:
+                   language, ctx, logger, voice: bool = False,
+                   ) -> tuple[dict | None, dict | None, dict | None]:
     """Stream the spoken answer, forwarding each sentence as it completes.
 
     Returns (parsed, meta, speech_detail), or (None, None, detail) to mean
@@ -599,6 +621,10 @@ def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
         result = asyncio.run(stream_to_speech(
             adapter, system_prompt=system_prompt, user_prompt=user_prompt,
             schema=schema, temperature=temperature, language=language,
+            # Only spoken sentences get stripped of markdown. With voice off
+            # this same stream draws the on-screen bubble, where `**bold**` is
+            # wanted.
+            normalize=voice,
         ))
     except Exception as exc:                    # noqa: BLE001 - falls back
         logger.warning(ctx, f"Answer stream failed, answering without streaming: {exc}")
@@ -1197,7 +1223,7 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
         if _has_sentence_sink():
             parsed, meta, speech = _stream_answer(
                 adapter, answer_prompt, user_prompt, output_contract,
-                bundle.definition.llm.temperature, language, ctx, logger,
+                bundle.definition.llm.temperature, language, ctx, logger, voice,
             )
         if parsed is None:
             parsed, meta = adapter.generate_structured(
