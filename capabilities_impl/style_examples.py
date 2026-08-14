@@ -42,24 +42,31 @@ _EMBED_MODEL = os.environ.get("STYLE_EMBED_MODEL", "bge-m3")
 # Measured with scripts/eval_style_examples.py. Re-run it after any corpus
 # change -- these numbers move, and a stale threshold is invisible.
 #
-# 535-passage transcript corpus (hi 379, ta 156), after five videos were
-# scraped specifically for the topics that were scoring lowest:
+# 511-passage transcript corpus (hi 368, ta 143):
 #
 #            floor   ceiling    gap     at 0.60
-#   hi       0.586    0.575   +0.011    7/10 served, 0 junk
-#   ta       0.555    0.564   -0.009    5/8  served, 0 junk
+#   hi       0.568    0.575   -0.007    7/10 served, 0 junk
+#   ta       0.549    0.564   -0.015    4/8  served, 0 junk
 #
 # Where it started, and each step:
 #
-#            passages          hi floor   ta served
-#   before    454 (hi only)      0.496     no corpus at all
-#   +Tamil    492 (363/129)      0.546     3/8
-#   +5 videos 535 (379/156)      0.586     5/8
+#             passages         hi floor   ta served
+#   before     454 (hi only)     0.496    no corpus at all
+#   +Tamil     492 (363/129)     0.546    3/8
+#   +5 videos  535 (379/156)     0.586    5/8
+#   -word claims 511 (368/143)   0.568    4/8
 #
-# The topic-targeted scrape is what moved Tamil: gold loan went 0.521 -> 0.639
-# and FD 0.553 -> 0.728, both from one video each. Coverage predicts score
-# closely enough that the remaining misses name their own fix -- Tamil
-# budgeting (0.555) and Hindi senior-citizen income (0.586) are the next two.
+# That last row is a deliberate loss. An A/B found exemplars leaking their
+# CONTENT into answers: a Tamil gold-loan passage about refinancing five
+# sovereigns for a lakh produced an answer citing agricultural schemes and
+# "the 1 lakh you mentioned" -- to a question that named no amount. The claim
+# filter only ever matched digits, so amounts written as words walked through
+# it. Catching them cost the gold-loan exemplar, which was the leaking one,
+# and Tamil went 5/8 -> 4/8.
+#
+# Worth it, and not a close call: with no exemplar that same question now
+# answers from a tool call, quoting SBI's 9.15% with its as-of date. A wrong
+# exemplar does not merely fail to help, it displaces the grounded answer.
 #
 # The gap is still NEGATIVE in both languages: no threshold both serves every
 # real question and excludes every irrelevant one. "मेरे फोन की बैटरी जल्दी
@@ -338,5 +345,16 @@ def _examples_block(examples: list[str]) -> str:
         "them, or take a single fact, figure or claim from them. Every number "
         "in your answer still comes from a tool call, and every rule still "
         "comes from the documents.\n\n"
+        # Measured, and the worse half of the same failure: shown a passage
+        # about refinancing five sovereigns for a lakh, the model answered as
+        # though the user had said it -- "the 1 lakh you mentioned", about a
+        # question that gave no amount at all. Inventing the user's side of
+        # the conversation is worse than borrowing a number, because it is not
+        # checkable against anything.
+        "**The user did not say any of this.** These passages are someone "
+        "else's video, on someone else's situation. Never refer back to them "
+        "as though the user had mentioned them — no \"as you said\", no \"the "
+        "amount you mentioned\", no assuming their situation matches. If the "
+        "user gave no figure, they gave no figure.\n\n"
         f"{quoted}\n"
     )

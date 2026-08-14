@@ -60,11 +60,37 @@ MAX_CHARS = 700
 
 # A retrieved example is unverified text. Anything that reads like a claim
 # about money is dropped rather than risk it being echoed as fact.
+# Every alternative here is anchored on a DIGIT, which is the hole a measured
+# leak came through: "एक लाख रुपये" and "ஒரு லட்சம் ரூபாய்" are amounts written
+# as words, so nothing matched them and they stayed in the corpus. One of them
+# reached an answer -- the model reproduced the exemplar's ₹1 lakh and told the
+# user it was a figure *they* had mentioned. Spelled-out quantities are caught
+# by _WORD_CLAIM below.
 _CLAIM = re.compile(
-    r"\d+\s*(?:%|फीसदी|प्रतिशत)"          # a rate
-    r"|₹\s*\d|\bरु\.?\s*\d|\d+\s*(?:लाख|करोड़|हज़ार|हजार)"   # an amount
+    r"\d+\s*(?:%|फीसदी|फीसद|प्रतिशत|परसेंट|पर्सेंट|पीसी)"    # a rate
+    r"|₹\s*\d|\bरु\.?\s*\d|\d+\s*(?:लाख|करोड़|हज़ार|हजार|रुपये|रुपए)"   # an amount
     r"|\bसेक्शन\s*\d|\b80\s*[सीcC]\b",     # a tax section
 )
+
+# Numbers written as words, immediately followed by a unit that makes them a
+# quantity claim. Bare "एक" is just "a/one" and must not match -- it is the
+# pairing with लाख / रुपये / परसेंट that turns it into a figure.
+_HI_NUMBER_WORD = (
+    r"एक|दो|तीन|चार|पाँच|पांच|छह|छः|सात|आठ|नौ|दस|ग्यारह|बारह|बीस|तीस|"
+    r"चालीस|पचास|साठ|सत्तर|अस्सी|नब्बे|सौ|हज़ार|हजार|आधा|डेढ़|ढाई"
+)
+_HI_UNIT = r"लाख|करोड़|हज़ार|हजार|रुपये|रुपए|रुपया|फीसदी|फीसद|प्रतिशत|परसेंट|पर्सेंट|पीसी|साल|महीने|महीना|गुना"
+_TA_NUMBER_WORD = (
+    r"ஒரு|ஒன்று|ரெண்டு|இரண்டு|மூணு|மூன்று|நாலு|நான்கு|அஞ்சு|ஐந்து|ஆறு|ஏழு|"
+    r"எட்டு|ஒன்பது|பத்து|இருபது|முப்பது|நாற்பது|ஐம்பது|அறுபது|நூறு|ஆயிரம்|அரை|ஒன்றரை"
+)
+_TA_UNIT = (r"லட்சம்|லட்ச|லச்சம்|கோடி|ஆயிரம்|ரூபாய்|ரூபா|சவரன்|பவுன்|சதவீதம்|சதவீத|"
+            r"பர்சென்ட்|வருஷம்|வருடம்|மாசம்|மாதம்|மடங்கு")
+
+_WORD_CLAIM = {
+    "hi": re.compile(rf"\b(?:{_HI_NUMBER_WORD})\s+(?:{_HI_UNIT})"),
+    "ta": re.compile(rf"(?:{_TA_NUMBER_WORD})\s+(?:{_TA_UNIT})"),
+}
 
 # Comment-shaped noise: greetings, tags, pure praise, pure complaint.
 _NOISE = re.compile(
@@ -119,9 +145,9 @@ _TAMIL = re.compile(r"[஀-௿]")
 # were tuned against leakage actually observed in a built index, these are
 # not. Treat a Tamil passage that looks wrong in a reply as a bug here first.
 _TA_CLAIM = re.compile(
-    r"\d+\s*(?:%|சதவீத|சதவிகித)"                       # a rate
+    r"\d+\s*(?:%|சதவீத|சதவிகித|பர்சென்ட்)"             # a rate
     r"|₹\s*\d|\d+\s*(?:ரூபாய்|ரூபா)|ரூபாய்\s*\d"        # an amount
-    r"|\d+\s*(?:லட்ச|லச்ச|கோடி|ஆயிர)"                   # lakh / crore / thousand
+    r"|\d+\s*(?:லட்ச|லச்ச|கோடி|ஆயிர|சவரன்|பவுன்)"       # lakh / crore / sovereign
     r"|\bபிரிவு\s*\d|\b80\s*[சிcC]\b",                  # a tax section
 )
 _TA_NOISE = re.compile(
@@ -245,6 +271,9 @@ def looks_like_advice(text: str, language: str = "hi") -> tuple[bool, str]:
         return False, "app screen narration"
     if filters["claim"].search(stripped):
         return False, "carries a figure"
+    word_claim = _WORD_CLAIM.get(language)
+    if word_claim is not None and word_claim.search(stripped):
+        return False, "carries a figure in words"
 
     # Retrieval routes on script: style_examples.language_of() reads the
     # query's Unicode block, so a passage must be in the block its own
