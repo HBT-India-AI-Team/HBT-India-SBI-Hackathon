@@ -27,7 +27,7 @@ load_dotenv(Path(__file__).parent / ".env")
 import capabilities_impl  # noqa: E402,F401  (registers mock tools)
 from agent_platform.composition import list_agents, load_agent  # noqa: E402
 from agent_platform.llm import speech_stream  # noqa: E402
-from agent_platform.runtime import chat  # noqa: E402
+from agent_platform.runtime import chat, chat_store  # noqa: E402
 from agent_platform.runtime.executor import invoke_agent  # noqa: E402
 from agent_platform.state import get_run, list_runs  # noqa: E402
 from agent_platform.workflows import list_workflows, run_workflow  # noqa: E402
@@ -108,6 +108,16 @@ def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Heade
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Unknown agent_id '{agent_id}'")
 
+    question = _request_message(request)
+    output = ctx.validated_output or {}
+    # Record the exchange when the caller identified itself, so GET /api/history
+    # has something to return. No identity means no write, which is exactly
+    # today's behaviour for every existing integration.
+    session_id = chat_store.record_turn(
+        agent_id=agent_id, identity=_request_identity(request),
+        question=question, answer=output.get("content") or "",
+    )
+
     return {
         "run_id": ctx.run_id,
         "outcome": (ctx.decision or {}).get("outcome"),
@@ -118,12 +128,66 @@ def invoke(agent_id: str, request: dict[str, Any], x_api_key: str | None = Heade
         "output": ctx.validated_output,
         "hitl": ctx.hitl,
         "error": ctx.error,
+        # Present only when the turn was recorded. A client that ignores it
+        # loses nothing; one that keeps it can resume by session instead of
+        # replaying its own history.
+        "session_id": session_id,
         # Calculators to open beside the reply. Additive — [] on almost every
         # turn, and a client that does not know the key ignores it.
         "tools": tool_suggest.suggest(
-            _request_message(request),
+            question,
             [{"detail": r.detail} for r in ctx.stage_results],
         ),
+    }
+
+
+# What different callers name the person. The app's identity IS a name --
+# "the `name` IS the session key -- no separate random session id is
+# generated" (its lib/finguruIdentity.js) -- while our own routes use user_id.
+# Both map onto one identity namespace rather than two half-populated ones.
+_IDENTITY_KEYS = ("user_id", "name")
+
+
+def _request_identity(request: dict[str, Any]) -> str:
+    """Who this turn belongs to, at either nesting level, under either name."""
+    for candidate in (request, request.get("evidence")):
+        if not isinstance(candidate, dict):
+            continue
+        for key in _IDENTITY_KEYS:
+            value = candidate.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return ""
+
+
+@app.get("/api/history")
+def get_history(name: str | None = None, user_id: str | None = None,
+                agent_id: str = "finguru") -> dict[str, Any]:
+    """The stored transcript for a person, for redrawing a returning user's
+    thread. `name` and `user_id` are the same namespace; either works.
+
+    Message shape is {role, text}: the app renders `m.role || m.direction` and
+    `m.text || m.content || m.message`, so this hits the first branch of both
+    rather than relying on its fallbacks.
+
+    An unknown name is 200 with an empty list, not 404 — "nobody by that name
+    has asked anything yet" is a normal state on first visit, and the client
+    treats a failed fetch as a soft no-op it cannot distinguish from an error.
+    """
+    identity = (name or user_id or "").strip()
+    if not identity:
+        raise HTTPException(status_code=400, detail="Pass ?name= or ?user_id=")
+
+    session = chat_store.get_session_for_user(identity, agent_id)
+    messages = (session or {}).get("messages") or []
+    return {
+        "name": identity,
+        "agent_id": agent_id,
+        "session_id": (session or {}).get("session_id"),
+        "messages": [
+            {"role": m.get("role"), "text": m.get("content", "")}
+            for m in messages if isinstance(m, dict)
+        ],
     }
 
 

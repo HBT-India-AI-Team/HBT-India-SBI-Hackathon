@@ -172,6 +172,15 @@ def _tool_payload(row: sqlite3.Row) -> dict[str, Any]:
     return {
         "tool_id": row["tool_id"],
         "name": row["name"],
+        # The client's renderer branches on this to decide whether to evaluate
+        # a formula locally or POST to /api/tools/execute. Always "server"
+        # here: there is no `formula` field to evaluate, deliberately, because
+        # a browser-side copy of the EMI formula is a second implementation
+        # that can disagree with the sentence the agent already wrote.
+        #
+        # Omitting it is not neutral -- `undefined` matches neither branch, so
+        # the calculator renders and then does nothing on submit.
+        "execution": "server",
         "capability": row["capability"],
         "inputs": _decode(row["inputs"], default=[]),
         "arg_map": _decode(row["arg_map"], default={}),
@@ -231,10 +240,19 @@ def run_tool(tool_id: str, inputs: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:                    # noqa: BLE001 - surfaced as 400
         raise ValueError(str(exc)) from exc
 
+    value = result.get(tool["result_key"]) if isinstance(result, dict) else None
     return {
         "tool_id": tool_id,
-        "result": result,
-        "value": result.get(tool["result_key"]) if isinstance(result, dict) else None,
+        # `result` is the headline number, per the client's spec:
+        #   POST /api/tools/execute -> { "result": ..., "output_label": "..." }
+        # It used to be the whole capability dict, which a client following
+        # that spec renders as "[object Object]".
+        "result": value,
+        # The same number under the name our own Playground reads, and the
+        # full capability output for anything that wants the breakdown --
+        # total interest, total invested. Additive; neither is in the spec.
+        "value": value,
+        "breakdown": result if isinstance(result, dict) else {},
         "output_label": tool["output_label"],
         "output_prefix": tool["output_prefix"],
     }
@@ -296,6 +314,11 @@ def get_saved_tools(*, user_id: str) -> list[dict[str, Any]]:
             "tool": {
                 "tool_id": row["tool_id"],
                 "name": row["tool_name"],
+                # The saved-tools tab re-renders through the same generic
+                # renderer as the inline card (spec §6), so it branches on
+                # `execution` here too. Omitting it drew a form that did
+                # nothing on submit.
+                "execution": "server",
                 "capability": row["capability"],
                 "inputs": _decode(row["inputs"], default=[]),
                 "arg_map": _decode(row["arg_map"], default={}),

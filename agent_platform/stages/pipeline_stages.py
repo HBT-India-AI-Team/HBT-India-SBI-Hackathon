@@ -312,6 +312,12 @@ def reason_llm(ctx, bundle, logger) -> None:
 # make a demo depend on remembering.
 _LANGUAGE_KEYS = ("language", "lang")
 
+# What different callers name the prior turns. `conversation_history` is what
+# our own chat route writes; `history` is what the app sends. Same shape --
+# [{role, content}] -- and both were previously rendered into the prompt as a
+# raw dict repr, because neither was declared here.
+_HISTORY_KEYS = ("conversation_history", "history")
+
 
 # Keys that steer the runtime and are not content. _build_text_prompt renders
 # every *other* key straight into the user prompt, so anything added to
@@ -327,8 +333,71 @@ _LANGUAGE_KEYS = ("language", "lang")
 # one missing string.
 _TEXT_ROUTING_KEYS = {
     "skill_id", "skill_ids", "correlation_id", "style", "voice",
-    *_LANGUAGE_KEYS,
+    *_LANGUAGE_KEYS, *_HISTORY_KEYS, "name",
 }
+
+# How many prior turns to carry. Matches the window chat.py already applies to
+# its own sessions, so a caller sending history inline and a caller resuming a
+# stored session get the same amount of context rather than two behaviours.
+_HISTORY_TURNS = 6
+
+# A cap per turn, so one pasted wall of text cannot crowd out the instructions.
+# Truncation is marked rather than silent -- a model that can see it was cut
+# will ask, where one that cannot will confidently answer half a question.
+_HISTORY_CHARS = 600
+
+
+def _conversation_history(raw_input) -> list[dict]:
+    """Prior turns, under whichever name and level the caller used.
+
+    Our chat route calls it `conversation_history`; the app calls it `history`
+    and nests it in `evidence`. Both are [{role, content}]. `text` and
+    `direction` are also accepted because the app's own local store uses those,
+    and a client that forwards its store directly is an easy mistake to make.
+    """
+    raw = _request_flag(raw_input, *_HISTORY_KEYS)
+    if not isinstance(raw, list):
+        return []
+
+    turns: list[dict] = []
+    for entry in raw[-_HISTORY_TURNS:]:
+        if not isinstance(entry, dict):
+            continue
+        role = entry.get("role") or entry.get("direction") or ""
+        # "inbound"/"outbound" is the app's local vocabulary for the same thing.
+        role = {"inbound": "user", "outbound": "assistant"}.get(role, role)
+        content = entry.get("content") or entry.get("text") or ""
+        if not isinstance(content, str) or not content.strip():
+            continue
+        content = content.strip()
+        if len(content) > _HISTORY_CHARS:
+            content = content[:_HISTORY_CHARS] + " […]"
+        turns.append({"role": "assistant" if role == "assistant" else "user",
+                      "content": content})
+    return turns
+
+
+def _history_section(turns: list[dict]) -> str:
+    """A readable transcript, not a dict dumped into the question.
+
+    This existed only by accident before: history was passed through the same
+    generic renderer as every other field, so the model received a literal
+    Python repr -- "history: [{'role': 'user', 'content': 'hi'}]" -- pasted
+    into the user's own question. It worked, in the sense that a model will
+    read anything, but nothing formatted it and nothing bounded it.
+    """
+    if not turns:
+        return ""
+    lines = "\n".join(f"{t['role']}: {t['content']}" for t in turns)
+    return (
+        "## Earlier in this conversation\n\n"
+        f"{lines}\n\n"
+        "Use this only to resolve what the new message refers to — \"what about "
+        "15 years?\" means the loan above. Do not re-answer anything already "
+        "answered, and do not treat it as a fact source: every figure still "
+        "comes from a tool call made now.\n\n"
+        "## The new message\n\n"
+    )
 
 
 def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
@@ -351,7 +420,10 @@ def _build_text_prompt(skill, raw_input: dict) -> tuple[str, str]:
     evidence = fields.get("evidence")
     if isinstance(evidence, dict):
         fields["evidence"] = {k: v for k, v in evidence.items() if k not in _TEXT_ROUTING_KEYS}
-    user_prompt = "\n".join(f"{k}: {v}" for k, v in fields.items()) or "(no context provided)"
+    body = "\n".join(f"{k}: {v}" for k, v in fields.items()) or "(no context provided)"
+    # Prior turns are rendered as a transcript ahead of the new message rather
+    # than dumped among the fields; see _history_section.
+    user_prompt = _history_section(_conversation_history(raw_input)) + body
     return system_prompt, user_prompt
 
 
