@@ -380,6 +380,52 @@ nothing.
 
 ---
 
+## 18. The answer streams sentence-by-sentence to speech — and it barely helps
+
+**Decided:** in voice mode the answer call streams, and each finished sentence
+is forwarded to the speech service as soon as it exists.
+`agent_platform/llm/speech_stream.py`.
+
+**Measured, and this is the part to read.** One real voice turn, 17.6 seconds
+end to end:
+
+| phase | time | share |
+|---|---|---|
+| tool loop (2 calls) | 14,309 ms | **81%** |
+| answer generation | 3,243 ms | 18% |
+
+First sentence reached the speech endpoint 2,631 ms into the answer phase. So
+streaming bought **~600 ms of a 17.6-second turn** — under 4%. The design is
+sound and correctly implemented; the latency simply is not where it was
+assumed to be. **Anyone trying to make this feel faster should be working on
+the tool loop, not on the answer.**
+
+**Two things it must not do, both of which cost design effort:**
+
+*Never split a rupee figure.* `₹1,06,398.02` cut on the full stop becomes
+"₹1,06,398." and "02" — two utterances, the first a wrong number spoken to
+someone who cannot see the screen. A terminator only ends a sentence when a
+boundary character follows it, so a decimal point never does.
+
+*Never speak JSON.* The answer call runs with `format: <contract>`, so the
+stream is `{"language":"Tamil","content_type":"text","content":"…`. Splitting
+those tokens directly would send `{"language":"Tamil"` to the speech engine.
+`JsonStringField` walks the partial document and yields only that one field.
+
+**No retry on a stream, unlike `_post_chat`.** By the time a stream fails part
+of it has been spoken, and replaying from the top repeats audio the listener
+already heard. It falls back to the non-streaming path, which does retry.
+
+**Only voice streams.** On screen the whole answer appears at once, so
+streaming would buy nothing and give up that retry.
+
+**Cost:** two modules and a second answer path to keep working.
+
+**Would overturn it:** the tool loop getting fast enough that 3 seconds of
+answer generation is the dominant term. Then this matters. Today it does not.
+
+---
+
 ## Things deliberately NOT done
 
 **A second model to rephrase answers into colloquial Hindi.** Proposed and

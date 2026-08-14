@@ -19,7 +19,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 import requests
 
@@ -277,6 +277,77 @@ class OllamaAdapter:
             raise OllamaContentError(f"Ollama returned non-JSON content: {content[:200]!r}") from exc
 
         return parsed, self._call_metadata(body, duration_ms)
+
+    def stream_structured(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        schema: dict[str, Any],
+        temperature: float = 0.0,
+    ) -> Iterator[tuple[str, dict[str, Any] | None]]:
+        """Same call as generate_structured, yielded as it is produced.
+
+        Yields `(delta, final_body)`. `delta` is the newest slice of raw
+        response text — still JSON, because `format` is still applied, so a
+        caller that wants prose must run it through JsonStringField. The last
+        yield carries `final_body` with Ollama's completion stats and an
+        empty delta.
+
+        No retry loop, unlike _post_chat. A stream that dies halfway has
+        already had part of its output spoken aloud, and starting again would
+        repeat it. The caller falls back to the non-streaming path instead.
+        """
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "format": schema,
+            "options": {"temperature": temperature, "seed": self.seed},
+            "stream": True,
+        }
+        if self.think is not None:
+            payload["think"] = self.think
+
+        t0 = time.perf_counter()
+        collected: list[str] = []
+        try:
+            with requests.post(f"{self.host}/api/chat", json=payload,
+                               timeout=self.timeout_seconds, stream=True) as response:
+                response.raise_for_status()
+                for line in response.iter_lines(decode_unicode=True):
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    delta = (chunk.get("message") or {}).get("content") or ""
+                    if delta:
+                        collected.append(delta)
+                        yield delta, None
+                    if chunk.get("done"):
+                        # Ollama's final frame carries the counts; the content
+                        # is whatever we accumulated along the way.
+                        body = {**chunk, "message": {"content": "".join(collected)}}
+                        self._log_call(
+                            attempt=1, total_attempts=1, payload=payload,
+                            duration_ms=(time.perf_counter() - t0) * 1000,
+                            ok=True, response_body=body,
+                        )
+                        yield "", body
+                        return
+        except requests.RequestException as exc:
+            self._log_call(
+                attempt=1, total_attempts=1, payload=payload,
+                duration_ms=(time.perf_counter() - t0) * 1000, ok=False,
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            raise OllamaError(f"Ollama stream failed: {exc}") from exc
+
+        raise OllamaError("Ollama stream ended without a done frame")
 
     def generate_text(
         self,

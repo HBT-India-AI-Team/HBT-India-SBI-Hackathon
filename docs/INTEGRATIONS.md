@@ -138,6 +138,27 @@ attaching a Bearer token.
 | `POST /voice-api/synthesize` | `…/voice/synthesize` | `{text, language}` → WAV (TTS) |
 | `WS /voice-ws` | `…/voice/call?token=…` | live mode |
 
+### We now push to it as well
+
+In voice mode we forward each sentence to the speech service the moment it is
+finished, rather than waiting for the whole answer. One `POST {"text",
+"language"}` per sentence.
+
+| var | default | |
+|---|---|---|
+| `VOICE_TTS_URL` | *(unset)* | unset means do not forward — streaming and its timing logs still run |
+| `VOICE_TTS_TOKEN` | *(unset)* | sent as `Authorization: Bearer …` |
+| `VOICE_TTS_TIMEOUT_SECONDS` | `10` | |
+
+Point `VOICE_TTS_URL` at the GPU box's synthesize endpoint. If they would
+rather we pushed over the already-open WebSocket than open a connection per
+sentence, `stream_to_speech(..., sink=…)` takes a callable — say the word and
+we will wire it to the socket instead.
+
+**A failed forward never fails the answer.** Every speech-side error is caught
+and counted; a reply that reached the user as text but not audio is a degraded
+success.
+
 Client side: `voice.js`, `useVoiceCall.js`.
 
 **We do not build any of this.** Speech in and speech out belong to that

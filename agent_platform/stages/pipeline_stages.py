@@ -8,6 +8,7 @@ needs new stages for behaviour that's genuinely new.
 """
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import os
@@ -232,7 +233,7 @@ def _governing_output_contract(ctx, bundle) -> dict:
 def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
                        tool_calls: list[dict] | None = None,
                        style: dict | None = None, voice: bool = False,
-                       language: str | None = None) -> None:
+                       language: str | None = None, speech: dict | None = None) -> None:
     """Attaches what this LLM call actually did to the stage's detail, for
     the Playground's AI Observation panel.
 
@@ -261,6 +262,8 @@ def _record_llm_detail(ctx, meta: dict, *, prompt_chars: int | None = None,
         detail["voice"] = True
     if language:
         detail["reply_language"] = language
+    if speech:
+        detail["speech"] = speech
     # This assignment replaces the slot rather than updating it, so anything a
     # stage wants in its detail has to arrive through this call.
     ctx.pending_stage_detail = {k: v for k, v in detail.items() if v is not None}
@@ -559,6 +562,53 @@ def _language_section(ctx, logger) -> tuple[str, str | None]:
         "answer, say so in that language and ask them to repeat.\n",
         code,
     )
+
+
+def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
+                   language, ctx, logger) -> tuple[dict | None, dict | None, dict | None]:
+    """Stream the spoken answer, forwarding each sentence as it completes.
+
+    Returns (parsed, meta, speech_detail), or (None, None, detail) to mean
+    "use the ordinary path instead". Everything here degrades: a stream that
+    dies, a speech box that is down, or a reply that does not parse all fall
+    back to generate_structured, which has the retry a stream cannot.
+
+    Why a stream cannot retry: by the time one fails, part of it has already
+    been spoken. Replaying from the top would repeat audio the listener has
+    heard, which is worse than the pause of starting over silently.
+    """
+    try:
+        from agent_platform.llm.speech_stream import stream_to_speech
+    except ImportError:
+        return None, None, None
+
+    try:
+        result = asyncio.run(stream_to_speech(
+            adapter, system_prompt=system_prompt, user_prompt=user_prompt,
+            schema=schema, temperature=temperature, language=language,
+        ))
+    except Exception as exc:                    # noqa: BLE001 - falls back
+        logger.warning(ctx, f"Answer stream failed, answering without streaming: {exc}")
+        return None, None, {"streamed": False, "reason": f"{type(exc).__name__}: {exc}"}
+
+    detail = {
+        "streamed": True,
+        "sentences": len(result.sentences),
+        "first_sentence_ms": result.first_sentence_ms,
+        "forwarded": sum(1 for s in result.sentences if s.forwarded),
+        "timings_ms": [s.elapsed_ms for s in result.sentences],
+    }
+    if result.parsed is None:
+        # The words were spoken but the JSON wrapper is unusable. Regenerating
+        # will repeat the audio; that is still better than returning nothing,
+        # and it is rare enough to be worth the duplication.
+        logger.warning(ctx, "Streamed answer did not parse as JSON; regenerating unstreamed")
+        detail["reason"] = "streamed output was not valid JSON"
+        return None, None, detail
+
+    logger.event(ctx, "answer_streamed", sentences=detail["sentences"],
+                 first_sentence_ms=detail["first_sentence_ms"])
+    return result.parsed, result.meta, detail
 
 
 def _voice_enabled(raw_input) -> bool:
@@ -1096,15 +1146,26 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
 
     adapter = _build_adapter(bundle)
     logger.event(ctx, "ollama_call_started", model=bundle.definition.llm.model)
+    speech: dict | None = None
     try:
-        parsed, meta = adapter.generate_structured(
-            system_prompt=answer_prompt, user_prompt=user_prompt,
-            schema=output_contract, temperature=bundle.definition.llm.temperature,
-        )
+        parsed = meta = None
+        if voice:
+            # Only the spoken path streams. On screen the whole answer appears
+            # at once anyway, so streaming would buy nothing and give up the
+            # retry that _post_chat has and a stream cannot.
+            parsed, meta, speech = _stream_answer(
+                adapter, answer_prompt, user_prompt, output_contract,
+                bundle.definition.llm.temperature, language, ctx, logger,
+            )
+        if parsed is None:
+            parsed, meta = adapter.generate_structured(
+                system_prompt=answer_prompt, user_prompt=user_prompt,
+                schema=output_contract, temperature=bundle.definition.llm.temperature,
+            )
         ctx.llm_output = parsed
         _record_llm_detail(ctx, meta, prompt_chars=len(answer_prompt) + len(user_prompt),
                            tool_calls=tool_calls_made, style=style_detail, voice=voice,
-                           language=language)
+                           language=language, speech=speech)
         logger.llm_call(
             ctx, model=meta["model"], duration_ms=meta["duration_ms"],
             prompt_tokens=meta.get("prompt_tokens"), completion_tokens=meta.get("completion_tokens"),
