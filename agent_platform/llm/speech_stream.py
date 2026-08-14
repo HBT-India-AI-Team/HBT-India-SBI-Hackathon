@@ -47,12 +47,28 @@ from agent_platform.llm.streaming import JsonStringField, SentenceSplitter
 
 logger = logging.getLogger(__name__)
 
+# Read per call, not at import. Captured at import these would freeze whatever
+# the environment held the first time this module was touched -- so adding
+# VOICE_TTS_URL to .env would appear to do nothing until someone worked out
+# that a restart was needed, and a test could not point it anywhere. The cost
+# is a dict lookup per sentence.
+#
 # The speech service is on another machine (the GPU box). Unset means "do not
-# forward" -- streaming still works and still logs, it just has nowhere to
-# send to, which is the right behaviour on a laptop with no GPU peer.
-_TTS_URL = os.environ.get("VOICE_TTS_URL", "").strip()
-_TTS_TOKEN = os.environ.get("VOICE_TTS_TOKEN", "").strip()
-_TTS_TIMEOUT = float(os.environ.get("VOICE_TTS_TIMEOUT_SECONDS", "10"))
+# forward": streaming still runs and still logs its timings, it simply has
+# nowhere to send to, which is correct on a laptop with no GPU peer.
+def _tts_url() -> str:
+    return os.environ.get("VOICE_TTS_URL", "").strip()
+
+
+def _tts_token() -> str:
+    return os.environ.get("VOICE_TTS_TOKEN", "").strip()
+
+
+def _tts_timeout() -> float:
+    try:
+        return float(os.environ.get("VOICE_TTS_TIMEOUT_SECONDS", "10"))
+    except ValueError:
+        return 10.0
 
 # The field of the output contract that holds the words to speak. The rest of
 # the object -- language, content_type, confidence -- is machinery.
@@ -85,12 +101,14 @@ class StreamResult:
 def _post_sentence(text: str, language: str | None) -> None:
     """One blocking POST to the speech service. Raises on failure."""
     headers = {"Content-Type": "application/json"}
-    if _TTS_TOKEN:
-        headers["Authorization"] = f"Bearer {_TTS_TOKEN}"
+    token = _tts_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     payload: dict[str, Any] = {"text": text}
     if language:
         payload["language"] = language
-    response = requests.post(_TTS_URL, json=payload, headers=headers, timeout=_TTS_TIMEOUT)
+    response = requests.post(_tts_url(), json=payload, headers=headers,
+                             timeout=_tts_timeout())
     response.raise_for_status()
 
 
@@ -103,7 +121,10 @@ async def _forward(event: SentenceEvent, language: str | None,
     speech box was down is worse.
     """
     send = sink or _post_sentence
-    if send is _post_sentence and not _TTS_URL:
+    if send is _post_sentence and not _tts_url():
+        # Nothing configured to speak to. Streaming and its timings still ran;
+        # this is the state on any machine without a GPU peer.
+        event.error = "VOICE_TTS_URL not set"
         return
     try:
         await asyncio.to_thread(send, event.text, language)
