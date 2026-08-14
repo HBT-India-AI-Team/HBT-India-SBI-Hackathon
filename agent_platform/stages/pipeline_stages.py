@@ -553,6 +553,24 @@ def _style_section(ctx, logger) -> tuple[str, dict]:
     return section, detail
 
 
+# A "_BREADTH_RULE" section was added here and then removed. Recorded because
+# the removal is the useful part.
+#
+# It was written to fix Indic "tell me about X" questions that appeared to
+# come back as "which scheme did you mean?" while the English version answered
+# in full. That symptom was NOT REAL: the failing requests were sent with
+# `curl -d` from Git Bash, which corrupted the Tamil and Devanagari UTF-8 in
+# the request body. The backend was answering a mangled question correctly by
+# saying it could not read it. Sending the identical payload from Python, the
+# same questions answer in full in all three languages.
+#
+# Two things worth keeping from that. Anything testing Indic text over HTTP
+# must build the body in Python or it measures its own terminal. And a prompt
+# section added against an unverified symptom is not free -- this one made
+# Tamil "tell me about FD" worse while it was in, on a 12B model already
+# carrying ~18,000 characters of skill instructions.
+
+
 _VOICE_BRIEF = (
     "\n\n## This answer will be spoken aloud, not read\n\n"
     "It goes to a text-to-speech engine and reaches the user as sound. That "
