@@ -184,6 +184,70 @@ export const api = {
       signal: opts.signal,
     }),
 
+  /** Same turn as chatWithAgent, but sentences arrive as they are written.
+   *
+   *  `onSentence` fires per finished sentence; the resolved value is the same
+   *  object chatWithAgent returns, and is authoritative — the sentences are a
+   *  preview of it, not a separate answer.
+   *
+   *  Read with fetch + a stream reader rather than EventSource, which cannot
+   *  POST. Same approach the agent generator already uses. */
+  chatWithAgentStream: async (
+    agentId: string,
+    sessionId: string | null,
+    message: string,
+    opts: {
+      style?: boolean
+      voice?: boolean
+      signal?: AbortSignal
+      onSentence?: (text: string, index: number) => void
+    } = {},
+  ): Promise<ChatTurnResult> => {
+    const response = await fetch(`/admin/agents/${agentId}/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        message,
+        style: opts.style ?? true,
+        voice: opts.voice ?? false,
+      }),
+      signal: opts.signal,
+    })
+    if (!response.ok || !response.body) {
+      throw new ApiRequestError(`Request failed (${response.status})`)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let result: ChatTurnResult | null = null
+
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      // SSE frames are separated by a blank line. A chunk can split one in
+      // half, so only whole frames are consumed and the remainder is kept.
+      const frames = buffer.split('\n\n')
+      buffer = frames.pop() ?? ''
+      for (const frame of frames) {
+        const line = frame.split('\n').find((l) => l.startsWith('data: '))
+        if (!line) continue
+        const event = JSON.parse(line.slice(6))
+        if (event.event === 'sentence') {
+          opts.onSentence?.(event.text, event.index)
+        } else if (event.event === 'done') {
+          result = event as ChatTurnResult
+        } else if (event.event === 'error') {
+          throw new ApiRequestError(event.message ?? 'Stream failed')
+        }
+      }
+    }
+    if (!result) throw new ApiRequestError('Stream ended without a reply')
+    return result
+  },
+
   testRunAgent: (agentId: string, input: Record<string, unknown>) =>
     apiFetch<TestRunResult>(`/admin/agents/${agentId}/test-run`, {
       method: 'POST',

@@ -78,6 +78,17 @@ export interface StageDetail {
   }
   /** Present and true only when the answer was written to be spoken. */
   voice?: boolean
+  /** Sentence-level streaming stats. Present whenever the answer streamed,
+   *  even with nothing consuming the sentences — which is the Playground's
+   *  case, and the only way to see the split working without a voice client. */
+  speech?: {
+    streamed: boolean
+    sentences?: number
+    first_sentence_ms?: number | null
+    forwarded?: number
+    timings_ms?: number[]
+    reason?: string
+  }
 }
 
 export interface StageTraceEntry {

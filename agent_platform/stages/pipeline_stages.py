@@ -564,6 +564,19 @@ def _language_section(ctx, logger) -> tuple[str, str | None]:
     )
 
 
+def _has_sentence_sink() -> bool:
+    """Is anything waiting to receive sentences as they are written?
+
+    Lazily imported for the same reason as style: agent_platform is the
+    generic runtime and must stay importable without the streaming layer.
+    """
+    try:
+        from agent_platform.llm import speech_stream
+    except ImportError:
+        return False
+    return speech_stream.sentence_sink.get() is not None
+
+
 def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
                    language, ctx, logger) -> tuple[dict | None, dict | None, dict | None]:
     """Stream the spoken answer, forwarding each sentence as it completes.
@@ -1149,10 +1162,16 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
     speech: dict | None = None
     try:
         parsed = meta = None
-        if voice:
-            # Only the spoken path streams. On screen the whole answer appears
-            # at once anyway, so streaming would buy nothing and give up the
-            # retry that _post_chat has and a stream cannot.
+        # Streaming is decided by whether anything is consuming sentences, not
+        # by voice mode. The two are independent: voice changes how an answer
+        # is *written* (short, no markdown), streaming changes how it is
+        # *delivered*. A text client watching an answer appear wants streaming
+        # without the brevity, and both combinations are legitimate.
+        #
+        # With nobody listening it takes the ordinary path, which has the
+        # retry that a stream cannot -- there is no point paying that cost for
+        # sentences nothing will read.
+        if _has_sentence_sink():
             parsed, meta, speech = _stream_answer(
                 adapter, answer_prompt, user_prompt, output_contract,
                 bundle.definition.llm.temperature, language, ctx, logger,

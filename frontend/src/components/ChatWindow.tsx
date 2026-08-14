@@ -92,18 +92,33 @@ function ModePill({ label, on, onToggle, title }: {
 function StyleBadge({ trace }: { trace: StageTraceEntry[] }) {
   const style = trace.find((t) => t.detail?.style)?.detail?.style
   const spoken = trace.some((t) => t.detail?.voice)
-  if (!style && !spoken) return null
+  const hasSpeech = trace.some((t) => t.detail?.speech)
+  if (!style && !spoken && !hasSpeech) return null
 
   const sources = [
     style?.guide ? `${style.language ?? ''} register guide`.trim() : null,
     style?.examples ? `${style.examples} example${style.examples === 1 ? '' : 's'}` : null,
   ].filter(Boolean)
 
+  // Streaming is invisible here — the Playground receives the whole reply at
+  // once, because it reads the plain JSON route rather than the SSE one a
+  // voice client uses. These counts are the only evidence the split ran, and
+  // the only way to check it on a Tamil or Hindi answer without wiring up a
+  // voice client to watch.
+  const speech = trace.find((t) => t.detail?.speech)?.detail?.speech
+  const streamed = speech?.streamed
+    ? `streamed in ${speech.sentences} sentence${speech.sentences === 1 ? '' : 's'}` +
+      (speech.first_sentence_ms ? `, first at ${Math.round(speech.first_sentence_ms)}ms` : '')
+    : speech?.reason
+      ? `not streamed — ${speech.reason}`
+      : null
+
   const parts = [
     !style ? null : style.applied
       ? `colloquial style: ${sources.join(' + ')}`
       : `plain style — ${style.reason ?? 'not applied'}`,
     spoken ? 'spoken answer (short, no markdown)' : null,
+    streamed,
   ].filter(Boolean)
 
   return (
@@ -180,6 +195,8 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
   const [styleOn, setStyleOn] = useState(true)
   const [voiceOn, setVoiceOn] = useState(false)
   const [sending, setSending] = useState(false)
+  /** The answer so far, sentence by sentence, before the real reply lands. */
+  const [streaming, setStreaming] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const threadRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -234,11 +251,17 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
     const controller = new AbortController()
     abortRef.current = controller
     try {
-      const res = await api.chatWithAgent(agentId, sessionId, message, {
+      // Sentences land here as they are written and are shown immediately.
+      // They are replaced by `res.reply` on completion rather than kept: the
+      // final reply is the authoritative one, and rebuilding the answer by
+      // concatenating previews would drift the moment the two disagree.
+      const res = await api.chatWithAgentStream(agentId, sessionId, message, {
         style: styleOn,
         voice: voiceOn,
         signal: controller.signal,
+        onSentence: (text) => setStreaming((prev) => (prev ? `${prev} ${text}` : text)),
       })
+      setStreaming(null)
       setSessionId(res.session_id)
       setMessages((prev) => [
         ...prev,
@@ -262,6 +285,7 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
     } finally {
       abortRef.current = null
       setSending(false)
+      setStreaming(null)
     }
   }
 
@@ -310,7 +334,17 @@ export function ChatWindow({ agentId, demoSampleInput }: ChatWindowProps) {
             )}
           </div>
         ))}
-        {sending && (
+        {/* The answer as it is written. Styled like an assistant bubble but
+            visibly provisional, so nobody mistakes a half-written reply for a
+            finished one — the tool results are already in by this point, but
+            the last sentence may still contradict the first. */}
+        {streaming && (
+          <div className="max-w-[85%] self-start rounded-xl rounded-bl-sm bg-neutral-50 border border-dashed border-neutral-300 px-3.5 py-2.5 text-sm leading-relaxed text-neutral-600">
+            {streaming}
+            <span className="ml-1 inline-block h-3.5 w-1.5 animate-pulse bg-neutral-400 align-middle" />
+          </div>
+        )}
+        {sending && !streaming && (
           <div className="self-start text-xs text-neutral-400 italic px-1">Thinking…</div>
         )}
       </div>

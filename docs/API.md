@@ -43,6 +43,7 @@ only thing that should touch these.
 | `GET` | `/admin/agents/{agent_id}/api-key` | — | Returns the key a client uses to call POST /agents/{agent_id}/invoke (the public, non-admin endpoint) |
 | `POST` | `/admin/agents/{agent_id}/api-key/regenerate` | — | Invalidates the old key immediately |
 | `POST` | `/admin/agents/{agent_id}/chat` | — | No API key required — this is the internal Playground's chat mode, same trust level as test-run above |
+| `POST` | `/admin/agents/{agent_id}/chat/stream` | — | Streaming counterpart to /chat, for the Playground |
 | `POST` | `/admin/agents/{agent_id}/edit-file` | — | The one "Fix with AI" mechanism — edits exactly the file you have open, the way a careful human applies a targeted change: the mod |
 | `GET`, `PUT` | `/admin/agents/{agent_id}/files` | — | Get Agent Files |
 | `POST` | `/admin/agents/{agent_id}/input-mode` | — | Lets Playground change which interface an agent defaults to without anyone hand-editing agent.yaml |

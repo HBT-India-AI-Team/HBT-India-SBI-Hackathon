@@ -21,6 +21,8 @@ import queue
 import re
 import shutil
 import threading
+import time
+from contextvars import copy_context
 from pathlib import Path
 from typing import Any, Literal
 
@@ -30,6 +32,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ValidationError
 
 from agent_platform.capabilities import DEFAULT_REGISTRY
+from agent_platform.llm import speech_stream
 from agent_platform.composition import evict, list_agents, load_agent
 from agent_platform.composition.loader import AGENTS_DIR, SKILLS_DIR
 from agent_platform.composition.models import AgentDefinition
@@ -1246,6 +1249,86 @@ class ChatPayload(BaseModel):
     # client that turns this on, and the Playground toggle exists so the
     # result can be checked without wiring one up.
     voice: bool = False
+
+
+def _chat_stream_events(agent_id: str, payload: "ChatPayload"):
+    """The Playground's chat turn, with sentences emitted as they are written.
+
+    Same session handling as the plain route — it calls the same
+    handle_chat_turn — so a conversation can move between the two without
+    losing its thread.
+
+    Streaming is not tied to voice mode. Voice changes how an answer is
+    written; this changes when the client sees it. Watching a Tamil answer
+    build sentence by sentence is also the only way to check the splitter
+    without wiring up a voice client, which is most of why this exists.
+    """
+    events: queue.Queue = queue.Queue()
+    outcome: dict[str, Any] = {}
+
+    def sink(text: str, _language: str | None) -> None:
+        events.put({"event": "sentence", "text": text})
+
+    def worker() -> None:
+        speech_stream.sentence_sink.set(sink)
+        try:
+            outcome["result"] = chat.handle_chat_turn(
+                agent_id, payload.session_id, payload.message, payload.style, payload.voice)
+        except FileNotFoundError:
+            outcome["error"] = f"Unknown agent_id '{agent_id}'"
+        except Exception as exc:                # noqa: BLE001 - relayed below
+            outcome["error"] = f"{type(exc).__name__}: {exc}"
+        finally:
+            events.put(None)
+
+    # copy_context, or the sink set above never reaches the pipeline running
+    # inside this thread — which looks exactly like "streaming did nothing".
+    threading.Thread(target=copy_context().run, args=(worker,), daemon=True).start()
+
+    started = time.perf_counter()
+    index = 0
+    while True:
+        event = events.get()
+        if event is None:
+            break
+        index += 1
+        event["index"] = index
+        event["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 1)
+        yield _sse(event)
+
+    if "error" in outcome:
+        yield _sse({"event": "error", "message": outcome["error"]})
+        return
+
+    # Every field the plain /chat route returns, so ChatTurnResult means the
+    # same thing on both and a client can switch without special-casing.
+    result = outcome["result"]
+    yield _sse({
+        "event": "done",
+        "session_id": result.session_id,
+        "reply": result.reply,
+        "evidence": result.evidence,
+        "content_type": result.content_type,
+        "decision": result.decision,
+        "stage_trace": result.stage_trace,
+        "done": result.done,
+    })
+
+
+@router.post("/agents/{agent_id}/chat/stream")
+def chat_with_agent_stream(agent_id: str, payload: ChatPayload) -> StreamingResponse:
+    """Streaming counterpart to /chat, for the Playground.
+
+    Emits `sentence` events as the answer is written, then a `done` event
+    carrying exactly what the plain route returns — same reply, same decision,
+    same stage trace — so the client renders sentences early and then replaces
+    them with the authoritative reply.
+    """
+    return StreamingResponse(
+        _chat_stream_events(agent_id, payload),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("/agents/{agent_id}/chat")
