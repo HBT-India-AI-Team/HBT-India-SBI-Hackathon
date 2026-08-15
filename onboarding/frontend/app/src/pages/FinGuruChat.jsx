@@ -129,9 +129,13 @@ export default function FinGuruChat() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [colloquial, setColloquial] = useState(false);
-  // Recommended follow-up questions -- text mode only (see send()); off by
-  // default so typed chat behaves exactly as before unless turned on.
-  const [followUpsEnabled, setFollowUpsEnabled] = useState(false);
+  // Recommended follow-up questions -- text mode only (see send()).
+  //
+  // On by default now. It was off so typed chat behaved exactly as before
+  // unless switched on, which made "follow-ups aren't appearing" the expected
+  // behaviour rather than a bug -- the switch is easy to miss, and a feature
+  // nobody turns on is a feature nobody has. The switch still turns it off.
+  const [followUpsEnabled, setFollowUpsEnabled] = useState(true);
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE); // response + voice language code
   const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | transcribing | speaking
   // Track by stable message id (not array index) -- an index captured from

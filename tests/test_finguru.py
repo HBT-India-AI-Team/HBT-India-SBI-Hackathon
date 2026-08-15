@@ -75,6 +75,13 @@ def test_follow_ups_are_a_schema_field_not_a_marker_in_the_prose():
     assert field["type"] == "array"
     assert field["items"]["type"] == "string"
     assert field["maxItems"] == 3
+    # `required` only guarantees the KEY exists -- an empty array satisfies it,
+    # and the model did return one for a plain savings-rate question. minItems
+    # is the part that actually guarantees suggestions, because Ollama compiles
+    # this schema to a grammar the tokens must satisfy. Measured 8/8 with it,
+    # including "thanks", "ok" and an off-topic question, all of which are
+    # cases where an empty list would otherwise be the natural output.
+    assert field["minItems"] == 2
     # The failure mode that survived two prompt revisions: the model writing
     # its own questions to the user ("Would you like me to...") instead of the
     # user's next question to it. The instructions carry a table of both

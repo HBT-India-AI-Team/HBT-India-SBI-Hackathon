@@ -23,8 +23,9 @@
     "follow_ups": {
       "type": "array",
       "items": {"type": "string"},
+      "minItems": 2,
       "maxItems": 3,
-      "description": "Two or three questions THE USER might ask you next, written in their voice, in the SAME language and script as `content` -- a Tamil answer gets Tamil follow-ups. These are put on buttons the user taps to send, so each one must read as the user speaking to you. Write 'How is FD interest taxed?' -- NOT 'Would you like me to explain FD taxation?', which is you speaking to them, and not the bare topic 'FD taxation'. Keep each under about 12 words. Almost every answer has natural next questions; return an empty array only when the conversation genuinely has nowhere to go."
+      "description": "Two or three questions THE USER might ask you next, written in their voice, in the SAME language and script as `content` -- a Tamil answer gets Tamil follow-ups. These are put on buttons the user taps to send, so each one must read as the user speaking to you. Write 'How is FD interest taxed?' -- NOT 'Would you like me to explain FD taxation?', which is you speaking to them, and not the bare topic 'FD taxation'. Keep each under about 12 words. ALWAYS give at least two -- even a narrow question has something adjacent worth asking, so an empty list is never the right answer."
     }
   },
   "required": ["language", "content_type", "content", "confidence", "follow_ups"]

@@ -499,5 +499,8 @@ Same language and script as `content`, always:
 
 Keep each under about 12 words, and make them things this conversation
 actually leads to — after a savings-rate answer, FD rates and account types
-are natural; the weather is not. Almost every answer has two or three. Return
-an empty list only when there is genuinely nowhere to go.
+are natural; the weather is not.
+
+**Always give at least two.** Even a narrow question has something adjacent
+worth asking: a rate leads to how it is calculated, what it applies to, what
+the alternative pays. An empty list is never the right answer.
