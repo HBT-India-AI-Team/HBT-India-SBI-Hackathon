@@ -17,6 +17,7 @@ import { LANGUAGE_NAMES, ENABLED_LANGUAGES, DEFAULT_LANGUAGE, resolveLanguageCod
 import { getProfileId } from '../lib/finguruProfile';
 import { getConversation, upsertConversation, trimRetention, historySupported, MAX_CONVERSATIONS } from '../lib/historyDb';
 import NamePrompt from '../components/NamePrompt';
+import ToolCard from '../components/ToolCard';
 import { useFinGuruName } from '../lib/finguruIdentity';
 import { fetchNameHistory } from '../api/finguruHistory';
 import { logMicStart, debugLog } from '../lib/pipelineLog';
@@ -696,6 +697,10 @@ export default function FinGuruChat() {
           variant: res.hitl?.triggered ? 'error' : 'default',
           followUps,
           ...(streamedProvider ? { ttsProvider: streamedProvider } : {}),
+          // Calculators the backend offered for this question -- an EMI card
+          // under an EMI answer, a FIRE planner under a retirement one, each
+          // prefilled with whatever the agent actually computed. Usually [].
+          tools: res.tools || [],
         },
       ]);
       // Speak the reply back when the question came in by voice (or the
@@ -1209,6 +1214,17 @@ export default function FinGuruChat() {
                     </span>
                   )}
                 </div>
+                {m.tools?.length > 0 && (
+                  <div className="ml-10">
+                    {m.tools.map((suggestion) => (
+                      <ToolCard
+                        key={suggestion.tool_id}
+                        suggestion={suggestion}
+                        name={nameRef.current}
+                      />
+                    ))}
+                  </div>
+                )}
                 {m.followUps?.length > 0 && (
                   <div className="flex flex-col gap-1.5 ml-10 mt-0.5">
                     {m.followUps.map((q, qi) => (

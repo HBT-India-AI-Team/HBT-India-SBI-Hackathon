@@ -79,9 +79,22 @@ _TOPICS: list[tuple[str, re.Pattern[str]]] = [
         r"\bemi\b|\bequated monthly\b|\bloan (?:payment|instal?ment|repayment)\b"
         r"|\bmonthly instal?ment\b|\bकिस्त\b|\bமாதத் தவணை\b",
         re.IGNORECASE)),
+    # Measured gap: "How much do I need to invest monthly to retire with 2
+    # crore in 20 years?" is the FIRE question people actually type, and it
+    # matched none of the original alternatives -- they all required the
+    # jargon ("FIRE", "early retirement", "corpus") rather than the plain
+    # word. Bare \bretire\b/\bretirement\b are in now, plus SIP, which is how
+    # the same goal gets asked about in India.
+    #
+    # "fire" keeps its negative lookahead because it is a common English word;
+    # the rest do not need one. A retirement-account question now also offers
+    # the planner, which is a reasonable thing to be offered.
     ("fire_calculator", re.compile(
-        r"\bfire\b(?!\s*(?:alarm|safety|insurance))|\bretire early\b|\bearly retirement\b"
-        r"|\bfinancial independence\b|\bretirement corpus\b|\bcorpus\b",
+        r"\bfire\b(?!\s*(?:alarm|safety|insurance|extinguisher))"
+        r"|\bretire\b|\bretirement\b|\bretire early\b|\bearly retirement\b"
+        r"|\bfinancial independence\b|\bcorpus\b|\bnest egg\b|\bsip\b"
+        r"|रिटायर|सेवानिवृत्ति|एसआईपी"
+        r"|ஓய்வு|ஓய்வூதிய",
         re.IGNORECASE)),
 ]
 

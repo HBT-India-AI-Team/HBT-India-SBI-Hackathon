@@ -223,6 +223,8 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
       confidence: output.confidence,
       hitl: final?.hitl || { triggered: false, reasons: [] },
       error: null,
+      // The `done` event carries the same tool suggestions /invoke returns.
+      tools: Array.isArray(final?.tools) ? final.tools : [],
       // True when audio already played -- the caller must NOT then speak the
       // reply again through the one-shot path.
       spoken: sentenceCount > 0,

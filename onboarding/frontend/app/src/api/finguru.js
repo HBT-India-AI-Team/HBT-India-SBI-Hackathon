@@ -23,6 +23,12 @@ const finguruClient = axios.create({
 // api/finguruStream.js for spoken turns -- see that file for why.
 export const FINGURU_STREAM_URL = `${FINGURU_URL}/stream`;
 
+// Origin of the FinGuru backend, derived from the invoke URL rather than
+// configured separately so the two can never point at different servers. The
+// dynamic-tools endpoints (/api/tools, /api/tools/execute, /api/tools/save)
+// hang off this.
+export const FINGURU_API_BASE = FINGURU_URL.replace(/\/agents\/[^/]+\/invoke.*$/, '');
+
 // The same headers as the axios client above, for callers that need plain
 // fetch. Streaming cannot go through axios: it buffers the whole response
 // before resolving, which is exactly the wait we are trying to remove.
@@ -78,6 +84,10 @@ export async function askFinGuru(question, history = [], options = {}) {
       confidence: output.confidence,
       hitl: data?.hitl || { triggered: false, reasons: [] },
       error: data?.error || null,
+      // Calculators to offer beside this reply, each carrying its own full
+      // definition and any values the agent already computed. Usually empty.
+      // See api/tools.js and components/ToolCard.jsx.
+      tools: Array.isArray(data?.tools) ? data.tools : [],
     };
     logLlmReceived({
       engine: 'FinGuru',
