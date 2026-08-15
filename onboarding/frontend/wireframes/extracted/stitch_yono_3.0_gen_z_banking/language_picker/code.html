@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>YONO 3.0 - Language Picker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1a4f8a",
+                        "outline-variant": "#c2c6d1",
+                        "surface-tint": "#2f5f9b",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9ff",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container-high": "#e8e8ed",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-secondary-fixed-variant": "#44474a",
+                        "background": "#f9f9ff",
+                        "primary": "#00386b",
+                        "surface": "#f9f9ff",
+                        "secondary-fixed-dim": "#c4c7ca",
+                        "surface-dim": "#d9dadf",
+                        "secondary-fixed": "#e0e3e6",
+                        "on-tertiary-fixed": "#2f1500",
+                        "primary-fixed-dim": "#a5c8ff",
+                        "secondary-container": "#e0e3e6",
+                        "on-error": "#ffffff",
+                        "outline": "#737781",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#ededf3",
+                        "inverse-surface": "#2e3035",
+                        "inverse-primary": "#a5c8ff",
+                        "tertiary-container": "#793f00",
+                        "surface-container-low": "#f3f3f9",
+                        "secondary": "#5b5f61",
+                        "on-primary-fixed-variant": "#0d4782",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-primary-fixed": "#001c3a",
+                        "on-surface-variant": "#424750",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#191c1e",
+                        "primary-fixed": "#d4e3ff",
+                        "on-surface": "#1a1c20",
+                        "error": "#ba1a1a",
+                        "on-background": "#1a1c20",
+                        "tertiary": "#582c00",
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-secondary-container": "#626567",
+                        "tertiary-fixed-dim": "#ffb77e",
+                        "on-primary-container": "#9ac2ff",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffae6b",
+                        "inverse-on-surface": "#f0f0f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "8px",
+                        "xl": "32px",
+                        "sm": "12px",
+                        "card-gap": "16px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "container-margin": "20px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Quicksand"],
+                        "body-md": ["Quicksand"],
+                        "label-sm": ["Quicksand"],
+                        "display-lg": ["Quicksand"],
+                        "headline-lg-mobile": ["Quicksand"],
+                        "headline-sm": ["Quicksand"],
+                        "label-md": ["Quicksand"],
+                        "body-lg": ["Quicksand"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface h-screen w-full overflow-hidden flex flex-col font-body-md antialiased relative">
+<!-- Dimmed Background (Simulated Home Page) -->
+<div class="absolute inset-0 bg-background/30 backdrop-blur-sm z-0">
+<div class="w-full h-full flex items-center justify-center">
+<div class="p-4 bg-surface-container rounded-xl opacity-50">
+<p class="font-headline-md text-headline-md text-on-surface">Home Content Dimmed</p>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet Overlay Overlay -->
+<div class="absolute inset-0 bg-inverse-surface/40 z-10 transition-opacity duration-300"></div>
+<!-- Language Picker Bottom Sheet -->
+<div class="absolute bottom-0 left-0 w-full bg-surface rounded-t-xl shadow-[0px_-4px_20px_rgba(26,79,138,0.1)] z-20 transform transition-transform duration-300 translate-y-0 flex flex-col max-h-[751px]">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-md pb-xs">
+<div class="w-12 h-1.5 bg-outline-variant rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="px-container-margin py-md flex items-center justify-between border-b border-surface-variant">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Choose your language</h2>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-xs rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Language List -->
+<div class="flex-1 overflow-y-auto px-container-margin py-md space-y-sm">
+<!-- Option: English (Selected) -->
+<label class="flex items-center justify-between p-md rounded-lg border border-primary bg-primary-fixed/20 cursor-pointer transition-all">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm">
+                        A
+                    </div>
+<div>
+<span class="block font-body-md text-body-md text-on-surface">English</span>
+<span class="block font-label-md text-label-md text-on-surface-variant">English</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center">
+<input checked="" class="peer sr-only" name="language" type="radio" value="en"/>
+<div class="w-6 h-6 rounded-full border-2 border-primary peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</label>
+<!-- Option: Hindi -->
+<label class="flex items-center justify-between p-md rounded-lg border border-outline-variant hover:border-primary/50 hover:bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-headline-sm text-headline-sm">
+                        अ
+                    </div>
+<div>
+<span class="block font-body-md text-body-md text-on-surface">हिन्दी</span>
+<span class="block font-label-md text-label-md text-on-surface-variant">Hindi</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center">
+<input class="peer sr-only" name="language" type="radio" value="hi"/>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</label>
+<!-- Option: Tamil -->
+<label class="flex items-center justify-between p-md rounded-lg border border-outline-variant hover:border-primary/50 hover:bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-headline-sm text-headline-sm">
+                        அ
+                    </div>
+<div>
+<span class="block font-body-md text-body-md text-on-surface">தமிழ்</span>
+<span class="block font-label-md text-label-md text-on-surface-variant">Tamil</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center">
+<input class="peer sr-only" name="language" type="radio" value="ta"/>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</label>
+<!-- Option: Telugu -->
+<label class="flex items-center justify-between p-md rounded-lg border border-outline-variant hover:border-primary/50 hover:bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-headline-sm text-headline-sm">
+                        అ
+                    </div>
+<div>
+<span class="block font-body-md text-body-md text-on-surface">తెలుగు</span>
+<span class="block font-label-md text-label-md text-on-surface-variant">Telugu</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center">
+<input class="peer sr-only" name="language" type="radio" value="te"/>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</label>
+<!-- Option: Bengali -->
+<label class="flex items-center justify-between p-md rounded-lg border border-outline-variant hover:border-primary/50 hover:bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-headline-sm text-headline-sm">
+                        অ
+                    </div>
+<div>
+<span class="block font-body-md text-body-md text-on-surface">বাংলা</span>
+<span class="block font-label-md text-label-md text-on-surface-variant">Bengali</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center">
+<input class="peer sr-only" name="language" type="radio" value="bn"/>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</label>
+<!-- Option: Malayalam -->
+<label class="flex items-center justify-between p-md rounded-lg border border-outline-variant hover:border-primary/50 hover:bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-headline-sm text-headline-sm">
+                        അ
+                    </div>
+<div>
+<span class="block font-body-md text-body-md text-on-surface">മലയാളം</span>
+<span class="block font-label-md text-label-md text-on-surface-variant">Malayalam</span>
+</div>
+</div>
+<div class="relative flex items-center justify-center">
+<input class="peer sr-only" name="language" type="radio" value="ml"/>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-on-primary text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity" data-icon="check" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+</label>
+</div>
+<!-- Pinned Bottom Action -->
+<div class="px-container-margin py-md bg-surface border-t border-surface-variant w-full mt-auto">
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-full font-label-md text-label-md active:scale-95 transition-transform flex items-center justify-center">
+                Done
+            </button>
+</div>
+</div>
+<script>
+        // Minimal interaction logic for radio selection styling updates
+        const radios = document.querySelectorAll('input[name="language"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                // Reset all to unselected state
+                document.querySelectorAll('label').forEach(label => {
+                    label.classList.remove('border-primary', 'bg-primary-fixed/20');
+                    label.classList.add('border-outline-variant');
+                });
+                
+                // Set selected state on parent label
+                if(e.target.checked) {
+                    const parentLabel = e.target.closest('label');
+                    parentLabel.classList.remove('border-outline-variant');
+                    parentLabel.classList.add('border-primary', 'bg-primary-fixed/20');
+                }
+            });
+        });
+    </script>
+</body></html>
