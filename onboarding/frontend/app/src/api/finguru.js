@@ -18,6 +18,22 @@ const finguruClient = axios.create({
   },
 });
 
+// The streaming counterpart of the same endpoint: same body, same key, but it
+// emits each sentence as the agent finishes writing it. Used by
+// api/finguruStream.js for spoken turns -- see that file for why.
+export const FINGURU_STREAM_URL = `${FINGURU_URL}/stream`;
+
+// The same headers as the axios client above, for callers that need plain
+// fetch. Streaming cannot go through axios: it buffers the whole response
+// before resolving, which is exactly the wait we are trying to remove.
+export function finguruHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'X-API-Key': FINGURU_KEY,
+    'ngrok-skip-browser-warning': 'true',
+  };
+}
+
 /**
  * Ask FinGuru a question. The agent is stateless/single-shot; `history` is
  * sent for forward-compatibility but the current agent does not use it.

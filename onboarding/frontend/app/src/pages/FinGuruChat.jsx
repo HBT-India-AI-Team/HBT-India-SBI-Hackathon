@@ -6,6 +6,7 @@ import LevelMeter from '../components/LevelMeter';
 import MicIcon from '../components/MicIcon';
 import VoiceMessageBubble from '../components/VoiceMessageBubble';
 import { askFinGuru } from '../api/finguru';
+import { askFinGuruStreaming } from '../api/finguruStream';
 import { askOllama, OLLAMA_ENABLED, USE_OLLAMA_IN_VOICE, LLM_STREAMING_ENABLED } from '../api/ollama';
 import { streamOllamaToTTS } from '../api/ollamaStream';
 import { useVoiceRecorder } from '../lib/voiceRecorder';
@@ -608,8 +609,19 @@ export default function FinGuruChat() {
   // rather than threaded through every individual call site's options --
   // every brain request goes through this one function, so this is the only
   // place that needs to know about it.
-  const askBrain = (text, history, { colloquial: coll, language: lang, voice, useOllamaBrain }) => {
+  // `speechHooks`, when present, means the caller wants this turn SPOKEN as it
+  // arrives rather than after it completes. Only the FinGuru brain honours it:
+  // it has a streaming endpoint that emits whole sentences (see
+  // api/finguruStream.js), so the first words play in ~2-4s instead of after
+  // the full 12-95s answer. Ollama keeps its own streaming path
+  // (streamOllamaToTTS), which is selected upstream, so nothing changes there.
+  const askBrain = (text, history, { colloquial: coll, language: lang, voice, useOllamaBrain, speechHooks }) => {
     const useOllama = OLLAMA_ENABLED && (useOllamaBrain !== undefined ? useOllamaBrain : USE_OLLAMA_IN_VOICE && !!voice);
+    if (!useOllama && speechHooks) {
+      return askFinGuruStreaming(text, history, {
+        colloquial: coll, language: lang, name: nameRef.current, ...speechHooks,
+      });
+    }
     return useOllama
       ? askOllama(text, history, { language: lang, colloquial: coll, voice: !!voice, name: nameRef.current })
       : askFinGuru(text, history, { colloquial: coll, language: lang, voice: !!voice, name: nameRef.current });
@@ -639,6 +651,14 @@ export default function FinGuruChat() {
     // out of it.
     const wantFollowUps = followUpsEnabled && !opts.speak;
     const questionForBrain = wantFollowUps ? withFollowUpInstruction(trimmed) : trimmed;
+    // Generated before the call, not after: when this turn streams, audio
+    // starts while the reply is still being written, so the speaking state and
+    // the TTS badge need an id to attach to before there is any reply text.
+    const outboundId = newMsgId();
+    // Captured by the streaming hooks below and folded into the message when
+    // it is finally added -- updateMessageById cannot be used from inside the
+    // stream, because the message does not exist in state yet.
+    let streamedProvider = null;
     try {
       const res = await askBrain(questionForBrain, history, {
         colloquial: colloquialRef.current,
@@ -648,6 +668,17 @@ export default function FinGuruChat() {
         // questions are configured to use, regardless of USE_OLLAMA_IN_VOICE's
         // normal voice-only gating -- see askBrain's comment.
         useOllamaBrain: opts.viaFallback ? USE_OLLAMA_IN_VOICE : undefined,
+        // Spoken turns stream; typed ones stay one-shot, since there is
+        // nothing to play early and the full reply renders at once anyway.
+        ...(opts.speak ? {
+          speechHooks: {
+            onFirstProvider: (provider) => { streamedProvider = provider; },
+            onSpeakingChange: (speaking) => {
+              setSpeakingId(speaking ? outboundId : null);
+              setVoiceStatus(speaking ? 'speaking' : 'idle');
+            },
+          },
+        } : {}),
       });
       if (opts.speak) clearFallbackIfReason('llm'); // a voice-originated reply succeeded -> LLM is fine
       const rawReply = res.text || "I couldn't find an answer for that — try rephrasing?";
@@ -655,7 +686,6 @@ export default function FinGuruChat() {
       // never leaked into message.text, so it can't pollute a later turn's
       // history (built from messagesRef.current's .text fields) either.
       const { answer: replyText, followUps } = wantFollowUps ? extractFollowUps(rawReply) : { answer: rawReply, followUps: [] };
-      const outboundId = newMsgId(); // generated up front -- no index-capture needed
       setMessages((prev) => [
         ...prev,
         {
@@ -665,11 +695,14 @@ export default function FinGuruChat() {
           language: res.language,
           variant: res.hitl?.triggered ? 'error' : 'default',
           followUps,
+          ...(streamedProvider ? { ttsProvider: streamedProvider } : {}),
         },
       ]);
       // Speak the reply back when the question came in by voice (or the
-      // fallback banner said TTS still works).
-      if (opts.speak && res.text) speakMessage(outboundId, replyText);
+      // fallback banner said TTS still works). `res.spoken` means the
+      // streaming path already played it sentence by sentence -- speaking it
+      // again here would repeat the whole answer on top of itself.
+      if (opts.speak && res.text && !res.spoken) speakMessage(outboundId, replyText);
     } catch {
       // Only a voice-originated send failing means the voice LLM path is
       // down -- a plain typed question failing is a normal error, not a

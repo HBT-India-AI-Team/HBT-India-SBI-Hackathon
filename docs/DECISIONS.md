@@ -12,23 +12,61 @@ it** — because a decision you cannot argue against is a habit, not a decision.
 ## 1. `think` is a per-call argument, not an adapter setting
 
 **Decided:** `OllamaAdapter._post_chat` takes `think` per call. `run_tool_loop`
-never passes it; `generate_structured` passes `think=self.think` (false).
+does not pass it; `generate_structured` passes `think=self.think` (false).
 
-**Why:** measured on qwen3.6:35b under FinGuru's prompt —
+**Still in force — but the evidence under it is now contested.** A re-measure
+on 15 Aug 2026 (below) says the tool loop would be both safer and faster with
+thinking off on gemma4:12b. It was NOT applied: the change was made, failed to
+fix the latency it was meant to fix, and was reverted rather than shipped
+unverified. Treat the table below as a live lead, not a settled result.
+
+The original decision, measured on qwen3.6:35b under FinGuru's prompt —
 
 | | tool loop | final answer |
 |---|---|---|
 | thinking ON | tools called at every prompt length | 3,457 chars of reasoning, 81 of answer |
 | thinking OFF | **no tool calls at 12k or 21k** | a full answer |
 
-The two calls need opposite settings. One shared field breaks one of them, and
-it breaks it *silently* — the tool-off case looks like a model that just decided
-not to use tools.
+On that model the two calls genuinely needed opposite settings, so
+`run_tool_loop` withheld `think` entirely.
 
-**Cost:** the adapter has a parameter that looks redundant.
+**What changed:** the agent has run on gemma4:12b since (see `## 15`), and
+that number was never re-checked against it. Re-measured over six grounded
+questions (en/ta/hi — savings rate, FD maturity, EMI, repo rate):
 
-**Would overturn it:** a model where both calls behave the same. Re-measure on
-any model change; this is model-specific, not a general truth.
+| | grounded | mean latency* |
+|---|---|---|
+| thinking ON | 5/6 | 12,751 ms |
+| thinking OFF | **6/6** | **7,111 ms** |
+
+\* one 94s outlier excluded; the shared Ollama tunnel flapping, seen on both arms.
+
+Thinking off is the **safer** arm here, not just the faster one, and that is
+the reason to take it. The one ungrounded answer came from thinking ON: asked
+for the SBI savings rate it called no tool and wrote 406 characters anyway —
+a confident figure with nothing behind it, which is precisely what the tool
+loop exists to prevent. The latency win is a side effect.
+
+**Two bugs found while measuring this, both still open:**
+
+1. **`_log_call` does not record `think`.** It logs only `messages`, `format`,
+   `tools` and `options`, so every payload in `logs/ollama_calls.jsonl` reads
+   `think=None` no matter what was sent. This cost real time: it looked like
+   proof that the setting never reached the wire. The log cannot answer this
+   question until that field is added.
+
+2. **The tool loop times out at 90s on the second call, reproducibly.** Three
+   LLM calls per request; the middle one hits `timeout_seconds: 90` and dies,
+   the pipeline logs "Tool-calling loop failed, answering without tool results",
+   and the reply comes back with `tools: []` — a confident answer with nothing
+   behind it. Present with thinking both on and off, so it is not the setting
+   above. The Ollama host is healthy while it happens (`/api/tags` in 0.8s,
+   gemma4:12b resident in VRAM), which rules out the tunnel being down.
+   **This is the more urgent of the two: it makes answers silently ungrounded.**
+
+**Would overturn it:** a model where the tool loop stops calling tools with
+thinking off — the original qwen3.6 failure. Re-measure on any model change
+rather than trusting either row.
 
 ---
 
