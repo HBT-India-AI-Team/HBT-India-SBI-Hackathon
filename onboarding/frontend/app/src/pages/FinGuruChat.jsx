@@ -686,7 +686,19 @@ export default function FinGuruChat() {
       // Strip the follow-ups block back out before storing/displaying --
       // never leaked into message.text, so it can't pollute a later turn's
       // history (built from messagesRef.current's .text fields) either.
-      const { answer: replyText, followUps } = wantFollowUps ? extractFollowUps(rawReply) : { answer: rawReply, followUps: [] };
+      // extractFollowUps still runs whenever the instruction was sent, because
+      // its other job is stripping the marker block out of the displayed text
+      // -- a brain that answers the instruction AND fills the schema field
+      // would otherwise leave "###FOLLOWUPS###" sitting in the bubble.
+      const { answer: replyText, followUps: parsedFollowUps } = wantFollowUps
+        ? extractFollowUps(rawReply)
+        : { answer: rawReply, followUps: [] };
+      // FinGuru returns these as a schema field, which the model is
+      // constrained to fill; the marker is what Ollama (no schema) produces,
+      // and only sometimes. Prefer the reliable one, fall back to the other.
+      const followUps = wantFollowUps
+        ? (res.followUps?.length ? res.followUps : parsedFollowUps).slice(0, 3)
+        : [];
       setMessages((prev) => [
         ...prev,
         {

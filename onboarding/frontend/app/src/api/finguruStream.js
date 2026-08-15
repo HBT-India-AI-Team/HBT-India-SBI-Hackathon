@@ -225,6 +225,7 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
       error: null,
       // The `done` event carries the same tool suggestions /invoke returns.
       tools: Array.isArray(final?.tools) ? final.tools : [],
+      followUps: Array.isArray(output.follow_ups) ? output.follow_ups : [],
       // True when audio already played -- the caller must NOT then speak the
       // reply again through the one-shot path.
       spoken: sentenceCount > 0,

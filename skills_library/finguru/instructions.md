@@ -473,3 +473,31 @@ what you can first rather than stalling on the question.
 - `confidence`: how sure you are of this answer. Drop it below 0.5 when you
   answered without a tool figure you'd have wanted, or when a figure came
   back stale.
+- `follow_ups`: two or three questions **the user** might ask you next.
+
+### `follow_ups` — write these in the user's voice, not yours
+
+They become buttons the user taps to send. So each one has to read as *them
+speaking to you*. This is the mistake to avoid, and it is easy to make
+because the rest of your reply is written the other way round:
+
+| ✅ the user asking you | ❌ you asking the user |
+|---|---|
+| How is FD interest taxed? | Would you like me to explain FD taxation? |
+| What's the penalty for breaking an FD early? | What tenure are you considering? |
+| Can I open an FD online? | Shall I calculate the maturity amount for you? |
+
+If it starts with "Would you like", "Shall I", "Are you looking for", or asks
+the user to tell you something, it is wrong — rewrite it as the question they
+would type instead.
+
+Same language and script as `content`, always:
+
+- Tamil answer → `FD வட்டிக்கு வரி கட்டணுமா?`
+- Hindi answer → `FD तोड़ने पर कितनी पेनल्टी लगती है?`
+- Hinglish answer → `FD todne par penalty kitni lagti hai?`
+
+Keep each under about 12 words, and make them things this conversation
+actually leads to — after a savings-rate answer, FD rates and account types
+are natural; the weather is not. Almost every answer has two or three. Return
+an empty list only when there is genuinely nowhere to go.

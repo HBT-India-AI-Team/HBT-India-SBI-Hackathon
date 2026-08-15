@@ -88,6 +88,15 @@ export async function askFinGuru(question, history = [], options = {}) {
       // definition and any values the agent already computed. Usually empty.
       // See api/tools.js and components/ToolCard.jsx.
       tools: Array.isArray(data?.tools) ? data.tools : [],
+      // Suggested next questions, now a first-class field of the agent's
+      // output schema rather than a marker parsed back out of the prose.
+      // The schema is what constrains the model's JSON, so this field is
+      // always present -- the ###FOLLOWUPS### instruction was followed only
+      // sometimes (measured: present for one English question, absent for
+      // another and for Hindi, in the same minute). Already in the user's
+      // language, and never inside `content`, so a spoken reply cannot read
+      // the suggestion list aloud.
+      followUps: Array.isArray(output.follow_ups) ? output.follow_ups : [],
     };
     logLlmReceived({
       engine: 'FinGuru',

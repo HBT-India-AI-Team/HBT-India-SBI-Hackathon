@@ -52,8 +52,34 @@ def test_tool_schemas_name_themselves_consistently():
 def test_output_contract_requires_grounding_fields():
     skill = load_agent("finguru").skills["finguru"]
     assert set(skill.output_contract["required"]) == {
-        "language", "content_type", "content", "confidence",
+        "language", "content_type", "content", "confidence", "follow_ups",
     }
+
+
+def test_follow_ups_are_a_schema_field_not_a_marker_in_the_prose():
+    """The chat UI used to get suggested questions by appending "write
+    ###FOLLOWUPS### then three questions" to the message and parsing them back
+    out of the reply. Measured, the model obeyed that sometimes: present for
+    one English question, absent for another and for Hindi, within the same
+    minute -- which read as "follow-ups are broken in English".
+
+    As a required schema field it is what constrains the model's JSON, so it
+    is always there. It also keeps the suggestions OUT of `content`, which
+    matters for voice: a marker block inside the reply is a list of questions
+    waiting to be read aloud.
+    """
+    contract = load_agent("finguru").skills["finguru"].output_contract
+    field = contract["properties"]["follow_ups"]
+
+    assert "follow_ups" in contract["required"]
+    assert field["type"] == "array"
+    assert field["items"]["type"] == "string"
+    assert field["maxItems"] == 3
+    # The failure mode that survived two prompt revisions: the model writing
+    # its own questions to the user ("Would you like me to...") instead of the
+    # user's next question to it. The instructions carry a table of both
+    # forms; the contract has to at least say whose voice it is.
+    assert "THE USER" in field["description"]
 
 
 # -- vernacular ----
