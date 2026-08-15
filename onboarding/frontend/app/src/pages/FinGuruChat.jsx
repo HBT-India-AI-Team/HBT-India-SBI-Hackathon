@@ -677,8 +677,18 @@ export default function FinGuruChat() {
     // question (opts.speak) skips the instruction entirely, so the spoken
     // reply never has to read a suggestions block aloud or have one stripped
     // out of it.
-    const wantFollowUps = followUpsEnabled && !opts.speak;
-    const questionForBrain = wantFollowUps ? withFollowUpInstruction(trimmed) : trimmed;
+    // Shown whenever the switch is on, spoken turns included. They used to be
+    // excluded because the only way to get them was the ###FOLLOWUPS###
+    // instruction, which puts the suggestions INSIDE the reply text -- the
+    // same text that gets synthesized, so the assistant read the list aloud.
+    // FinGuru now returns them as their own schema field, outside `content`,
+    // so there is nothing in the spoken text to read.
+    const showFollowUps = followUpsEnabled;
+    // The instruction is still how a brain with no schema field (Ollama)
+    // produces them, and it still must not go out on a spoken turn, for
+    // exactly the original reason: the marker block would be read aloud.
+    const wantMarker = showFollowUps && !opts.speak;
+    const questionForBrain = wantMarker ? withFollowUpInstruction(trimmed) : trimmed;
     // Generated before the call, not after: when this turn streams, audio
     // starts while the reply is still being written, so the speaking state and
     // the TTS badge need an id to attach to before there is any reply text.
@@ -717,13 +727,17 @@ export default function FinGuruChat() {
       // its other job is stripping the marker block out of the displayed text
       // -- a brain that answers the instruction AND fills the schema field
       // would otherwise leave "###FOLLOWUPS###" sitting in the bubble.
-      const { answer: replyText, followUps: parsedFollowUps } = wantFollowUps
+      const { answer: replyText, followUps: parsedFollowUps } = wantMarker
         ? extractFollowUps(rawReply)
         : { answer: rawReply, followUps: [] };
       // FinGuru returns these as a schema field, which the model is
       // constrained to fill; the marker is what Ollama (no schema) produces,
       // and only sometimes. Prefer the reliable one, fall back to the other.
-      const followUps = wantFollowUps
+      //
+      // On a spoken turn parsedFollowUps is always empty by construction (no
+      // instruction was sent), so this is the schema field or nothing -- which
+      // is the correct degradation for an Ollama voice turn rather than a gap.
+      const followUps = showFollowUps
         ? (res.followUps?.length ? res.followUps : parsedFollowUps).slice(0, 3)
         : [];
       setMessages((prev) => [
