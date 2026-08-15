@@ -25,6 +25,7 @@ import { needsSarvamTts } from '../lib/ttsRouter';
 import { withFollowUpInstruction, extractFollowUps } from '../lib/followUps';
 
 const LAST_CONVERSATION_KEY = 'finguru.lastConversationId';
+const FOLLOW_UPS_KEY = 'finguru.followUpsEnabled';
 
 function newMsgId() {
   return (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID()) || `m-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -131,11 +132,22 @@ export default function FinGuruChat() {
   const [colloquial, setColloquial] = useState(false);
   // Recommended follow-up questions -- text mode only (see send()).
   //
-  // On by default now. It was off so typed chat behaved exactly as before
-  // unless switched on, which made "follow-ups aren't appearing" the expected
-  // behaviour rather than a bug -- the switch is easy to miss, and a feature
-  // nobody turns on is a feature nobody has. The switch still turns it off.
-  const [followUpsEnabled, setFollowUpsEnabled] = useState(true);
+  // On unless the user has turned it off, and their choice survives a reload.
+  // Two separate things were wrong before: it defaulted off, which made
+  // "follow-ups aren't appearing" the expected behaviour rather than a bug,
+  // and the state was not persisted, so switching it off lasted only until
+  // the next refresh. A toggle that forgets is worse than no toggle.
+  //
+  // Read as "anything but the string 'false' means on", so a first-time user
+  // (no key) and a user who switched it on both land on -- only an explicit
+  // off is remembered as off.
+  const [followUpsEnabled, setFollowUpsEnabled] = useState(() => {
+    try {
+      return localStorage.getItem(FOLLOW_UPS_KEY) !== 'false';
+    } catch {
+      return true;                      // private mode / storage disabled
+    }
+  });
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE); // response + voice language code
   const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | transcribing | speaking
   // Track by stable message id (not array index) -- an index captured from
@@ -441,6 +453,17 @@ export default function FinGuruChat() {
   useEffect(() => {
     colloquialRef.current = colloquial;
   }, [colloquial]);
+
+  // Remember the follow-ups choice across reloads. Written on every change
+  // rather than only on the off transition, so switching back on clears a
+  // previously stored off.
+  useEffect(() => {
+    try {
+      localStorage.setItem(FOLLOW_UPS_KEY, String(followUpsEnabled));
+    } catch {
+      /* storage unavailable -- the toggle still works for this session */
+    }
+  }, [followUpsEnabled]);
 
   // keep a ref of messages so send() can build history without a stale closure
   useEffect(() => {
