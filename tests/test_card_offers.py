@@ -137,6 +137,76 @@ def test_an_incomplete_offer_says_so_rather_than_filling_the_gap():
         assert absent not in offer
 
 
+class TestOfferLookupIsForced:
+    """Offers exist nowhere but this capability — not in the skill text, not
+    in the document corpus. So a missed tool call is not a degraded answer:
+    asked "sbi current debit card offers" the model reached for docs.search
+    and replied "I don't have a specific list of current offers" while the
+    list sat one call away. The pipeline now checks rather than asks.
+    """
+
+    @staticmethod
+    def _fires(message: str) -> bool:
+        from agent_platform.stages import pipeline_stages as p
+        return bool(p._OFFER_WORD.search(message) and p._OFFER_CONTEXT.search(message))
+
+    @pytest.mark.parametrize("message", [
+        "sbi current debit card offers",
+        "what offers are on my debit card",
+        "any discount on bigbasket?",
+        "is there cashback on amazon",
+        "SBI டெபிட் கார்டுல என்ன ஆஃபர் இருக்கு?",
+        "डेबिट कार्ड पर क्या ऑफर है?",
+        "do I get a deal at reliance digital",
+    ])
+    def test_it_fires_on_an_offer_question(self, message):
+        assert self._fires(message)
+
+    @pytest.mark.parametrize("message", [
+        # "offer" as a verb is the trap: these are deposit questions, and
+        # dragging a merchant catalogue into them would be noise at best.
+        "what does SBI offer for savings accounts?",
+        "what interest rate does SBI offer",
+        "tell me about fixed deposits",
+        "what documents do I need to open an account",
+    ])
+    def test_it_stays_out_of_questions_that_merely_say_offer(self, message):
+        assert not self._fires(message)
+
+    def test_a_forced_lookup_is_not_a_duplicate(self, monkeypatch):
+        """If the model already called it, calling again would put the same
+        catalogue in the prompt twice."""
+        from agent_platform.stages import pipeline_stages as p
+
+        class _Ctx:
+            raw_input = {"evidence": {"question": "sbi debit card offers"}}
+
+        class _Logger:
+            def warning(self, *a, **k): pass
+            def event(self, *a, **k): pass
+
+        already = [{"name": "india.get_card_offers", "arguments": {}, "result": {}}]
+        p._ensure_offer_lookup(_Ctx(), already, _Logger())
+        assert len(already) == 1
+
+    def test_a_failing_lookup_does_not_cost_the_answer(self, monkeypatch):
+        from agent_platform.capabilities import DEFAULT_REGISTRY
+        from agent_platform.stages import pipeline_stages as p
+
+        class _Ctx:
+            raw_input = {"evidence": {"question": "sbi debit card offers"}}
+
+        class _Logger:
+            def warning(self, *a, **k): pass
+            def event(self, *a, **k): pass
+
+        monkeypatch.setattr(DEFAULT_REGISTRY, "invoke",
+                            lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+        calls: list = []
+        p._ensure_offer_lookup(_Ctx(), calls, _Logger())      # must not raise
+        assert calls == []
+
+
 def test_the_scrape_itself_goes_stale_separately_from_any_offer(monkeypatch):
     """Offers churn monthly, so a months-old scrape is missing new ones even
     if every offer in it is still inside its own dates."""

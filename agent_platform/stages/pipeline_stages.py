@@ -1342,6 +1342,61 @@ _TOOL_SCHEMAS: dict[str, dict] = {
 }
 
 
+# Words that mean "what can I save money on", across the three languages this
+# agent answers in. Deliberately broad, because the pairing below is what makes
+# it precise.
+_OFFER_WORD = re.compile(
+    r"\boffers?\b|\bdiscount|\bcashback\b|\bdeals?\b|\bsale\b|\bcoupon"
+    r"|ஆஃபர்|சலுகை|தள்ளுபடி|டிஸ்கவுண்ட்"
+    r"|ऑफर|छूट|डिस्काउंट|कैशबैक|सेल",
+    re.IGNORECASE)
+
+# …paired with something that makes it a CARD-offer question rather than
+# "what does SBI offer for savings", which must not drag a merchant catalogue
+# into an answer about deposits.
+_OFFER_CONTEXT = re.compile(
+    r"\bcards?\b|\bdebit\b|\bcredit\b|கார்டு|कार्ड|डेबिट"
+    r"|amazon|bigbasket|big basket|flipkart|cleartrip|apollo|reliance"
+    r"|jio|swiggy|zomato|dhl|awfis|fabhotels|cleartax|medibuddy|google workspace",
+    re.IGNORECASE)
+
+
+def _ensure_offer_lookup(ctx, tool_calls_made: list[dict], logger) -> None:
+    """Fetch the card offers when the question is about them and the model
+    did not think to ask.
+
+    Offers exist nowhere but this capability -- not in the skill text, not in
+    the document corpus -- so a missed tool call is not a degraded answer, it
+    is the model saying "I don't have a list of current offers" while holding
+    a list of current offers. That is what it did: asked "sbi current debit
+    card offers" it reached for docs.search and answered from RBI card
+    guidance instead.
+
+    A mandatory instruction was the other option and is weaker; the tool rule
+    for EMI has to be restated in the prompt and still depends on the model
+    obeying it. This is the same reasoning as deriving calculator widgets in
+    code rather than asking the model to emit them.
+
+    Never fatal, and never a duplicate: if the loop already called it, this
+    does nothing.
+    """
+    if any(c.get("name") == "india.get_card_offers" for c in tool_calls_made):
+        return
+    message = _user_message(ctx.raw_input)
+    if not (message and _OFFER_WORD.search(message) and _OFFER_CONTEXT.search(message)):
+        return
+    if not DEFAULT_REGISTRY.has("india.get_card_offers"):
+        return
+    try:
+        result = DEFAULT_REGISTRY.invoke("india.get_card_offers")
+    except Exception as exc:                    # noqa: BLE001 - decoration only
+        logger.warning(ctx, f"Offer lookup failed, answering without it: {exc}")
+        return
+    tool_calls_made.append(
+        {"name": "india.get_card_offers", "arguments": {}, "result": result})
+    logger.event(ctx, "offer_lookup_forced", count=result.get("count"))
+
+
 @register_stage("reason_llm_with_tools")
 def reason_llm_with_tools(ctx, bundle, logger) -> None:
     """Text-prompt reasoning (see reason_llm_text) that can also call real,
@@ -1394,6 +1449,7 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
         except OllamaError as exc:
             logger.warning(ctx, f"Tool-calling loop failed, answering without tool results: {exc}")
 
+    _ensure_offer_lookup(ctx, tool_calls_made, logger)
     logger.event(ctx, "tool_calls_made", calls=[c["name"] for c in tool_calls_made])
 
     if tool_calls_made:
