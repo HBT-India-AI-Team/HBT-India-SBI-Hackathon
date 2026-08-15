@@ -426,6 +426,56 @@ answer generation is the dominant term. Then this matters. Today it does not.
 
 ---
 
+## 19. webclaw fetches source pages; it does not write fixtures
+
+**Decided:** `scripts/webclaw_fetch.py` wraps the webclaw CLI for build-time
+extraction. Nothing in the request path imports it — enforced by a test, not a
+comment — and no script writes a fixture from its output without a human
+reading the diff.
+
+**Why:** the old path was `urllib` plus a regex tag-strip, which flattens a
+table into a run of words. On the SBI offers page that is precisely the
+information you need:
+
+| | raw HTML → regex strip | webclaw `--format llm` |
+|---|---|---|
+| SBI offers page | 385 KB → 28,434 chars | **12,391 chars** (3.2% of raw) |
+| RBI FAQ | 98 KB → 14,601 chars | 14,936 chars (14.9% of raw) |
+| Reliance slab table | `...Upto Rs 99,999 Flat 2500 Above Rs 99,999...` | a markdown table, one row per band |
+
+The flattened version is where the ₹50,000–99,999 / ₹2,500 misread came from
+(see `## 7` and `capabilities_impl/card_offers.py`): once the band and the
+amount are adjacent words in a sentence, the pairing is a guess.
+
+**But the same run showed why it cannot be trusted to write.** On SBI's
+hand-built *layout* tables — Cleartrip, Flipkart Travel — the coupon codes and
+the categories both survive extraction and their association does not:
+
+```
+Domestic Flights 12%
+SBIDC International Flights
+10% 15000
+```
+
+`SBIDC` reads as belonging to International Flights there. Whether it does is
+not recoverable from that output. An importer would have written it down
+either way, and at runtime a wrong coupon code is indistinguishable from a
+right one — the same failure `## 10` keeps the rates in a hand-curated file to
+avoid.
+
+**Cost:** a 25 MB binary that is not vendored (this repo is public), so a
+fresh clone gets `WebclawMissing` until someone installs it. The wrapper
+raises rather than falling back for that reason: a silent fallback to the
+regex strip returns text that looks fine and pairs numbers wrongly.
+
+**Would overturn it:** a source whose tables are real `<table>` markup end to
+end. The Reliance slab table already extracts cleanly; if SBI ever rebuilds
+the rest of the page the same way, importing those becomes defensible. Test it
+by extracting and diffing against the hand-written fixture before trusting it,
+which is what `--self-test` is for.
+
+---
+
 ## Things deliberately NOT done
 
 **A second model to rephrase answers into colloquial Hindi.** Proposed and

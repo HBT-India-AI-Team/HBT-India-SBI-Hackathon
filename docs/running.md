@@ -107,6 +107,41 @@ python -m pytest tests/ -v
 
 55 tests (+1 skipped live-only smoke test), all fast (~1.5s) because every test monkeypatches the LLM adapter — no network dependency, no live Ollama needed. See `docs/testing.md`.
 
+## Pulling a source page (build time only)
+
+Every number FinGuru quotes comes from a page someone fetched and read. `webclaw`
+is the extractor for that — it keeps HTML tables as tables, where the old
+regex tag-strip flattened them into a run of words.
+
+Install once (not vendored — it is ~25 MB and this repo is public):
+
+1. Download `webclaw-vX.Y.Z-x86_64-pc-windows-msvc.zip` from
+   [github.com/0xMassi/webclaw/releases](https://github.com/0xMassi/webclaw/releases),
+   verify it against the release's `SHA256SUMS`
+2. Extract to `%LOCALAPPDATA%\webclaw\` (searched automatically), or put it on
+   PATH, or set `WEBCLAW_BIN` to the executable
+
+No API key is needed. `WEBCLAW_API_KEY` only buys hosted JS-rendering and
+bot-wall bypass; both rbi.org.in and sbi.bank.in return complete
+server-rendered HTML to a plain GET.
+
+```powershell
+# confirm the install works against this repo's own two sources
+python scripts/webclaw_fetch.py --self-test
+
+# extract one page (markdown, boilerplate stripped)
+python scripts/webclaw_fetch.py https://sbi.bank.in/... --out page.md
+
+# with webclaw's parsed metadata (title, language, word_count, JSON-LD)
+python scripts/webclaw_fetch.py <url> --json --out page.json
+```
+
+**Read the output before anything goes into a fixture.** On genuine `<table>`
+markup the extraction is reliable; on SBI's hand-built layout tables the coupon
+codes and the categories both survive but their pairing does not. Nothing here
+writes a fixture automatically, and that is deliberate — see `## 19` in
+`docs/DECISIONS.md`.
+
 ## Where results go
 
 - `runs/<run_id>.json` — everything about one run: input summary, per-stage results, final decision, full explanation, error (if any)
