@@ -110,7 +110,18 @@ llm:
   # sampling variance to get creative with.
   temperature: 0.3
   seed: 7
-  timeout_seconds: 90
+  # 30, not 90, because this is the budget before a STALL is noticed, not the
+  # budget for the model to think. Measured on this host, a real call is
+  # 1.5-8.5s end to end: 0.4s to load a resident model, under 0.1s of prompt
+  # eval, and 0.2-4s of generation. Nothing legitimate comes close to 30s.
+  #
+  # What the old 90 bought was 90 seconds of waiting on the shared ngrok
+  # tunnel's intermittent stall before anything could be retried, and the
+  # retry never came -- a read timeout was not classed as transient, so the
+  # turn was abandoned and answered without tool results. Together with that
+  # fix in ollama_adapter, a stall now costs ~30s and recovers, instead of
+  # costing 95s and returning an ungrounded answer.
+  timeout_seconds: 30
 
 draft: false
 # Routable: unlike demo_chat_assistant, FinGuru is a real destination the

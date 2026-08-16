@@ -153,6 +153,43 @@ class OllamaAdapter:
         # empty content when given it. Set it per agent, having tested that
         # agent's model, never globally.
         self.think = think
+        # How long Ollama keeps the model in VRAM after a request. Sent on
+        # every call because Ollama's own default is 5 minutes, and a demo
+        # where questions arrive further apart than that pays a full reload
+        # every single time. Measured against this host:
+        #
+        #   after an idle gap   wall 4.14s = load 3.25s + prompt 0.07s + gen 0.23s
+        #   immediately after   wall 1.60s = load 0.35s + prompt 0.02s + gen 0.71s
+        #
+        # 3.25s of a 4.14s request was reloading 12GB into VRAM -- unrelated to
+        # prompt size or reply length, and paid twice per turn on the pipeline's
+        # two calls whenever the first one lands cold.
+        #
+        # "-1" means never unload, and it is a deliberate trade rather than a
+        # free win. This GPU is shared: gemma4:12b was chosen over qwen3.6:35b
+        # specifically to leave ~16GB for the voice agent (see
+        # agents/finguru/agent.yaml), and the Parler-TTS server is on this same
+        # host. Pinning 12GB permanently buys chat latency with memory someone
+        # else may want.
+        #
+        # Taken anyway, for now, on the owner's call while a demo is being
+        # recorded -- and measured as coexisting: with gemma4 resident at
+        # 12.1GB, local Parler TTS still returned a 254KB wav in 3.5s, so the
+        # two do currently fit. Set OLLAMA_KEEP_ALIVE=30m (or any duration) to
+        # give the VRAM back on a timer instead; nothing here needs changing.
+        # Coerced, because the two accepted forms are not interchangeable and
+        # the wrong one is a 400 on every call: Ollama takes a NUMBER of
+        # seconds (-1 meaning never unload) or a duration STRING like "30m".
+        # Reading "-1" from the environment and forwarding it as a string
+        # produced "400 Bad Request" on every request, which surfaced as fast
+        # empty replies -- the pipeline caught the failure and fell back to its
+        # deterministic path, so the symptom was a 1.2s answer with no tool
+        # call and no follow-ups rather than an error.
+        _keep_alive_raw = os.environ.get("OLLAMA_KEEP_ALIVE", "-1")
+        try:
+            self.keep_alive: int | str = int(_keep_alive_raw)
+        except ValueError:
+            self.keep_alive = _keep_alive_raw       # a duration like "30m"
 
     def _log_call(self, *, attempt: int, total_attempts: int, payload: dict[str, Any],
                   duration_ms: float, ok: bool, response_body: dict[str, Any] | None = None,
@@ -199,7 +236,8 @@ class OllamaAdapter:
         the other -- which is how it was found: silencing thinking to stop
         empty replies silently stopped every tool call.
         """
-        payload = {**payload, "model": self.model, "stream": False}
+        payload = {**payload, "model": self.model, "stream": False,
+                   "keep_alive": self.keep_alive}
         if think is not None:
             payload["think"] = think
         total_attempts = self.max_transient_retries + 1
@@ -218,7 +256,18 @@ class OllamaAdapter:
                 return body
             except requests.RequestException as exc:
                 status = exc.response.status_code if getattr(exc, "response", None) is not None else None
-                transient = isinstance(exc, requests.ConnectionError) or status in _TRANSIENT_STATUS_CODES
+                # requests.Timeout is NOT a subclass of ConnectionError, so a
+                # read timeout used to skip the retry loop entirely and fail
+                # the whole turn. That is the worst case, not the safest one:
+                # measured on the shared ngrok tunnel, the second tool-loop
+                # call (the one carrying a tool result back) intermittently
+                # stalls, the read times out, and the pipeline gives up and
+                # answers with no tool results -- an ungrounded reply after a
+                # 90-second wait. The identical request retried immediately
+                # afterwards returns in 2-4s, so this is a stalled connection,
+                # not a busy model, and it is exactly what a retry is for.
+                transient = (isinstance(exc, (requests.ConnectionError, requests.Timeout))
+                             or status in _TRANSIENT_STATUS_CODES)
                 self._log_call(
                     attempt=attempt, total_attempts=total_attempts, payload=payload,
                     duration_ms=(time.perf_counter() - t0) * 1000, ok=False,
@@ -309,6 +358,9 @@ class OllamaAdapter:
             "format": schema,
             "options": {"temperature": temperature, "seed": self.seed},
             "stream": True,
+            # Same reason as _post_chat: without it this call can be the one
+            # that lands cold and pays the reload.
+            "keep_alive": self.keep_alive,
         }
         if self.think is not None:
             payload["think"] = self.think
@@ -406,11 +458,34 @@ class OllamaAdapter:
         calls_made: list[dict[str, Any]] = []
 
         for _turn in range(max_turns):
+            # Thinking off for the tool-choice call. This reverses the original
+            # "choosing tools IS the reasoning", which was measured on
+            # qwen3.6:35b -- there, thinking off produced no tool calls at all.
+            # gemma4:12b, which this agent has run on since, behaves the
+            # opposite way. Re-measured over six grounded questions (en/ta/hi:
+            # rates, FD, EMI, repo):
+            #
+            #                    grounded   mean latency*
+            #   thinking ON        5/6        12,751 ms
+            #   thinking OFF       6/6         7,111 ms
+            #   (* one 94s outlier excluded, the shared tunnel flapping)
+            #
+            # Taken for groundedness first and speed second: the one ungrounded
+            # answer was thinking ON's, which called no tool for a savings-rate
+            # question and wrote 406 characters regardless. The tool loop was
+            # burning ~1,700 characters of invisible `thinking` per call to
+            # reach a worse decision.
+            #
+            # Passed literally, not as self.think, because the adapter reaching
+            # this loop has think=None even for finguru, whose agent.yaml sets
+            # llm.think=false -- that plumbing is broken separately and is
+            # tracked in DECISIONS #1. Note the call log cannot confirm any of
+            # this: _log_call does not record `think` at all.
             body = self._post_chat({
                 "messages": messages,
                 "tools": tools,
                 "options": {"temperature": temperature, "seed": self.seed},
-            })   # think deliberately NOT passed: choosing tools IS the reasoning
+            }, think=False)
             message = body.get("message", {})
             tool_calls = message.get("tool_calls") or []
             if not tool_calls:
