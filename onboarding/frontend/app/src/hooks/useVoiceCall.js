@@ -399,6 +399,17 @@ export function useVoiceCall({ onTranscript, onError } = {}) {
     debugLog('[VoiceCall] mic', mutedRef.current ? 'muted' : 'unmuted');
   }, []);
 
+  // Explicit set, for the caller (auto-mute-while-thinking/speaking) rather
+  // than the user's own "M" toggle -- same underlying mechanism as
+  // toggleMute, just not a flip. A no-op if already in the requested state,
+  // so a caller can call this every render without spamming the debug log.
+  const setMicMuted = useCallback((next) => {
+    if (mutedRef.current === next) return;
+    mutedRef.current = next;
+    setMuted(next);
+    debugLog('[VoiceCall] mic', next ? 'auto-muted' : 'auto-unmuted');
+  }, []);
+
   return {
     supported: voiceCallSupported,
     status, // idle | connecting | live | reconnecting | ended
@@ -406,6 +417,7 @@ export function useVoiceCall({ onTranscript, onError } = {}) {
     reconnectMaxAttempts: RECONNECT_MAX_ATTEMPTS,
     muted,
     toggleMute,
+    setMicMuted,
     start,
     end,
   };

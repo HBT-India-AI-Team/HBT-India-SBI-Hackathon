@@ -5,7 +5,7 @@ on failure — and returns the finished context.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from agent_platform import stages  # noqa: F401  (import registers pipeline stages)
 from agent_platform.composition import load_agent
@@ -18,7 +18,7 @@ from .pipeline import run_pipeline
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now().astimezone().isoformat()
 
 
 def invoke_agent(agent_id: str, raw_input: dict, correlation_id: str | None = None) -> RunContext:

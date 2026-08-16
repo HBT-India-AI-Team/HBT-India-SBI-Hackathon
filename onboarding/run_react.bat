@@ -13,7 +13,7 @@ REM ============================================================
 setlocal enabledelayedexpansion
 
 REM ---- load ports from ports.config (single source of truth) ----
-set "BACKEND_PORT=8000"
+set "BACKEND_PORT=8080"
 set "FRONTEND_PORT=5173"
 if exist "%~dp0ports.config" (
   for /f "usebackq eol=# tokens=1,2 delims==" %%A in ("%~dp0ports.config") do (

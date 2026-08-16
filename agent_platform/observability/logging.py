@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +21,9 @@ DEFAULT_LOG_PATH = REPO_ROOT / "logs" / "agent-runs.jsonl"
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    # Local time (with its UTC offset), not UTC -- logs read far more often
+    # by a person on this machine than joined against another timezone.
+    return datetime.now().astimezone().isoformat()
 
 
 class AgentLogger:

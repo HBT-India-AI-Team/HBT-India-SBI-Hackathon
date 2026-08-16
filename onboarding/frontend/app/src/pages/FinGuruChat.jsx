@@ -13,7 +13,11 @@ import { useVoiceRecorder } from '../lib/voiceRecorder';
 import { transcribeAudio, synthesizeText, playAudioBlob, stopAudio, checkVoiceHealth } from '../api/voice';
 import { VOICE_MODE, SKIP_FINGURU_IN_VOICE, BARGE_IN_ENABLED, BARGE_IN_MIN_CHARS } from '../lib/voiceConfig';
 import { useVoiceCall } from '../hooks/useVoiceCall';
-import { LANGUAGE_NAMES, ENABLED_LANGUAGES, DEFAULT_LANGUAGE, resolveLanguageCode } from '../lib/languages';
+import {
+  LANGUAGE_NAMES, ENABLED_LANGUAGES, DEFAULT_LANGUAGE, resolveLanguageCode,
+  languageDisplayName, unsupportedLanguageMessage, detectScriptLanguage,
+  detectSupportedScriptLanguage,
+} from '../lib/languages';
 import { getProfileId } from '../lib/finguruProfile';
 import { getConversation, upsertConversation, trimRetention, historySupported, MAX_CONVERSATIONS } from '../lib/historyDb';
 import NamePrompt from '../components/NamePrompt';
@@ -26,6 +30,16 @@ import { withFollowUpInstruction, extractFollowUps } from '../lib/followUps';
 
 const LAST_CONVERSATION_KEY = 'finguru.lastConversationId';
 const FOLLOW_UPS_KEY = 'finguru.followUpsEnabled';
+
+// When true, each request/response bubble shows the local time it was added.
+// Off by default -- debug/QA aid, not something an end user needs on screen.
+const SHOW_MESSAGE_TIMESTAMPS =
+  (import.meta.env.VITE_SHOW_MESSAGE_TIMESTAMPS || 'false').trim().toLowerCase() === 'true';
+
+function formatMessageTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 function newMsgId() {
   return (typeof crypto !== 'undefined' && crypto.randomUUID && crypto.randomUUID()) || `m-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -126,7 +140,17 @@ export default function FinGuruChat() {
     };
   }, [name]);
 
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessagesRaw] = useState([]);
+  // Every message gets a `ts` the moment it's first added, stamped here so
+  // the ~15 call sites that build message objects don't each have to. Once
+  // set it's never touched again -- an update (e.g. attaching ttsProvider)
+  // patches the same object, which already has ts, so it survives untouched.
+  const setMessages = (updater) => {
+    setMessagesRaw((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      return next.map((m) => (m.ts ? m : { ...m, ts: Date.now() }));
+    });
+  };
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [colloquial, setColloquial] = useState(false);
@@ -164,6 +188,7 @@ export default function FinGuruChat() {
   const colloquialRef = useRef(false);
   const languageRef = useRef(DEFAULT_LANGUAGE);
   const voiceBusyRef = useRef(false); // true while asking/synthesizing/speaking
+  const autoMutedRef = useRef(false); // true while the thinking/speaking auto-mute effect owns the mic's mute state
   const seeded = useRef(false);
 
   // --- Prompt 2: record-then-send voice messages (turn mode) ---
@@ -190,6 +215,11 @@ export default function FinGuruChat() {
   // status text instead of duplicating state, see the render section below). ---
   const [ollamaThinking, setOllamaThinking] = useState(false); // Ollama-fallback: request in flight, before first spoken sentence
   const [liveSpeaking, setLiveSpeaking] = useState(false); // FinGuru/Ollama-TTS reply audio currently playing
+
+  // Copy-to-clipboard confirmation: which message's Copy button most recently
+  // succeeded, so its label can briefly swap to "Copied" -- see copyMessageText.
+  const [copiedId, setCopiedId] = useState(null);
+  const copiedTimerRef = useRef(null);
 
   // --- Prompt 6: barge-in bookkeeping (live mode only) ---
   const ollamaAbortRef = useRef(null); // AbortController for the in-flight streaming-Ollama turn, if any
@@ -236,7 +266,10 @@ export default function FinGuruChat() {
     setMessages((prev) => [
       ...prev,
       { id: newMsgId(), direction: 'inbound', text, sttProvider: 'sarvam' },
-      { id: outboundId, direction: 'outbound', text: '…' },
+      // viaVoice: this turn actually went through STT/TTS, so the Play/Stop
+      // and "TTS: Sarvam/Local" controls should show under the reply -- same
+      // rule the one-shot voice path uses (see send()'s viaVoice comment).
+      { id: outboundId, direction: 'outbound', text: '…', viaVoice: true },
     ]);
     ollamaMsgIdRef.current = outboundId; // Prompt 6: lets a barge-in mark this exact message interrupted
     const controller = new AbortController();
@@ -281,6 +314,11 @@ export default function FinGuruChat() {
         return;
       }
       clearFallbackIfReason('llm'); // a streaming-Ollama reply succeeded -> LLM is fine
+      // The message's ts was stamped when the '…' placeholder was first added
+      // (start of generation, not the reply) -- bump it once now that the
+      // real text has fully arrived, rather than on every onToken update
+      // (which would make the shown time flicker while streaming).
+      updateMessageById(outboundId, { ts: Date.now() });
       if (result?.ttsFallbackNeeded) {
         // /tts/stream never connected this turn (e.g. Prompt 3's
         // TTS_STREAMING_ENABLED is off on the GPU PC) -- the text is already
@@ -320,7 +358,7 @@ export default function FinGuruChat() {
           : 'The voice assistant is temporarily unavailable — you can type instead.',
         true
       );
-      updateMessageById(outboundId, { text: 'Voice server is unavailable right now.', variant: 'error' });
+      updateMessageById(outboundId, { text: 'Voice server is unavailable right now.', variant: 'error', ts: Date.now() });
     } finally {
       setOllamaThinking(false);
       streamDone = true;
@@ -345,13 +383,17 @@ export default function FinGuruChat() {
       clearFallbackIfReason('connection'); // a transcript arriving proves the call is actually working again
       // Match the reply language to whatever STT heard (updates the picker +
       // languageRef before the brain/TTS calls below run).
-      if (applyDetectedLanguage(detectedLanguage) === 'unsupported') {
+      if (applyDetectedLanguage(detectedLanguage, t) === 'unsupported') {
         setMessages((prev) => [
           ...prev,
           { id: newMsgId(), direction: 'inbound', text: t, sttProvider: 'sarvam' },
-          { id: newMsgId(), direction: 'outbound', text: UNSUPPORTED_LANGUAGE_MESSAGE, variant: 'error' },
+          {
+            id: newMsgId(), direction: 'outbound',
+            text: unsupportedLanguageMessage(languageDisplayName(detectedLanguage)),
+            variant: 'error',
+          },
         ]);
-        return;
+        return; // no brain/TTS call for this turn -- the reply above is the whole turn
       }
       // Prompt 6 (barge-in): a transcript arriving while the assistant is
       // already SPEAKING can interrupt it, if enabled and long enough to be
@@ -658,6 +700,31 @@ export default function FinGuruChat() {
   const send = async (text, opts = {}) => {
     const trimmed = (text ?? input).trim();
     if (!trimmed || loading) return;
+
+    // Voice-originated turns were already checked against STT's own detected
+    // language (see onTranscript/processVoiceJob above) -- this guards TYPED
+    // input, which has no STT to ask, via script detection instead. Scoped to
+    // scripts we recognize but don't serve (Telugu, Kannada, Malayalam,
+    // Bengali, Gujarati, Punjabi); Latin script and Devanagari/Tamil (English,
+    // Hindi, Tamil, and their romanized forms -- all already supported) pass
+    // straight through.
+    if (!opts.speak && !opts.sttProvider) {
+      const scriptCode = detectScriptLanguage(trimmed);
+      if (scriptCode) {
+        setInput('');
+        setMessages((prev) => [
+          ...prev,
+          { id: newMsgId(), direction: 'inbound', text: trimmed },
+          {
+            id: newMsgId(), direction: 'outbound',
+            text: unsupportedLanguageMessage(LANGUAGE_NAMES[scriptCode]),
+            variant: 'error',
+          },
+        ]);
+        return; // no brain call for this turn -- the reply above is the whole turn
+      }
+    }
+
     const history = messagesRef.current
       .filter((m) => m.text)
       .map((m) => ({ role: m.direction === 'inbound' ? 'user' : 'assistant', content: m.text }));
@@ -683,7 +750,7 @@ export default function FinGuruChat() {
     // same text that gets synthesized, so the assistant read the list aloud.
     // FinGuru now returns them as their own schema field, outside `content`,
     // so there is nothing in the spoken text to read.
-    const showFollowUps = followUpsEnabled;
+    const showFollowUps = followUpsActive;
     // The instruction is still how a brain with no schema field (Ollama)
     // produces them, and it still must not go out on a spoken turn, for
     // exactly the original reason: the marker block would be read aloud.
@@ -697,6 +764,26 @@ export default function FinGuruChat() {
     // it is finally added -- updateMessageById cannot be used from inside the
     // stream, because the message does not exist in state yet.
     let streamedProvider = null;
+    // Lets a barge-in's stopSpeakingNow() actually reach a FinGuru-streamed
+    // voice reply (there's no manual Stop button anymore, but a new
+    // transcript arriving mid-speech still needs to cut the old reply off).
+    // Without this, stopSpeakingNow() could pause whatever single sentence
+    // was CURRENTLY playing (via the shared stopAudio()), but askFinGuruStreaming's
+    // SentenceSpeaker has its own internal queue of not-yet-played sentences
+    // that nothing ever told to stop -- pause() doesn't fire the audio
+    // element's 'ended' event, so the queue's "still playing" flag never
+    // cleared and the next queued sentence played anyway, with speakingId
+    // stuck since onSpeakingChange(false) never fired either. Reuses
+    // ollamaAbortRef -- the same ref stopSpeakingNow() already aborts
+    // unconditionally for the streaming-Ollama path -- since only one voice
+    // turn is ever in flight at a time.
+    const controller = opts.speak ? new AbortController() : null;
+    if (controller) ollamaAbortRef.current = controller;
+    let speechStreamDone = false;
+    let speechStillPlaying = false;
+    const releaseSpeechController = () => {
+      if (controller && ollamaAbortRef.current === controller) ollamaAbortRef.current = null;
+    };
     try {
       const res = await askBrain(questionForBrain, history, {
         colloquial: colloquialRef.current,
@@ -712,9 +799,16 @@ export default function FinGuruChat() {
           speechHooks: {
             onFirstProvider: (provider) => { streamedProvider = provider; },
             onSpeakingChange: (speaking) => {
+              speechStillPlaying = speaking;
               setSpeakingId(speaking ? outboundId : null);
               setVoiceStatus(speaking ? 'speaking' : 'idle');
+              // Mirrors runStreamingOllama's releaseIfIdle: only release once
+              // BOTH the stream has finished AND whatever it queued has
+              // finished playing, so Stop can still reach a controller for
+              // audio still draining after the text itself is done.
+              if (!speaking && speechStreamDone) releaseSpeechController();
             },
+            signal: controller?.signal,
           },
         } : {}),
       });
@@ -748,6 +842,10 @@ export default function FinGuruChat() {
           text: replyText,
           language: res.language,
           variant: res.hitl?.triggered ? 'error' : 'default',
+          // Only a voice-originated turn actually touched STT/TTS -- a typed
+          // question never did, so its reply shouldn't show Play/TTS
+          // controls implying an audio pipeline that was never involved.
+          viaVoice: !!opts.speak,
           followUps,
           ...(streamedProvider ? { ttsProvider: streamedProvider } : {}),
           // Calculators the backend offered for this question -- an EMI card
@@ -772,6 +870,10 @@ export default function FinGuruChat() {
       ]);
     } finally {
       setLoading(false);
+      if (controller) {
+        speechStreamDone = true;
+        if (!speechStillPlaying) releaseSpeechController();
+      }
     }
   };
 
@@ -870,9 +972,20 @@ export default function FinGuruChat() {
   // that isn't one of ENABLED_LANGUAGES, or an unrecognized code entirely) --
   // callers must stop the turn on 'unsupported' rather than running the
   // brain/TTS in a language this app doesn't offer.
-  const applyDetectedLanguage = (detected) => {
-    if (!detected) return 'unchanged'; // STT didn't report a language -- don't block on it
-    const code = resolveLanguageCode(detected);
+  //
+  // `text` is the transcript itself, used only as a fallback when `detected`
+  // is empty -- Sarvam's live-call transcript.final event doesn't always
+  // carry a `language` field (observed: a Tamil-script utterance arriving
+  // with no language at all), and without this the turn would silently fall
+  // back to DEFAULT_LANGUAGE ('en'), producing an English reply to a Tamil
+  // question with no "Detected Tamil" note to explain why. Script detection
+  // only covers Tamil/Devanagari (the two Indic scripts this app serves) --
+  // it says nothing for Latin text, which is correctly left to STT/default.
+  const applyDetectedLanguage = (detected, text) => {
+    const fallback = !detected ? detectSupportedScriptLanguage(text) : null;
+    const raw = detected || fallback;
+    if (!raw) return 'unchanged'; // STT reported nothing and the text gives no signal either
+    const code = resolveLanguageCode(raw);
     if (!code || !ENABLED_LANGUAGES.includes(code)) return 'unsupported';
     if (code === languageRef.current) return 'unchanged';
     languageRef.current = code; // used immediately below by askBrain/synthesizeText
@@ -881,16 +994,16 @@ export default function FinGuruChat() {
     return 'applied';
   };
 
-  const UNSUPPORTED_LANGUAGE_MESSAGE = "This language isn't supported yet — support will be added soon. Try English, Tamil, or Hindi.";
-
   const processVoiceJob = async ({ id, blob }) => {
     updateMessageById(id, { status: 'processing', statusText: 'Transcribing…' });
     let transcript = '';
     let langStatus;
+    let detectedRaw;
     try {
       const result = await transcribeAudio(blob);
       transcript = (result?.text || '').trim();
-      langStatus = applyDetectedLanguage(result?.detected_language);
+      detectedRaw = result?.detected_language;
+      langStatus = applyDetectedLanguage(detectedRaw, transcript);
       clearFallbackIfReason('stt'); // transcription succeeded -> STT is fine
     } catch (err) {
       const status = err?.response?.status;
@@ -909,10 +1022,10 @@ export default function FinGuruChat() {
       updateMessageById(id, {
         text: transcript,
         status: 'error',
-        statusText: UNSUPPORTED_LANGUAGE_MESSAGE,
+        statusText: unsupportedLanguageMessage(languageDisplayName(detectedRaw)),
         sttProvider: 'sarvam',
       });
-      return;
+      return; // no brain/TTS call for this turn -- the status line above is the whole turn
     }
     updateMessageById(id, {
       text: transcript,
@@ -993,29 +1106,6 @@ export default function FinGuruChat() {
     runVoiceQueue();
   };
 
-  const languageSelect = (
-    <select
-      value={language}
-      onChange={(e) => setLanguage(e.target.value)}
-      disabled={inCall}
-      aria-label="Response language"
-      title={
-        inCall
-          ? "Sarvam auto-detects your language during a call — this updates automatically as you speak"
-          : 'Language for replies and voice'
-      }
-      className={`h-7 rounded-full border border-outline-variant bg-surface text-[11px] font-heading font-bold text-primary pl-2 pr-1 outline-none ${
-        inCall ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-      }`}
-    >
-      {ENABLED_LANGUAGES.map((code) => (
-        <option key={code} value={code}>
-          {LANGUAGE_NAMES[code]}
-        </option>
-      ))}
-    </select>
-  );
-
   const desiSwitch = (
     <button
       type="button"
@@ -1057,66 +1147,94 @@ export default function FinGuruChat() {
 
   // Recommended follow-up questions -- only ever applied to typed (text-mode)
   // questions, see send()'s wantFollowUps -- a voice question ignores this
-  // toggle entirely.
+  // toggle entirely. Forced off (and greyed out, un-clickable) while a call
+  // is active: irrelevant during voice anyway, and disabling it makes that
+  // obvious rather than leaving a switch that looks ON but does nothing.
+  //
+  // Deliberately doesn't touch the underlying followUpsEnabled STATE (or its
+  // localStorage persistence) -- this is a display/effective override for the
+  // duration of the call, not a change to the user's saved preference, so it
+  // reverts to whatever they had it set to the moment the call ends.
+  const followUpsActive = followUpsEnabled && !inCall;
   const followUpsSwitch = (
     <button
       type="button"
-      onClick={() => setFollowUpsEnabled((v) => !v)}
+      onClick={() => !inCall && setFollowUpsEnabled((v) => !v)}
+      disabled={inCall}
       role="switch"
-      aria-checked={followUpsEnabled}
+      aria-checked={followUpsActive}
       aria-label="Recommended follow-up questions for typed replies"
       title={
-        followUpsEnabled
-          ? 'Follow-up suggestions ON — typed replies show up to 3 suggested next questions'
-          : 'Follow-up suggestions OFF'
+        inCall
+          ? 'Follow-up suggestions are off during a voice call'
+          : followUpsEnabled
+            ? 'Follow-up suggestions ON — typed replies show up to 3 suggested next questions'
+            : 'Follow-up suggestions OFF'
       }
-      className="flex items-center gap-1 h-7 pl-2 pr-1 rounded-full border transition active:scale-95 whitespace-nowrap"
+      className="flex items-center gap-1 h-7 pl-2 pr-1 rounded-full border transition active:scale-95 whitespace-nowrap disabled:opacity-40 disabled:active:scale-100 disabled:cursor-not-allowed"
       style={{
-        borderColor: followUpsEnabled ? 'var(--color-primary)' : 'var(--color-outline-variant)',
-        background: followUpsEnabled ? 'var(--color-primary)' : 'transparent',
+        borderColor: followUpsActive ? 'var(--color-primary)' : 'var(--color-outline-variant)',
+        background: followUpsActive ? 'var(--color-primary)' : 'transparent',
       }}
     >
       <span
         className="text-[10.5px] font-heading font-bold"
-        style={{ color: followUpsEnabled ? 'var(--color-on-primary)' : 'var(--color-on-surface-variant)' }}
+        style={{ color: followUpsActive ? 'var(--color-on-primary)' : 'var(--color-on-surface-variant)' }}
       >
         Follow-ups
       </span>
       <span
         className="relative w-7 h-4 rounded-full transition"
-        style={{ background: followUpsEnabled ? 'var(--color-on-primary)' : 'var(--color-outline-variant)' }}
+        style={{ background: followUpsActive ? 'var(--color-on-primary)' : 'var(--color-outline-variant)' }}
       >
         <span
           className="absolute top-0.5 w-3 h-3 rounded-full transition-all"
           style={{
-            left: followUpsEnabled ? '14px' : '2px',
-            background: followUpsEnabled ? 'var(--color-primary)' : 'var(--color-surface-lowest)',
+            left: followUpsActive ? '14px' : '2px',
+            background: followUpsActive ? 'var(--color-primary)' : 'var(--color-surface-lowest)',
           }}
         />
       </span>
     </button>
   );
 
-  const toggleSpeak = (id, text) => {
-    // If this message is showing Preparing/Stop at all, SOMETHING is currently
-    // producing its audio -- hard-stop via stopSpeakingNow() rather than trying
-    // to match this exact id against whichever pipeline ref backs it. Matching
-    // refs (e.g. ollamaMsgIdRef.current === id) can go stale the instant a
-    // barge-in (real or a false one from mic echo re-hearing our own TTS)
-    // swaps in a newer turn's controller, leaving Stop silently unable to find
-    // "its" controller. stopSpeakingNow() tears down all three reply pipelines
-    // unconditionally, so it works regardless of which one is actually live.
-    if (preparingId === id || speakingId === id) {
-      stopSpeakingNow();
-      return;
-    }
-    speakMessage(id, text);
-  };
-
   const toggleCall = () => {
     setVoiceNote(null);
     if (inCall) voiceCall.end();
     else voiceCall.start();
+  };
+
+  // Copy/Share for a reply's text. `copiedId` drives a brief "Copied" swap on
+  // whichever message's button was just clicked, cleared on a timer -- so two
+  // replies copied back-to-back each get their own confirmation rather than
+  // one getting stuck showing a stale checkmark.
+  const copyMessageText = async (id, text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard API needs a secure context (https/localhost) and permission;
+      // silently do nothing rather than show a false "Copied".
+      return;
+    }
+    setCopiedId(id);
+    clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  // Native share sheet when available (mobile browsers, some desktop
+  // browsers); on anything else (most desktop browsers have no
+  // navigator.share) falls back to the same clipboard copy, since "share"
+  // with no share target is just "hand me the text another way".
+  const shareMessageText = async (id, text) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+      } catch {
+        /* user cancelled the share sheet, or it failed -- either way, nothing to recover */
+      }
+      return;
+    }
+    copyMessageText(id, text);
   };
 
   const transcribing = voiceStatus === 'transcribing';
@@ -1149,6 +1267,38 @@ export default function FinGuruChat() {
           ? 'thinking'
           : 'listening';
 
+  // Auto-mute the mic while the assistant is thinking or speaking, so its own
+  // reply (or the wait before it) can't be picked back up and mistaken for
+  // the next question. Unmutes the instant we're back to 'listening'.
+  //
+  // Only mutes/unmutes what THIS effect itself muted (autoMutedRef) -- if the
+  // user hit "M" to mute deliberately, that's their call to undo, not ours;
+  // this only ever reverts its own auto-mute, never a manual one.
+  //
+  // NOTE: this intentionally defeats barge-in (VITE_BARGE_IN_ENABLED) while
+  // speaking -- no mic audio reaches Sarvam at all during 'speaking', so
+  // there is no transcript for a barge-in to fire on. That trade-off is the
+  // point: this flag exists specifically to stop the assistant hearing (and
+  // reacting to) its own voice or an accidental interruption.
+  useEffect(() => {
+    if (!liveMode || !inCall || !voiceCall.setMicMuted) {
+      // Call ended (or not live) -- start() resets the mic to unmuted for the
+      // next call, so this effect must forget it ever auto-muted anything,
+      // or the first 'speaking' stage of the NEXT call would see
+      // autoMutedRef already true and skip re-muting.
+      autoMutedRef.current = false;
+      return;
+    }
+    const shouldMute = liveStage === 'thinking' || liveStage === 'speaking';
+    if (shouldMute && !autoMutedRef.current) {
+      autoMutedRef.current = true;
+      voiceCall.setMicMuted(true);
+    } else if (!shouldMute && autoMutedRef.current) {
+      autoMutedRef.current = false;
+      voiceCall.setMicMuted(false);
+    }
+  }, [liveStage, liveMode, inCall]);
+
   // Turn mode: reuse the currently-processing voice message's own status text
   // (already tracked per-message since Prompt 2) instead of a second parallel
   // stage tracker -- there's exactly one job "in flight" at a time (the queue
@@ -1158,7 +1308,6 @@ export default function FinGuruChat() {
 
   const headerControls = (
     <>
-      {languageSelect}
       {desiSwitch}
       {followUpsSwitch}
     </>
@@ -1222,51 +1371,80 @@ export default function FinGuruChat() {
             return m.direction === 'inbound' ? (
               <div key={i} className="flex flex-col items-end gap-0.5">
                 <UserBubble>{m.text}</UserBubble>
-                {m.viaFallback && (
-                  <span className="text-[10px] text-on-surface-variant mr-1" title="Sent as text while voice was unavailable">
-                    ⌨️ typed (voice unavailable)
-                  </span>
-                )}
                 {m.sttProvider && (
                   <span className="text-[10px] text-on-surface-variant mr-1 opacity-70">
                     STT: {providerLabel(m.sttProvider)}
+                  </span>
+                )}
+                {SHOW_MESSAGE_TIMESTAMPS && m.ts && (
+                  <span className="text-[10px] text-on-surface-variant mr-1 opacity-70">
+                    {formatMessageTime(m.ts)}
                   </span>
                 )}
               </div>
             ) : (
               <div key={i} className="flex flex-col gap-1 self-start max-w-[88%]">
                 <BotBubble variant={m.variant}>
-                  <Markdown text={m.text} />
+                  {m.text === '…' ? (
+                    // The streaming-Ollama placeholder (see runStreamingOllama)
+                    // starts life as a literal ellipsis and gets overwritten by
+                    // real tokens via updateMessageById -- while it's still
+                    // that sentinel, show the same animated dots the typed-chat
+                    // TypingBubble uses instead of a static "…" with no motion.
+                    <span className="flex gap-1 items-center py-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-outline typing-dot" style={{ animationDelay: '0s' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-outline typing-dot" style={{ animationDelay: '0.15s' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-outline typing-dot" style={{ animationDelay: '0.3s' }} />
+                    </span>
+                  ) : (
+                    <Markdown text={m.text} />
+                  )}
                 </BotBubble>
-                <div className="flex items-center gap-2 ml-10">
-                  <button
-                    type="button"
-                    onClick={() => toggleSpeak(m.id, m.text)}
-                    className="self-start text-[11px] font-semibold text-primary flex items-center gap-1 active:scale-95"
-                    title={preparingId === m.id ? 'Preparing audio…' : speakingId === m.id ? 'Stop' : 'Play aloud'}
-                  >
-                    {preparingId === m.id ? (
-                      <>
-                        <span className="inline-block w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                        Preparing…
-                      </>
-                    ) : speakingId === m.id ? (
-                      '⏹ Stop'
-                    ) : (
-                      '🔊 Play'
+                {m.text && m.text !== '…' && (
+                  <div className="flex items-center gap-2 ml-10">
+                    {SHOW_MESSAGE_TIMESTAMPS && m.ts && (
+                      <span className="text-[10px] text-on-surface-variant opacity-70">
+                        {formatMessageTime(m.ts)}
+                      </span>
                     )}
-                  </button>
-                  {m.interrupted && (
-                    <span className="text-[10.5px] text-on-surface-variant" title="You interrupted this reply">
-                      ⏸ Interrupted
-                    </span>
-                  )}
-                  {m.text && (
-                    <span className="text-[10px] text-on-surface-variant opacity-70">
-                      TTS: {providerLabel(m.ttsProvider || predictedTtsProvider(m.text))}
-                    </span>
-                  )}
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => copyMessageText(m.id, m.text)}
+                      className="text-[11px] font-semibold text-primary flex items-center gap-0.5 active:scale-95"
+                      title="Copy reply text"
+                    >
+                      {copiedId === m.id ? '✓ Copied' : '📋 Copy'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => shareMessageText(m.id, m.text)}
+                      className="text-[11px] font-semibold text-primary flex items-center gap-0.5 active:scale-95"
+                      title="Share reply text"
+                    >
+                      ↗ Share
+                    </button>
+                  </div>
+                )}
+                {m.viaVoice && (
+                  <div className="flex items-center gap-2 ml-10">
+                    {/* Play/Stop control removed -- Stop couldn't reliably tear
+                        down every audio pipeline (queued streaming sentences,
+                        the REST-fallback player, TtsSentenceStream's own
+                        AudioContext), so a stuck button was worse than none.
+                        Voice replies still speak automatically; this is only
+                        the manual replay/stop affordance. */}
+                    {m.interrupted && (
+                      <span className="text-[10.5px] text-on-surface-variant" title="You interrupted this reply">
+                        ⏸ Interrupted
+                      </span>
+                    )}
+                    {m.text && (
+                      <span className="text-[10px] text-on-surface-variant opacity-70">
+                        TTS: {providerLabel(m.ttsProvider || predictedTtsProvider(m.text))}
+                      </span>
+                    )}
+                  </div>
+                )}
                 {m.tools?.length > 0 && (
                   <div className="ml-10">
                     {m.tools.map((suggestion) => (
@@ -1466,10 +1644,11 @@ export default function FinGuruChat() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!nameHistoryChecked) return; // per spec: no new message until the history check settles
-              // Prompt 7: while on the voice fallback, route typed messages
-              // through the same brain voice uses and speak the reply back
-              // if TTS itself isn't the thing that's down.
-              if (voiceFallback) send(undefined, { viaFallback: true, speak: voiceFallback.ttsOk });
+              // While on the voice fallback, typed messages still route
+              // through the same brain voice uses, but a typed question
+              // stays text-only -- no TTS controls or auto-play, since the
+              // user chose to type rather than speak.
+              if (voiceFallback) send(undefined, { viaFallback: true });
               else send();
             }}
             className="flex items-center gap-2 bg-surface-container-low rounded-full px-3 py-2 border border-outline-variant"

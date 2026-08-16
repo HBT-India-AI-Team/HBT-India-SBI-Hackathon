@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
@@ -158,7 +158,7 @@ class OllamaAdapter:
                   duration_ms: float, ok: bool, response_body: dict[str, Any] | None = None,
                   error: str | None = None) -> None:
         record = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now().astimezone().isoformat(),
             "host": self.host,
             "model": self.model,
             "attempt": attempt,

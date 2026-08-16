@@ -7,12 +7,12 @@ free as long as its stages populate the same RunContext fields.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now().astimezone().isoformat()
 
 
 def build(ctx, bundle) -> dict[str, Any]:
