@@ -31,10 +31,48 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: frontendPort,
+      // Vite rejects any request whose Host header it does not recognise, so
+      // reaching this dev server through a tunnel returns "Blocked request.
+      // This host is not allowed" for the page AND every proxied call. The
+      // check is a DNS-rebinding protection and is worth keeping narrow:
+      // this lists the tunnel domains rather than disabling it with `true`.
+      // Add a domain here (or set FRONTEND_ALLOWED_HOSTS=a,b) when a new
+      // tunnel is used.
+      allowedHosts: [
+        '.ngrok-free.dev',
+        '.ngrok.io',
+        '.trycloudflare.com',
+        ...(env.FRONTEND_ALLOWED_HOSTS
+          ? env.FRONTEND_ALLOWED_HOSTS.split(',').map((h) => h.trim()).filter(Boolean)
+          : []),
+      ],
       // Same-origin proxy to the reference voice server. The browser calls
       // /voice-api/* (no CORS/preflight); Vite forwards to <target>/voice/*
       // with the Bearer token attached here.
       proxy: {
+        // FinGuru's own agent backend, same-origin. Added so the app works
+        // when this dev server is reached from somewhere other than this
+        // machine -- over a tunnel, or from a phone on the LAN. With
+        // VITE_FINGURU_URL pointing at http://localhost:8080 the browser
+        // resolves "localhost" to ITS OWN machine, so every request fails for
+        // anyone but the developer; and an https tunnel serving a page that
+        // calls http is blocked as mixed content regardless.
+        //
+        // Set VITE_FINGURU_URL=/agents/finguru/invoke to use this. An
+        // absolute URL still works and bypasses this entirely, so nothing
+        // that already points at a hosted backend changes.
+        '/agents': {
+          target: env.FINGURU_BACKEND_TARGET || 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        },
+        // Same-origin path for the name-identity + dynamic-tools endpoints
+        // (/api/history, /api/tools, /api/tools/execute) on that same backend.
+        '/api/tools': {
+          target: env.FINGURU_BACKEND_TARGET || 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        },
         '/voice-api': {
           target: voiceTarget,
           changeOrigin: true,

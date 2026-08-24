@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { logTtsSent, logTtsReceived, debugError, debugWarn } from '../lib/pipelineLog';
+import { logTtsSent, logTtsReceived, logTtsPlaybackStart, debugError, debugWarn } from '../lib/pipelineLog';
 import { normalizeForTTS } from '../lib/ttsText';
 import { sarvamTranscribe, sarvamSynthesize } from './sarvam';
 import { needsSarvamTts } from '../lib/ttsRouter';
@@ -106,10 +106,11 @@ export async function synthesizeText(text, language = 'en') {
 // --- single-slot audio playback for spoken replies ---
 let currentAudio = null;
 
-export function playAudioBlob(blob, { onEnd } = {}) {
+export function playAudioBlob(blob, { onEnd, label } = {}) {
   stopAudio();
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
+  const queuedAt = performance.now();
   const done = () => {
     URL.revokeObjectURL(url);
     if (currentAudio === audio) currentAudio = null;
@@ -117,6 +118,16 @@ export function playAudioBlob(blob, { onEnd } = {}) {
   };
   audio.onended = done;
   audio.onerror = done;
+  // 'playing' (not 'play') -- fires when audio is genuinely audible, after any
+  // buffering, rather than when playback was merely requested.
+  audio.onplaying = () => {
+    logTtsPlaybackStart({
+      ...(label ? { label } : {}),
+      startDelayMs: Math.round(performance.now() - queuedAt),
+      durationSec: Number.isFinite(audio.duration) ? Math.round(audio.duration * 10) / 10 : null,
+      audioBytes: blob?.size ?? null,
+    });
+  };
   currentAudio = audio;
   audio.play().catch(done);
   return audio;

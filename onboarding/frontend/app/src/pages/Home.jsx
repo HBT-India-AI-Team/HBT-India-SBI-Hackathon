@@ -63,13 +63,19 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-surface pb-24">
       <header className="sticky top-0 z-30 bg-surface/95 backdrop-blur border-b border-surface-highest">
-        <div className="flex items-center justify-between px-5 py-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-heading font-bold text-[13px]">
-              Y
-            </div>
-            <h1 className="font-heading font-bold text-[18px] text-primary">Hi there</h1>
+        {/* Native-app title bar: mark left, brand centred, action right.
+            The brand is centred rather than stacked with the greeting because
+            a two-line block beside a single round button never balances --
+            the eye reads the block as heavier and the header looks tilted.
+            The greeting moved into the page body, where it has room to be a
+            real heading instead of a caption. */}
+        <div className="grid grid-cols-[40px_1fr_40px] items-center gap-2 px-5 py-3.5">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary font-heading font-bold text-[15px] shadow-sm">
+            Y
           </div>
+          <h1 className="font-heading font-bold text-[19px] leading-none text-primary tracking-tight text-center whitespace-nowrap">
+            YONO&nbsp;3.0
+          </h1>
           <button
             onClick={() => setPickerOpen(true)}
             aria-label="Change language"
@@ -82,6 +88,12 @@ export default function Home() {
       </header>
 
       <main className="px-5 py-5 flex flex-col gap-5 overflow-x-hidden">
+        {/* The greeting the header used to carry as a caption. It gets to be
+            a real heading here, and sets up the card below it. */}
+        <h2 className="font-heading font-bold text-[22px] leading-tight text-on-surface -mb-1">
+          Hi there <span aria-hidden="true">👋</span>
+        </h2>
+
         {/* Progress / start banner */}
         <button
           onClick={applicationId ? resume : startNewApplication}

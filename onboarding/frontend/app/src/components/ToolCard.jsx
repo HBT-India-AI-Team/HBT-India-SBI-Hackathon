@@ -74,7 +74,13 @@ export default function ToolCard({ suggestion, name, onSaved }) {
   }, []);
 
   const save = async () => {
-    const stored = await saveToolInstance(name, tool.tool_id || suggestion.tool_id, values, result?.result);
+    // The whole execute response, not just its `result` number: /api/tools/save
+    // types `result` as an object and rejects a bare number with 422, so
+    // passing result?.result made every save fail silently (saveToolInstance
+    // swallows the error and returns null, leaving the button stuck on "Save").
+    // Storing the full payload also keeps output_label/prefix/breakdown with
+    // the row, which is what /api/tools/saved hands back for re-rendering.
+    const stored = await saveToolInstance(name, tool.tool_id || suggestion.tool_id, values, result);
     if (stored) {
       setSaved(true);
       onSaved?.(stored);

@@ -62,10 +62,17 @@ export function logLlmReceived(detail) {
 export function logTtsSent(detail) {
   stage('📤', 'Sent to TTS', detail);
 }
-export function logTtsReceived(_detail) {
-  // Intentionally disabled: TTS-received logging (stage 7) is off for now.
-  // Re-enable by uncommenting and restoring the `detail` param name.
-  // stage('📥', 'TTS response received', _detail);
+export function logTtsReceived(detail) {
+  stage('📥', 'TTS response received', detail);
+}
+// Stage 8: audio actually started coming out of the speakers. Distinct from
+// stage 7 -- "received" is when the WAV bytes landed, this is when the user
+// genuinely begins HEARING the reply, which is the latency that matters and
+// the only one that includes queue wait behind an earlier sentence still
+// playing. Fires per audio clip, so a sentence-streamed reply logs one per
+// sentence.
+export function logTtsPlaybackStart(detail) {
+  stage('🔊', 'TTS playback started', detail);
 }
 
 // Everything else. Off by default -- set VITE_DEBUG_LOGS=true to restore the

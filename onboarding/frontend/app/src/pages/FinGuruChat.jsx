@@ -701,6 +701,13 @@ export default function FinGuruChat() {
     const trimmed = (text ?? input).trim();
     if (!trimmed || loading) return;
 
+    // opts.speak: the question itself came in as voice (mic/live-call).
+    // opts.speakReply: the question was typed, but the reply should still be
+    // spoken (main compose box, follow-up chips) -- everything downstream
+    // that decides whether to run the streaming-TTS pipeline and speak the
+    // answer keys off this, not off opts.speak alone.
+    const wantsSpokenReply = !!(opts.speak || opts.speakReply);
+
     // Voice-originated turns were already checked against STT's own detected
     // language (see onTranscript/processVoiceJob above) -- this guards TYPED
     // input, which has no STT to ask, via script detection instead. Scoped to
@@ -740,10 +747,10 @@ export default function FinGuruChat() {
     ]);
     setInput('');
     setLoading(true);
-    // Follow-up suggestions are a text-mode-only feature: a voice-originated
-    // question (opts.speak) skips the instruction entirely, so the spoken
-    // reply never has to read a suggestions block aloud or have one stripped
-    // out of it.
+    // Follow-up suggestions are a text-only feature: any turn whose reply
+    // will be spoken (wantsSpokenReply) skips the instruction entirely, so
+    // the spoken reply never has to read a suggestions block aloud or have
+    // one stripped out of it.
     // Shown whenever the switch is on, spoken turns included. They used to be
     // excluded because the only way to get them was the ###FOLLOWUPS###
     // instruction, which puts the suggestions INSIDE the reply text -- the
@@ -754,7 +761,7 @@ export default function FinGuruChat() {
     // The instruction is still how a brain with no schema field (Ollama)
     // produces them, and it still must not go out on a spoken turn, for
     // exactly the original reason: the marker block would be read aloud.
-    const wantMarker = showFollowUps && !opts.speak;
+    const wantMarker = showFollowUps && !wantsSpokenReply;
     const questionForBrain = wantMarker ? withFollowUpInstruction(trimmed) : trimmed;
     // Generated before the call, not after: when this turn streams, audio
     // starts while the reply is still being written, so the speaking state and
@@ -777,7 +784,7 @@ export default function FinGuruChat() {
     // ollamaAbortRef -- the same ref stopSpeakingNow() already aborts
     // unconditionally for the streaming-Ollama path -- since only one voice
     // turn is ever in flight at a time.
-    const controller = opts.speak ? new AbortController() : null;
+    const controller = wantsSpokenReply ? new AbortController() : null;
     if (controller) ollamaAbortRef.current = controller;
     let speechStreamDone = false;
     let speechStillPlaying = false;
@@ -788,14 +795,22 @@ export default function FinGuruChat() {
       const res = await askBrain(questionForBrain, history, {
         colloquial: colloquialRef.current,
         language: languageRef.current,
-        voice: !!opts.speak,
+        voice: wantsSpokenReply,
         // Prompt 7: a fallback-typed message uses whichever brain voice
         // questions are configured to use, regardless of USE_OLLAMA_IN_VOICE's
         // normal voice-only gating -- see askBrain's comment.
-        useOllamaBrain: opts.viaFallback ? USE_OLLAMA_IN_VOICE : undefined,
-        // Spoken turns stream; typed ones stay one-shot, since there is
-        // nothing to play early and the full reply renders at once anyway.
-        ...(opts.speak ? {
+        //
+        // Passed explicitly for the normal case too, rather than left
+        // undefined: askBrain would otherwise derive the brain from `voice`,
+        // which now means "this reply will be spoken" and is true for typed
+        // questions as well. Brain choice must keep keying off how the
+        // QUESTION arrived (opts.speak), or turning on speakReply would
+        // silently move typed questions off FinGuru onto Ollama.
+        useOllamaBrain: opts.viaFallback ? USE_OLLAMA_IN_VOICE : (USE_OLLAMA_IN_VOICE && !!opts.speak),
+        // Any turn whose reply should be spoken (voice-originated, or a typed
+        // question sent with speakReply) streams sentence-by-sentence so audio
+        // starts as each sentence is written rather than after the full reply.
+        ...(wantsSpokenReply ? {
           speechHooks: {
             onFirstProvider: (provider) => { streamedProvider = provider; },
             onSpeakingChange: (speaking) => {
@@ -812,7 +827,7 @@ export default function FinGuruChat() {
           },
         } : {}),
       });
-      if (opts.speak) clearFallbackIfReason('llm'); // a voice-originated reply succeeded -> LLM is fine
+      if (wantsSpokenReply) clearFallbackIfReason('llm'); // a spoken reply succeeded -> LLM is fine
       const rawReply = res.text || "I couldn't find an answer for that — try rephrasing?";
       // Strip the follow-ups block back out before storing/displaying --
       // never leaked into message.text, so it can't pollute a later turn's
@@ -842,10 +857,9 @@ export default function FinGuruChat() {
           text: replyText,
           language: res.language,
           variant: res.hitl?.triggered ? 'error' : 'default',
-          // Only a voice-originated turn actually touched STT/TTS -- a typed
-          // question never did, so its reply shouldn't show Play/TTS
-          // controls implying an audio pipeline that was never involved.
-          viaVoice: !!opts.speak,
+          // Show Play/TTS controls for any turn whose reply was actually
+          // spoken -- voice-originated, or typed with speakReply.
+          viaVoice: wantsSpokenReply,
           followUps,
           ...(streamedProvider ? { ttsProvider: streamedProvider } : {}),
           // Calculators the backend offered for this question -- an EMI card
@@ -854,11 +868,11 @@ export default function FinGuruChat() {
           tools: res.tools || [],
         },
       ]);
-      // Speak the reply back when the question came in by voice (or the
-      // fallback banner said TTS still works). `res.spoken` means the
+      // Speak the reply back whenever this turn wanted a spoken reply
+      // (voice-originated, or typed with speakReply). `res.spoken` means the
       // streaming path already played it sentence by sentence -- speaking it
       // again here would repeat the whole answer on top of itself.
-      if (opts.speak && res.text && !res.spoken) speakMessage(outboundId, replyText);
+      if (wantsSpokenReply && res.text && !res.spoken) speakMessage(outboundId, replyText);
     } catch {
       // Only a voice-originated send failing means the voice LLM path is
       // down -- a plain typed question failing is a normal error, not a
@@ -1463,7 +1477,7 @@ export default function FinGuruChat() {
                         key={qi}
                         type="button"
                         disabled={loading}
-                        onClick={() => send(q)}
+                        onClick={() => send(q, { speakReply: true })}
                         className="text-left text-[12.5px] font-semibold text-primary bg-primary/5 border border-primary/20 rounded-xl px-3 py-1.5 active:scale-[0.99] transition disabled:opacity-50"
                       >
                         {q}
@@ -1644,12 +1658,12 @@ export default function FinGuruChat() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!nameHistoryChecked) return; // per spec: no new message until the history check settles
-              // While on the voice fallback, typed messages still route
-              // through the same brain voice uses, but a typed question
-              // stays text-only -- no TTS controls or auto-play, since the
-              // user chose to type rather than speak.
+              // Typed messages get a spoken reply too now (same streaming-TTS
+              // pipeline voice turns use), except on the voice fallback banner
+              // -- there the voice pipeline itself is known-unavailable, so
+              // stay text-only rather than attempt TTS that's likely to fail.
               if (voiceFallback) send(undefined, { viaFallback: true });
-              else send();
+              else send(undefined, { speakReply: true });
             }}
             className="flex items-center gap-2 bg-surface-container-low rounded-full px-3 py-2 border border-outline-variant"
           >

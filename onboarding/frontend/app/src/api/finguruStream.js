@@ -1,5 +1,7 @@
 import { FINGURU_STREAM_URL, finguruHeaders } from './finguru';
-import { synthesizeText, playAudioBlob } from './voice';
+import { synthesizeText, playAudioBlob, stripMarkdownForSpeech } from './voice';
+import { TtsSentenceStream } from './ttsStream';
+import { normalizeForTTS } from '../lib/ttsText';
 import { logLlmSent, logLlmReceived, logTtsSent, debugLog, debugError } from '../lib/pipelineLog';
 
 // Streaming FinGuru -> sentence-level TTS. The counterpart to
@@ -20,10 +22,33 @@ import { logLlmSent, logLlmReceived, logTtsSent, debugLog, debugError } from '..
 // screen. So this consumes `sentence` events rather than re-splitting text.
 // (The Ollama path has to split client-side because it streams raw tokens.)
 //
-// Each sentence still goes through the existing synthesizeText(), so the
-// per-sentence Sarvam-vs-local routing in lib/ttsRouter.js is unchanged: a
-// sentence carrying a rupee amount goes to Sarvam, the rest to local
-// Parler-TTS, exactly as on the non-streaming path.
+// HOW THE AUDIO GETS OUT: streaming WS first, REST only as a fallback.
+//
+// Each sentence goes to the voice server's WS /tts/stream (api/ttsStream.js),
+// which returns PCM chunks as it generates them instead of one WAV at the end.
+// Measured on the same sentence through the tunnel:
+//
+//   REST /synthesize   6.0s before any audio
+//   WS   /tts/stream   0.8s to the first chunk
+//
+// The socket is opened at the START of the turn, before the first sentence
+// exists, so its ~1.2s connect happens while the LLM is still writing rather
+// than on the critical path.
+//
+// If the socket never opens (streaming disabled server-side, endpoint
+// unreachable), TtsSentenceStream calls back and we fall back to the REST
+// SentenceSpeaker below, replaying every sentence received so far. The
+// fallback only ever fires when NOTHING has been played, so it cannot
+// double-speak a reply that was already partly audible.
+//
+// A previous version cut the opening sentence at a comma to shorten the first
+// REST synthesis. Streaming makes that pointless -- the first chunk arrives
+// long before a whole sentence is synthesized either way -- and it cost an
+// extra round trip, so it is gone.
+//
+// NOTE: the WS path is local Parler-TTS only. lib/ttsRouter.js's Sarvam
+// routing does not apply to it, which currently changes nothing, since that
+// router is switched to always-local.
 
 /**
  * Plays synthesized sentences strictly in order, while allowing the next one
@@ -45,13 +70,28 @@ class SentenceSpeaker {
     this.stopped = false;
     this.streamEnded = false;
     this.reportedProvider = false;
+    // Sentences arrive in a burst (often <1s apart) but must be SENT to TTS
+    // one at a time, not fired concurrently: measured directly against the
+    // local voice server, 3 concurrent /synthesize calls each degraded from
+    // a solo ~10s to ~30s and then failed outright ("server is currently
+    // offline") -- it has no real request queue, just one worker. Chaining
+    // each push() off this promise means sentence N+1's request doesn't go
+    // out until sentence N's has resolved (or failed), regardless of how
+    // fast the sentences themselves arrive.
+    this._synthChain = Promise.resolve();
   }
 
-  /** Synthesize one sentence; playback order is preserved regardless of which
-   *  provider answers first. */
-  async push(text, language) {
+  /** Queue one sentence for synthesis; playback order is preserved
+   *  regardless of which provider answers first, and requests are sent to
+   *  TTS strictly one at a time (see _synthChain above). */
+  push(text, language) {
     if (this.stopped || !text) return;
     const index = this.received++;
+    this._synthChain = this._synthChain.then(() => this._synthesizeOne(index, text, language));
+  }
+
+  async _synthesizeOne(index, text, language) {
+    if (this.stopped) return;
     try {
       const { blob, provider } = await synthesizeText(text, language);
       if (this.stopped) return;
@@ -86,6 +126,7 @@ class SentenceSpeaker {
     this.playing = true;
     if (this.nextToPlay === 1) this.onSpeakingChange?.(true);
     playAudioBlob(blob, {
+      label: `sentence ${this.nextToPlay}`,
       onEnd: () => {
         this.playing = false;
         if (this.stopped) return;
@@ -143,10 +184,49 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
     ...(name ? { name } : {}),
   };
 
-  const speaker = new SentenceSpeaker({ onFirstProvider, onSpeakingChange });
+  // --- audio out: streaming WS, with the REST speaker held in reserve ---
+  //
+  // Opened NOW, before the request is even sent, so the socket is connected by
+  // the time the first sentence arrives ~5-7s later. That turns its ~1.2s
+  // connect from latency the user waits through into time that was going to be
+  // spent waiting for the LLM anyway.
+  const ttsLang = language || 'en';
+  const sessionId = `fg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const spokenSoFar = [];        // cleaned sentences, for replay if the WS never opens
+  let speaker = null;            // REST fallback, built only if it is actually needed
+  let usingRestFallback = false;
+
+  const startRestFallback = () => {
+    if (usingRestFallback) return;
+    usingRestFallback = true;
+    debugLog('[FinGuruStream] tts-ws unavailable -- falling back to REST synthesis');
+    speaker = new SentenceSpeaker({ onFirstProvider, onSpeakingChange });
+    for (const s of spokenSoFar) speaker.push(s, ttsLang);   // nothing was audible yet, so this cannot double-speak
+  };
+
+  const ttsStream = new TtsSentenceStream(sessionId, ttsLang, onSpeakingChange, startRestFallback, name);
+  // The WS is local Parler-TTS only, so the badge is known up front rather
+  // than discovered per sentence the way the REST router required.
+  onFirstProvider?.('local');
+
+  // One handle for "stop making noise", whichever path is live.
+  const stopAllAudio = () => {
+    ttsStream.stop();
+    speaker?.stop();
+  };
+  // Text must be cleaned the same way synthesizeText() cleans it -- the WS
+  // path bypasses that function, so markdown would otherwise be spoken.
+  const speakSentence = (text) => {
+    const cleaned = normalizeForTTS(stripMarkdownForSpeech(text));
+    if (!cleaned) return;
+    spokenSoFar.push(cleaned);
+    if (usingRestFallback) speaker.push(cleaned, ttsLang);
+    else ttsStream.sendSentence(cleaned);
+  };
+
   if (signal) {
-    if (signal.aborted) { speaker.stop(); return { text: '', language: null, interrupted: true }; }
-    signal.addEventListener('abort', () => speaker.stop(), { once: true });
+    if (signal.aborted) { stopAllAudio(); return { text: '', language: null, interrupted: true }; }
+    signal.addEventListener('abort', stopAllAudio, { once: true });
   }
 
   logLlmSent({ engine: 'FinGuru(stream)', question, style: colloquial, voice: true, language: language || null });
@@ -194,9 +274,10 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
             debugLog(`[FinGuruStream] first sentence at ${firstSentenceAtMs}ms`);
           }
           onSentence?.(msg.text);
-          // Not awaited: awaiting here would serialize synthesis behind the
-          // stream, which is the stall this whole path exists to remove.
-          speaker.push(msg.text, language || 'en');
+          logTtsSent({ streaming: true, seq: sentenceCount, provider: usingRestFallback ? 'local(rest)' : 'local(ws)', textLength: msg.text.length, textPreview: msg.text.slice(0, 80) });
+          // Fire-and-forget: the WS send returns immediately, so reading the
+          // SSE stream is never blocked behind synthesis.
+          speakSentence(msg.text);
         } else if (msg.event === 'done') {
           final = msg;
         } else if (msg.event === 'error') {
@@ -205,7 +286,10 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
       }
     }
 
-    speaker.end();
+    // End of turn. finish() lets the server know no more text is coming; the
+    // audio already queued keeps playing and draining after this returns.
+    if (usingRestFallback) speaker.end();
+    else ttsStream.finish();
     const output = final?.output || {};
     logLlmReceived({
       engine: 'FinGuru(stream)',
@@ -232,7 +316,7 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
       sessionId: final?.session_id || null,
     };
   } catch (err) {
-    speaker.stop();
+    stopAllAudio();
     if (err?.name === 'AbortError' || signal?.aborted) {
       return { text: '', language: null, interrupted: true, spoken: false };
     }
