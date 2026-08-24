@@ -59,6 +59,18 @@ const PREBUFFER_MAX_WAIT_MS = 1500;
 // currentTime, so the initial start() is not racing the audio clock.
 const SCHEDULE_LEAD_SEC = 0.02;
 
+// How long after the last audio chunk to keep a finished turn's socket alive
+// before closing it.
+//
+// This is not tidiness. The server does NOT close the socket when it is sent
+// `done: true` -- verified directly, it stays OPEN -- so a turn that only
+// calls finish() leaks one connection per message. They accumulate on a box
+// whose GPU is shared with Ollama, and the symptom is the second and every
+// later message in a conversation stalling or timing out while the first was
+// fine. Closing once the audio has drained is what keeps a long conversation
+// costing one connection rather than one per turn.
+const CLOSE_IDLE_MS = 5000;
+
 function logTts(msg, extra) {
   debugLog(`[TtsStream][${new Date().toISOString()}] ${msg}`, extra ?? '');
 }
@@ -93,6 +105,7 @@ export class TtsSentenceStream {
     this.bufferedSec = 0;       // audio in `queue`, in seconds
     this.playbackStarted = false;
     this.prebufferTimer = null;
+    this.closeWatchdog = null;
     this.underruns = 0;
     this.firstChunkBytes = null;
     this.speaking = false;
@@ -189,6 +202,29 @@ export class TtsSentenceStream {
   finish() {
     this._enqueue({ session_id: this.sessionId, done: true });
     this.finished = true;
+    // The server leaves the socket open after `done`, so closing is on us.
+    this._armCloseWatchdog();
+  }
+
+  // Close the socket once the turn is genuinely over: finished, no audio still
+  // arriving, and nothing still playing. Re-armed by every late chunk and
+  // while playback drains, so it can never cut a reply short.
+  _armCloseWatchdog() {
+    if (!this.finished || this.stopped || this.deliberateClose) return;
+    if (this.closeWatchdog) clearTimeout(this.closeWatchdog);
+    this.closeWatchdog = setTimeout(() => {
+      if (this.stopped || this.deliberateClose) return;
+      if (this.speaking || this.queue.length) {
+        this._armCloseWatchdog(); // still draining -- check again later
+        return;
+      }
+      logTts('turn complete -- closing tts-ws', {
+        sessionId: this.sessionId,
+        chunksPlayed: this.chunksPlayed,
+        underruns: this.underruns,
+      });
+      this.close();
+    }, CLOSE_IDLE_MS);
   }
 
   _onMessage(e) {
@@ -205,6 +241,7 @@ export class TtsSentenceStream {
     if (e.data instanceof ArrayBuffer) {
       logTtsReceived({ streaming: true, sessionId: this.sessionId, audioBytes: e.data.byteLength });
       this._play(e.data);
+      this._armCloseWatchdog(); // push the close out; audio is still arriving
     }
   }
 
@@ -347,6 +384,10 @@ export class TtsSentenceStream {
     if (this.prebufferTimer) {
       clearTimeout(this.prebufferTimer);
       this.prebufferTimer = null;
+    }
+    if (this.closeWatchdog) {
+      clearTimeout(this.closeWatchdog);
+      this.closeWatchdog = null;
     }
     if (this.speakingEndTimer) {
       clearTimeout(this.speakingEndTimer);
