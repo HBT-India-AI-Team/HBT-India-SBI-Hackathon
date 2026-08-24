@@ -86,6 +86,11 @@ class StreamResult:
     meta: dict[str, Any] = field(default_factory=dict)
     sentences: list[SentenceEvent] = field(default_factory=list)
     raw: str = ""
+    # Set when `script_ok` rejected the opening sentence and speech was held
+    # back for the whole turn. The answer itself is unaffected -- it is still
+    # generated, parsed and returned; only the audio is withheld, so the
+    # caller's own correction pass can fix the text before anything is heard.
+    script_suppressed: bool = False
 
     @property
     def first_sentence_ms(self) -> float | None:
@@ -140,6 +145,7 @@ async def stream_to_speech(
     language: str | None = None,
     sink: Callable[[str, str | None], None] | None = None,
     normalize: bool = False,
+    script_ok: Callable[[str], bool] | None = None,
 ) -> StreamResult:
     """Stream the answer, speaking each sentence as it completes.
 
@@ -151,6 +157,17 @@ async def stream_to_speech(
     before it goes out. Off by default and switched on only in voice mode:
     this same stream feeds the on-screen provisional bubble when voice is off,
     and stripping `**bold**` out of *that* would be damage, not cleanup.
+
+    `script_ok(sentence) -> bool` vets the FIRST sentence only. Returning False
+    holds back speech for the whole turn. This exists because streaming and
+    correction pull in opposite directions: the caller can detect a reply
+    written in the wrong script and regenerate it, but by then a stream has
+    already spoken the wrong one, leaving corrected text on screen beside
+    audio that said something else. Withholding audio the moment the opening
+    sentence looks wrong keeps the two in agreement -- the caller repairs the
+    text, and the client speaks the repaired version instead. Only the first
+    sentence is judged: a reply does not change script halfway, and re-judging
+    every sentence would risk cutting a good answer off mid-flow.
 
     Returns everything the non-streaming path returns, plus per-sentence
     timings, so the caller can validate the answer exactly as before.
@@ -172,6 +189,8 @@ async def stream_to_speech(
     raw_parts: list[str] = []
 
     def dispatch(text: str) -> None:
+        if result.script_suppressed:
+            return                              # opening sentence was rejected
         if normalize:
             # Cleaned here, at the single point a sentence is finalized, so
             # every path out -- SSE, socket, test sink -- gets the same text.
@@ -181,6 +200,14 @@ async def stream_to_speech(
             text = clean_for_speech(text)
             if not text:
                 return                          # nothing left but markup
+        if script_ok is not None and not result.sentences and not script_ok(text):
+            result.script_suppressed = True
+            logger.warning(
+                "opening sentence failed the script check -- holding back speech "
+                "for this turn so the caller can correct the text first: %s",
+                text[:80],
+            )
+            return
         event = SentenceEvent(index=len(result.sentences) + 1, text=text,
                               elapsed_ms=round((time.perf_counter() - t0) * 1000, 1))
         result.sentences.append(event)

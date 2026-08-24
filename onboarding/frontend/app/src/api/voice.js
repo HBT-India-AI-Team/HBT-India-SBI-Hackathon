@@ -80,7 +80,7 @@ export async function synthesizeText(text, language = 'en') {
   // strip markdown, then run the shared TTS normalizer over the whole reply so
   // the one-shot FinGuru / non-streaming Ollama paths get the same treatment.
   const stripped = stripMarkdownForSpeech(text);
-  const cleaned = normalizeForTTS(stripped);
+  const cleaned = normalizeForTTS(stripped, language);
   if (cleaned !== stripped.trim()) {
     debugWarn('[TTS] normalized non-compliant reply before synthesize', { before: stripped, after: cleaned });
   }

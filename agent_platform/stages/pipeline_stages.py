@@ -731,7 +731,17 @@ _REPLY_SCRIPTS: tuple[tuple[frozenset[str], str, re.Pattern[str]], ...] = (
 )
 
 
-def _wrong_script(content: str, language: str | None) -> str | None:
+# Below this many characters of the expected script, a user message is not
+# credibly "written in the script" -- a stray Devanagari word inside an
+# otherwise romanized question should not force a Devanagari answer.
+_SCRIPT_INPUT_MIN = 8
+# And below this much Latin prose, a reply is too short to call romanized;
+# "PAN card" alone is not a romanized answer.
+_ROMANIZED_REPLY_MIN = 25
+
+
+def _wrong_script(content: str, language: str | None,
+                  user_message: str | None = None) -> str | None:
     """The script that took over instead, or None if the reply is acceptable.
 
     Compares Indic blocks against each other rather than measuring how much of
@@ -741,9 +751,18 @@ def _wrong_script(content: str, language: str | None) -> str | None:
     wrong is a *different Indic language*: a Tamil question answered in Telugu,
     which both scripts-are-Indic and looks-plausible let straight through.
 
-    Returns None when it cannot judge -- English, an unlisted language, or a
-    reply with no Indic characters at all (which is a legitimate answer to a
-    question asked in romanized Tamil).
+    ROMANIZATION is the other failure, and it needs `user_message` to judge.
+    A reply with no Indic characters at all is correct when the user themselves
+    wrote romanized, and wrong when they wrote in the script -- identical
+    output, opposite verdicts, so the reply alone cannot decide it. Measured on
+    gemma4:12b: a Devanagari question ("ईएमआई लोग किस लिए लेते हैं?") came back
+    as "EMI ka matlab hota hai..." on roughly one run in three, self-labelled
+    `"language": "Hindi (Devanagari)"`. Without the user's message in hand this
+    function returned None for exactly that case -- no Indic characters, "not
+    our call" -- which is how romanized replies reached users unchallenged.
+
+    Returns None when it cannot judge: English, an unlisted language, or a
+    romanized reply to a question that was itself romanized.
     """
     if not content or not language:
         return None
@@ -755,7 +774,14 @@ def _wrong_script(content: str, language: str | None) -> str | None:
     counts = [(name, len(pattern.findall(content))) for _, name, pattern in _REPLY_SCRIPTS]
     mine = dict(counts)[expected[1]]
     intruder, most = max(counts, key=lambda pair: pair[1])
-    if most == 0:                       # no Indic script at all — not our call
+    if most == 0:
+        # No Indic script anywhere in the reply. Only wrong if the user wrote
+        # in the script and got romanized text back.
+        _, expected_name, expected_pattern = expected
+        if (user_message
+                and len(expected_pattern.findall(user_message)) >= _SCRIPT_INPUT_MIN
+                and len(re.findall(r"[A-Za-z]", content)) >= _ROMANIZED_REPLY_MIN):
+            return f"romanized {expected_name}"
         return None
     if intruder != expected[1] and most > mine:
         return intruder
@@ -794,6 +820,16 @@ def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
     except ImportError:
         return None, None, None
 
+    # Vet the opening sentence with the same rule the post-hoc correction uses,
+    # so a reply that is about to be regenerated for being romanized is never
+    # spoken in the first place. Without this the stream says the wrong-script
+    # version while the corrected text lands in the bubble.
+    asked_in = _user_message(ctx.raw_input)
+    script_ok = (
+        (lambda sentence: _wrong_script(sentence, language, asked_in) is None)
+        if language else None
+    )
+
     try:
         result = asyncio.run(stream_to_speech(
             adapter, system_prompt=system_prompt, user_prompt=user_prompt,
@@ -802,6 +838,7 @@ def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
             # this same stream draws the on-screen bubble, where `**bold**` is
             # wanted.
             normalize=voice,
+            script_ok=script_ok,
         ))
     except Exception as exc:                    # noqa: BLE001 - falls back
         logger.warning(ctx, f"Answer stream failed, answering without streaming: {exc}")
@@ -814,6 +851,12 @@ def _stream_answer(adapter, system_prompt, user_prompt, schema, temperature,
         "forwarded": sum(1 for s in result.sentences if s.forwarded),
         "timings_ms": [s.elapsed_ms for s in result.sentences],
     }
+    if result.script_suppressed:
+        # Worth its own event: this turn silently gave up the streaming latency
+        # win, and the reason is a model fault the correction pass then repairs.
+        # A rising count here means the script drift is getting worse.
+        detail["script_suppressed"] = True
+        logger.event(ctx, "speech_suppressed_wrong_script", language=language)
     if result.parsed is None:
         # The words were spoken but the JSON wrapper is unusable. Regenerating
         # will repeat the audio; that is still better than returning nothing,
@@ -1506,7 +1549,8 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
         # declaration exists to prevent. A caller cannot detect that, and a
         # user reading an answer in a language they do not speak has been
         # given nothing, so it is worth one more call to fix.
-        intruder = _wrong_script((parsed or {}).get("content", ""), language)
+        asked_in = _user_message(ctx.raw_input)
+        intruder = _wrong_script((parsed or {}).get("content", ""), language, asked_in)
         if intruder is not None:
             logger.warning(ctx, f"Reply came back in {intruder}, not {language}; regenerating")
             logger.event(ctx, "reply_language_wrong", expected=language, got=intruder)
@@ -1514,10 +1558,11 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
                 system_prompt=(
                     answer_prompt
                     + f"\n\n## Your previous attempt was written in {intruder}\n\n"
-                    f"That is the wrong language and the user cannot read it. Write "
-                    f"this answer in **{language}** and its own script, every "
-                    f"sentence of it. The facts and figures stay exactly the same; "
-                    f"only the language changes.\n"
+                    f"The user asked in **{language}** and its own script, and "
+                    f"cannot read it back this way. Write this answer in "
+                    f"**{language}**, in that script, every sentence of it -- not "
+                    f"transliterated into Latin letters. The facts and figures stay "
+                    f"exactly the same; only the writing changes.\n"
                 ),
                 user_prompt=user_prompt, schema=output_contract,
                 temperature=bundle.definition.llm.temperature,
@@ -1525,7 +1570,7 @@ def reason_llm_with_tools(ctx, bundle, logger) -> None:
             # Kept only if it actually fixed the problem. A second wrong-language
             # answer is no better than the first, and the first at least came
             # from the unmodified prompt.
-            if _wrong_script((retry_parsed or {}).get("content", ""), language) is None:
+            if _wrong_script((retry_parsed or {}).get("content", ""), language, asked_in) is None:
                 parsed, meta = retry_parsed, retry_meta
                 logger.event(ctx, "reply_language_corrected", language=language)
 

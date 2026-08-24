@@ -217,7 +217,7 @@ export async function askFinGuruStreaming(question, history = [], options = {}) 
   // Text must be cleaned the same way synthesizeText() cleans it -- the WS
   // path bypasses that function, so markdown would otherwise be spoken.
   const speakSentence = (text) => {
-    const cleaned = normalizeForTTS(stripMarkdownForSpeech(text));
+    const cleaned = normalizeForTTS(stripMarkdownForSpeech(text), ttsLang);
     if (!cleaned) return;
     spokenSoFar.push(cleaned);
     if (usingRestFallback) speaker.push(cleaned, ttsLang);

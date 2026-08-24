@@ -81,7 +81,7 @@ export async function streamOllamaToTTS(question, opts = {}) {
     if (!sentence || ttsWsFailed) return; // nothing to send to once we've abandoned the ws
     // Defense in depth: clean each sentence right before it goes to TTS, in
     // case the LLM ignored the formatting rules in the system prompt.
-    const cleaned = normalizeForTTS(sentence);
+    const cleaned = normalizeForTTS(sentence, language);
     if (!cleaned) return;
     if (cleaned !== sentence.trim()) {
       // The LLM didn't fully follow the TTS formatting prompt -- surface the

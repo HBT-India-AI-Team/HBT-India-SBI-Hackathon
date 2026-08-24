@@ -1477,7 +1477,7 @@ export default function FinGuruChat() {
                         key={qi}
                         type="button"
                         disabled={loading}
-                        onClick={() => send(q, { speakReply: true })}
+                        onClick={() => send(q)}
                         className="text-left text-[12.5px] font-semibold text-primary bg-primary/5 border border-primary/20 rounded-xl px-3 py-1.5 active:scale-[0.99] transition disabled:opacity-50"
                       >
                         {q}
@@ -1658,12 +1658,14 @@ export default function FinGuruChat() {
             onSubmit={(e) => {
               e.preventDefault();
               if (!nameHistoryChecked) return; // per spec: no new message until the history check settles
-              // Typed messages get a spoken reply too now (same streaming-TTS
-              // pipeline voice turns use), except on the voice fallback banner
-              // -- there the voice pipeline itself is known-unavailable, so
-              // stay text-only rather than attempt TTS that's likely to fail.
+              // Typed questions stay text-only: the user chose to type rather
+              // than speak, so a spoken reply is not what they asked for.
+              // Speech is reached through the mic / live call instead. The
+              // machinery for speaking a typed turn is still here (pass
+              // `speakReply: true` to send) -- it is simply not wired to this
+              // form.
               if (voiceFallback) send(undefined, { viaFallback: true });
-              else send(undefined, { speakReply: true });
+              else send();
             }}
             className="flex items-center gap-2 bg-surface-container-low rounded-full px-3 py-2 border border-outline-variant"
           >

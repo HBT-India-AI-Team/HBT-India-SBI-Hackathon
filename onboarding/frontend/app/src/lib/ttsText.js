@@ -55,6 +55,111 @@ const NON_SPEECH_SYMBOLS_RE = /[#*_|~`^<>\\]/g;
 // Valid sentence-final punctuation, including the Devanagari/Tamil danda.
 const SENTENCE_END_RE = /[.!?।]$/;
 
+// --- numbers -> words, for the local TTS model ---------------------------
+//
+// The local Parler-TTS voice reads raw digits badly. Measured against the live
+// server on the same sentence: "3,71,392.25 rupees over 38 months" is 56
+// characters and produced 7.22s of audio (129 ms/char), while the same amount
+// written as words is 86 characters -- half again as long -- and produced only
+// 5.71s (66 ms/char). Twice the time per character means the model is labouring
+// over each digit rather than speaking a number, which is what makes amounts
+// sound wrong and drags the whole sentence out of its normal cadence.
+//
+// The original design avoided this by routing anything with a digit to Sarvam,
+// whose voice reads Indian amounts natively. With TTS forced local that route
+// is closed, so the expansion has to happen here instead.
+//
+// ENGLISH ONLY, deliberately. Expanding a number into English words inside a
+// Hindi or Tamil sentence would splice two languages together mid-clause --
+// exactly the defect this is meant to remove. For every other language the
+// digits are left untouched, which is no worse than before.
+
+const _ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+  'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
+  'eighteen', 'nineteen'];
+const _TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+
+function _under100(n) {
+  if (n < 20) return _ONES[n];
+  const t = _TENS[Math.floor(n / 10)];
+  return n % 10 ? `${t} ${_ONES[n % 10]}` : t;
+}
+
+/** Indian numbering: crore / lakh / thousand / hundred, not millions. */
+function indianNumberToWords(n) {
+  if (!Number.isFinite(n)) return '';
+  if (n === 0) return 'zero';
+  const parts = [];
+  const crore = Math.floor(n / 10000000);
+  if (crore) {
+    // Recurse so "125 crore" reads correctly rather than overflowing the table.
+    parts.push(`${indianNumberToWords(crore)} crore`);
+    n %= 10000000;
+  }
+  const lakh = Math.floor(n / 100000);
+  if (lakh) { parts.push(`${_under100(lakh)} lakh`); n %= 100000; }
+  const thousand = Math.floor(n / 1000);
+  if (thousand) { parts.push(`${_under100(thousand)} thousand`); n %= 1000; }
+  const hundred = Math.floor(n / 100);
+  if (hundred) { parts.push(`${_ONES[hundred]} hundred`); n %= 100; }
+  if (n) parts.push(_under100(n));
+  return parts.join(' ');
+}
+
+// A number as it actually appears in these replies: an optional currency mark,
+// Indian-grouped digits, an optional decimal, an optional percent sign.
+// The whitespace before `%` lives INSIDE that optional group on purpose. With
+// it outside, a plain number swallowed the space that followed it and welded
+// itself to the next word -- "10,000 on" spoke as "ten thousand rupeeson".
+const NUMBER_RE = /(₹|Rs\.?|INR)?\s?(\d[\d,]*)(?:\.(\d+))?(\s*%)?/g;
+// Long unbroken digit runs are identifiers -- account numbers, mobile numbers,
+// reference numbers. Nobody wants those as one enormous word, so they stay
+// digit-by-digit, which is also how a person reads them aloud.
+const ID_DIGITS_MIN = 9;
+
+function spellNumberMatch(currency, intRaw, decRaw, percent) {
+  const digits = intRaw.replace(/,/g, '');
+  if (!/^\d+$/.test(digits)) return null;
+
+  // Identifier, not a quantity: read it out digit by digit.
+  if (!currency && !decRaw && !percent && !intRaw.includes(',') && digits.length >= ID_DIGITS_MIN) {
+    return digits.split('').map((d) => _ONES[Number(d)]).join(' ');
+  }
+  if (digits.length > 15) return null;          // beyond crore-of-crores: leave it alone
+
+  let out = indianNumberToWords(Number(digits));
+  const isMoney = Boolean(currency);
+  if (decRaw) {
+    if (isMoney && decRaw.length <= 2) {
+      // Money decimals are paise, and "and twenty five paise" is how the
+      // amount is actually said -- "point two five rupees" is not.
+      const paise = Number(decRaw.padEnd(2, '0'));
+      if (paise) out += ` rupees and ${_under100(paise)} paise`;
+      else out += ' rupees';
+      return percent ? `${out} percent` : out;
+    }
+    out += ` point ${decRaw.split('').map((d) => _ONES[Number(d)]).join(' ')}`;
+  }
+  if (isMoney) out += ' rupees';
+  if (percent) out += ' percent';
+  return out;
+}
+
+/**
+ * Rewrites digits as spoken English words. Applied only when the reply is in
+ * English -- see the note above. Pure; safe to call on text with no numbers.
+ */
+export function spellNumbersForSpeech(text) {
+  if (!text) return '';
+  return String(text).replace(NUMBER_RE, (match, currency, intRaw, decRaw, percent) => {
+    const spoken = spellNumberMatch(currency, intRaw, decRaw, percent);
+    if (spoken === null) return match;
+    // Preserve whatever separated this from the previous word.
+    const lead = /^\s/.test(match) ? ' ' : '';
+    return lead + spoken;
+  });
+}
+
 /**
  * Last-mile cleanup for a single sentence chunk before it goes to TTS. Pure and
  * idempotent -- safe to call on already-clean text. Returns the cleaned string.
@@ -62,12 +167,18 @@ const SENTENCE_END_RE = /[.!?।]$/;
  * @param {string} text
  * @returns {string}
  */
-export function normalizeForTTS(text) {
+export function normalizeForTTS(text, language) {
   if (!text) return '';
   let out = String(text);
   out = out.replace(LEADING_LIST_MARKER_RE, '');   // drop a leading "1." / "- " / "• "
   out = out.replace(BRACKET_CHARS_RE, '');          // "(EMI)" -> "EMI"
   out = out.replace(NON_SPEECH_SYMBOLS_RE, '');     // strip #, *, _, |, ~, etc.
+  // English only -- spelling a number into English words inside a Hindi or
+  // Tamil sentence would be worse than the digits it replaces. Callers that
+  // pass no language get the old behaviour, digits untouched.
+  if (language && String(language).trim().toLowerCase().startsWith('en')) {
+    out = spellNumbersForSpeech(out);
+  }
   out = out.replace(/\s+/g, ' ').trim();            // collapse whitespace/newlines
   if (!out) return '';
   // If stripping removed the trailing punctuation (or the LLM never added it),
