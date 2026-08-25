@@ -26,6 +26,7 @@ import { useFinGuruName } from '../lib/finguruIdentity';
 import { fetchNameHistory } from '../api/finguruHistory';
 import { logMicStart, debugLog } from '../lib/pipelineLog';
 import { needsSarvamTts } from '../lib/ttsRouter';
+import { speakTextStreamed } from '../api/ttsStream';
 import { withFollowUpInstruction, extractFollowUps } from '../lib/followUps';
 
 const LAST_CONVERSATION_KEY = 'finguru.lastConversationId';
@@ -646,6 +647,28 @@ export default function FinGuruChat() {
       setSpeakingId(null);
       setPreparingId(id); // show the loader while we synthesize
       setVoiceStatus('speaking');
+
+      // Stream it sentence-by-sentence rather than waiting for the whole clip.
+      // This path runs whenever a reply arrived WITHOUT sentence events -- a
+      // one-shot brain, or a turn where the backend held speech back to correct
+      // the script -- and one-shot synthesis of a full reply is brutally slow:
+      // 345 characters of Hindi measured 27.5s before any sound, and replies
+      // only get longer as a conversation goes on. Chunked over the socket the
+      // first words land in ~1-2s instead.
+      const streamed = speakTextStreamed(text, languageRef.current, {
+        name: nameRef.current,
+        onProvider: (provider) => updateMessageById(id, { ttsProvider: provider }),
+        onSpeaking: (speaking) => {
+          if (token !== speakReqRef.current) return;
+          setPreparingId(null);
+          setSpeakingId(speaking ? id : null);
+          setVoiceStatus(speaking ? 'speaking' : 'idle');
+        },
+      });
+      if (streamed.spoken) return;   // audio is on its way over the socket
+
+      // Socket unavailable: fall back to the one-shot REST clip. Slow, but a
+      // slow reply beats a silent one.
       const { blob, provider } = await synthesizeText(text, languageRef.current);
       if (token !== speakReqRef.current) return; // cancelled or superseded
       setPreparingId(null);

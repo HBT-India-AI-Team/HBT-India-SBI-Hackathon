@@ -114,7 +114,20 @@ export class TtsSentenceStream {
     this.stopped = false; // stop() was called -- ignore any late frames, never play again
     this.reconnectAttempt = 0;
     this.chunksPlayed = 0;
-    this.openedAt = performance.now(); // for time-to-first-audio in the log
+    // Two different clocks, because they answer two different questions and
+    // conflating them sent one investigation down the wrong path entirely.
+    //
+    // `openedAt` is turn start -- this object is constructed BEFORE the LLM is
+    // asked anything, so the socket is connected by the time the first
+    // sentence exists. Measuring first-audio from here therefore includes the
+    // whole LLM think time, which on a slow turn is the overwhelming majority
+    // of it. A "TTS delay" of 127s reported that way was really ~120s of LLM
+    // and a few seconds of speech.
+    //
+    // `firstSentenceAt` is stamped when text is actually handed to TTS, so
+    // ttsMs below is the number that genuinely belongs to speech.
+    this.openedAt = performance.now();
+    this.firstSentenceAt = null;
     this._connect();
   }
 
@@ -190,6 +203,7 @@ export class TtsSentenceStream {
   }
 
   sendSentence(text) {
+    if (this.firstSentenceAt === null) this.firstSentenceAt = performance.now();
     this._enqueue({
       session_id: this.sessionId,
       text,
@@ -337,10 +351,15 @@ export class TtsSentenceStream {
       this.chunksPlayed += 1;
       if (this.chunksPlayed === 1) {
         // Stage 8, streaming flavour: the moment the reply becomes audible.
+        const now = performance.now();
         logTtsPlaybackStart({
           streaming: true,
           sessionId: this.sessionId,
-          sinceStreamOpenMs: Math.round(performance.now() - this.openedAt),
+          // The one that is actually TTS: text handed over -> audible.
+          ttsMs: this.firstSentenceAt === null ? null : Math.round(now - this.firstSentenceAt),
+          // Turn start -> audible. Includes LLM think time, so it is the
+          // user-perceived wait, NOT a measure of the speech pipeline.
+          totalSinceTurnStartMs: Math.round(now - this.openedAt),
           prebufferMs: PREBUFFER_MS,
           firstChunkBytes: this.firstChunkBytes,
           sampleRate: this.sampleRate,
@@ -430,6 +449,65 @@ export class TtsSentenceStream {
     this.audioCtx = null;
     this.nextPlayAt = 0;
   }
+}
+
+// Sentence boundary for text we were handed whole. Deliberately conservative:
+// the boundary character must NOT be followed by a digit, so "Rs 1,06,398.02"
+// is never cut into "Rs 1,06,398." and "02" -- two utterances, the first a
+// wrong number spoken to someone who cannot see the screen. Splitting is
+// otherwise the backend's job precisely to avoid that; this exists only for
+// text that arrived without sentence events.
+const SENTENCE_END = /([.!?।])(?!\d)\s+/;
+
+export function splitIntoSentences(text) {
+  const out = [];
+  let rest = String(text || '').trim();
+  for (;;) {
+    const m = rest.match(SENTENCE_END);
+    if (!m) break;
+    const cut = m.index + m[1].length;
+    const piece = rest.slice(0, cut).trim();
+    if (piece) out.push(piece);
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) out.push(rest);
+  return out;
+}
+
+/**
+ * Speak a reply we were handed WHOLE, over the streaming socket.
+ *
+ * The one-shot alternative -- POST the entire reply to /synthesize and wait
+ * for the finished clip -- costs the full generation time before a single word
+ * is audible. Measured on the live server: 345 characters of Hindi took 27.5s,
+ * and replies grow as the conversation does. Chunking the same text over the
+ * socket starts audio after the first sentence instead, ~1-2s, because the
+ * rest is generated while it plays.
+ *
+ * Returns { spoken: true } once audio starts, or { spoken: false } if the
+ * socket never opened -- the caller then falls back to REST, which is slow but
+ * still better than silence.
+ */
+export function speakTextStreamed(text, language, { onSpeaking, onProvider, name, signal } = {}) {
+  const sentences = splitIntoSentences(text);
+  if (!sentences.length) return { spoken: false, stream: null };
+
+  let fellBack = false;
+  const stream = new TtsSentenceStream(
+    `speak-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    language,
+    onSpeaking,
+    () => { fellBack = true; },      // socket never opened
+    name,
+  );
+  if (signal) {
+    if (signal.aborted) { stream.stop(); return { spoken: false, stream: null }; }
+    signal.addEventListener('abort', () => stream.stop(), { once: true });
+  }
+  onProvider?.('local(ws)');
+  for (const s of sentences) stream.sendSentence(s);
+  stream.finish();
+  return { spoken: !fellBack, stream, sentences: sentences.length };
 }
 
 export default TtsSentenceStream;
