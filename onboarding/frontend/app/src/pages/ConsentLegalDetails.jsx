@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PhoneScreen from '../components/PhoneScreen';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { useT } from '../lib/i18n';
 
 const CLAUSES = [
   {
@@ -23,6 +24,7 @@ const CLAUSES = [
 ];
 
 export default function ConsentLegalDetails() {
+  const t = useT();
   const navigate = useNavigate();
   const { patch } = useApp();
   const [checked, setChecked] = useState({ terms: false, data_sharing: false, communication: false });
@@ -31,7 +33,7 @@ export default function ConsentLegalDetails() {
 
   return (
     <PhoneScreen
-      title="Terms & consent"
+      title={t('Terms & consent')}
       footer={
         <PrimaryButton
           disabled={!allChecked}
@@ -40,12 +42,12 @@ export default function ConsentLegalDetails() {
             navigate('/requirements');
           }}
         >
-          Accept & continue
+          {t('Accept & continue')}
         </PrimaryButton>
       }
     >
       <p className="text-on-surface-variant text-sm mb-4">
-        Please review and accept the following before we start your application.
+        {t('Please review and accept the following before we start your application.')}
       </p>
       <div className="flex flex-col gap-3">
         {CLAUSES.map((c) => (
@@ -60,8 +62,8 @@ export default function ConsentLegalDetails() {
               onChange={(e) => setChecked((prev) => ({ ...prev, [c.key]: e.target.checked }))}
             />
             <div>
-              <p className="font-heading font-bold text-[14px] text-on-surface">{c.title}</p>
-              <p className="text-[12.5px] text-on-surface-variant mt-1 leading-snug">{c.text}</p>
+              <p className="font-heading font-bold text-[14px] text-on-surface">{t(c.title)}</p>
+              <p className="text-[12.5px] text-on-surface-variant mt-1 leading-snug">{t(c.text)}</p>
             </div>
           </label>
         ))}

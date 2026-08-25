@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 const STATE_META = {
   NOT_STARTED: { label: 'Pending', icon: '○', cls: 'text-outline' },
   AWAITING_INPUT: { label: 'Pending', icon: '○', cls: 'text-outline' },
@@ -9,13 +10,14 @@ const STATE_META = {
 };
 
 export default function RequirementsSheet({ open, onClose, requirements = [] }) {
+  const t = useT();
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full max-w-[480px] bg-surface-lowest rounded-t-2xl p-5 max-h-[75vh] overflow-y-auto shadow-2xl">
         <div className="w-10 h-1.5 bg-outline-variant rounded-full mx-auto mb-4" />
-        <h2 className="font-heading font-bold text-lg text-primary mb-4">Requirements checklist</h2>
+        <h2 className="font-heading font-bold text-lg text-primary mb-4">{t('Requirements checklist')}</h2>
         <ul className="flex flex-col gap-3">
           {requirements.map((r) => {
             const meta = STATE_META[r.state] || STATE_META.NOT_STARTED;
@@ -27,8 +29,8 @@ export default function RequirementsSheet({ open, onClose, requirements = [] }) 
                   {meta.icon}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13.5px] font-semibold text-on-surface truncate">{r.label}</p>
-                  <p className={`text-[12px] ${meta.cls}`}>{meta.label}</p>
+                  <p className="text-[13.5px] font-semibold text-on-surface truncate">{t(r.label)}</p>
+                  <p className={`text-[12px] ${meta.cls}`}>{t(meta.label)}</p>
                 </div>
               </li>
             );
@@ -38,7 +40,7 @@ export default function RequirementsSheet({ open, onClose, requirements = [] }) 
           onClick={onClose}
           className="mt-5 w-full h-12 rounded-full border-2 border-primary text-primary font-heading font-bold text-sm"
         >
-          Close
+          {t('Close')}
         </button>
       </div>
     </div>

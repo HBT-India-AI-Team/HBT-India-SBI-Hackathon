@@ -4,6 +4,7 @@ import PhoneScreen from '../components/PhoneScreen';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
 import { postConsent, startApplication } from '../api/client';
+import { useT } from '../lib/i18n';
 
 const PREVIEW = {
   savings_account: ['Mobile number (OTP)', 'PAN verification', 'Upload PAN card photo', 'Confirm product', 'Review & submit'],
@@ -29,6 +30,7 @@ const PREVIEW = {
 };
 
 export default function RequirementsChecklist() {
+  const t = useT();
   const navigate = useNavigate();
   const { productId, language, pendingConsentPurposes, mobileNumber, patch } = useApp();
   const [busy, setBusy] = useState(false);
@@ -67,7 +69,7 @@ export default function RequirementsChecklist() {
 
       navigate('/onboarding');
     } catch (e) {
-      setError(e?.response?.data?.detail || 'Could not start your application. Please try again.');
+      setError(e?.response?.data?.detail || t('Could not start your application. Please try again.'));
     } finally {
       setBusy(false);
     }
@@ -75,22 +77,22 @@ export default function RequirementsChecklist() {
 
   return (
     <PhoneScreen
-      title="What you'll need"
+      title={t("What you'll need")}
       footer={
         <div>
           {error && <p className="text-error text-[12.5px] mb-2">{error}</p>}
           <PrimaryButton onClick={begin} disabled={busy}>
-            {busy ? 'Starting…' : "Let's start"}
+            {busy ? t('Starting…') : t("Let's start")}
           </PrimaryButton>
         </div>
       }
     >
       <p className="text-on-surface-variant text-sm mb-4">
-        Quick overview before we dive in — you can complete these in any order the chat suggests.
+        {t('Quick overview before we dive in — you can complete these in any order the chat suggests.')}
       </p>
       <div className="mb-4">
         <label className="text-[12px] font-semibold text-on-surface-variant">
-          Mobile number on file? (optional — lets us detect an existing/duplicate application for you)
+          {t('Mobile number on file? (optional — lets us detect an existing/duplicate application for you)')}
         </label>
         <input
           value={mobile}
@@ -105,7 +107,7 @@ export default function RequirementsChecklist() {
             <span className="w-7 h-7 rounded-full bg-primary-container/15 text-primary flex items-center justify-center text-[12px] font-bold shrink-0">
               {i + 1}
             </span>
-            <span className="text-[13.5px] text-on-surface">{s}</span>
+            <span className="text-[13.5px] text-on-surface">{t(s)}</span>
           </li>
         ))}
       </ul>

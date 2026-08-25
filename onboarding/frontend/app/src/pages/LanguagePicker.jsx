@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PhoneScreen from '../components/PhoneScreen';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { translate } from '../lib/i18n';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -17,10 +18,14 @@ export default function LanguagePicker() {
   const navigate = useNavigate();
   const { patch, language } = useApp();
   const [selected, setSelected] = useState(language || 'en');
+  // Previews the language being CHOSEN rather than the one already saved,
+  // so tapping हिन्दी switches this screen immediately instead of only
+  // taking effect on the next one. The saved value is written on Continue.
+  const t = (text) => translate(text, selected);
 
   return (
     <PhoneScreen
-      title="Choose your language"
+      title={t('Choose your language')}
       footer={
         <PrimaryButton
           onClick={() => {
@@ -28,11 +33,11 @@ export default function LanguagePicker() {
             navigate('/product');
           }}
         >
-          Continue
+          {t('Continue')}
         </PrimaryButton>
       }
     >
-      <p className="text-on-surface-variant text-sm mb-4">You can change this anytime in chat.</p>
+      <p className="text-on-surface-variant text-sm mb-4">{t('You can change this anytime in chat.')}</p>
       <div className="flex flex-col gap-3">
         {LANGUAGES.map((l) => (
           <button

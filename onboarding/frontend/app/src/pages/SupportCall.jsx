@@ -4,8 +4,10 @@ import PhoneScreen from '../components/PhoneScreen';
 import { useApp } from '../context/AppContext';
 import { API_BASE, callEnd, callInitiate } from '../api/client';
 import useLiveCall from '../hooks/useLiveCall';
+import { useT } from '../lib/i18n';
 
 export default function SupportCall() {
+  const t = useT();
   const navigate = useNavigate();
   const { sessionId } = useApp();
   // mode: 'live-connecting' | 'live-active' | 'mock-connecting' | 'mock-active' | 'ended'
@@ -79,7 +81,7 @@ export default function SupportCall() {
   const isLive = mode === 'live-active';
 
   return (
-    <PhoneScreen title="Support call">
+    <PhoneScreen title={t('Support call')}>
       <p className="text-[11px] text-on-surface-variant bg-surface-container-low rounded-lg p-2 mb-4 text-center">
         {isLive
           ? 'LIVE: connected to the real voice server over a live audio call.'
@@ -99,12 +101,12 @@ export default function SupportCall() {
           </div>
         </div>
         <h2 className="font-heading font-bold text-xl text-primary">
-          {isLive ? 'YONO Support (live)' : 'SBI Support'}
+          {isLive ? t('YONO Support (live)') : t('SBI Support')}
         </h2>
-        {mode === 'live-connecting' && <p className="text-on-surface-variant animate-pulse">Connecting…</p>}
-        {mode === 'mock-connecting' && <p className="text-on-surface-variant animate-pulse">Connecting…</p>}
+        {mode === 'live-connecting' && <p className="text-on-surface-variant animate-pulse">{t('Connecting…')}</p>}
+        {mode === 'mock-connecting' && <p className="text-on-surface-variant animate-pulse">{t('Connecting…')}</p>}
         {isActive && <p className="text-on-surface-variant font-mono text-lg">{fmt(seconds)}</p>}
-        {mode === 'ended' && <p className="text-on-surface-variant">Call ended</p>}
+        {mode === 'ended' && <p className="text-on-surface-variant">{t('Call ended')}</p>}
 
         {isLive && live.transcript.length > 0 && (
           <div className="w-full max-h-56 overflow-y-auto flex flex-col gap-2 bg-surface-container-low rounded-lg p-3 text-left">
@@ -123,7 +125,7 @@ export default function SupportCall() {
         {isLive && (
           <button
             onClick={live.toggleMute}
-            aria-label={live.muted ? 'Unmute microphone' : 'Mute microphone'}
+            aria-label={live.muted ? t('Unmute microphone') : t('Mute microphone')}
             className={`h-10 px-4 rounded-full text-[13px] font-heading font-bold flex items-center gap-2 border transition ${
               live.muted
                 ? 'bg-error-container text-on-error-container border-error'

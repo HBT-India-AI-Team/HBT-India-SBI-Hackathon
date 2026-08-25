@@ -9,6 +9,7 @@ recomputed here from the current set of Requirement rows.
 import logging
 from datetime import datetime
 
+from backend import config
 from backend.models.models import Requirement, RequirementState, ReviewItem, ApplicationStatus
 from backend.services import product_catalog, validators, events
 
@@ -216,7 +217,15 @@ def submit_requirement_value(application, requirement_id, value, db):
     # --- mobile OTP two-phase handling ---
     if rtype in _MOBILE_TYPES:
         digits = (value or "").strip()
-        looks_like_otp = len(digits) == 6 and digits.isdigit() and requirement.state == STATE.VERIFYING.value
+        # With the bypass on, anything typed at the OTP step counts as the OTP.
+        # Without this the shape test below sends a non-6-digit entry down the
+        # mobile-number branch instead, and the user is told their code "is not
+        # a valid 10-digit mobile number" -- so bypassing only verify_otp would
+        # still leave "1234" and "" rejected.
+        awaiting_otp = requirement.state == STATE.VERIFYING.value
+        looks_like_otp = awaiting_otp and (
+            config.OTP_BYPASS or (len(digits) == 6 and digits.isdigit())
+        )
         if looks_like_otp:
             from backend.services.otp import verify_otp
             result = verify_otp(requirement, digits)

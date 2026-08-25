@@ -8,6 +8,7 @@ import {
   postMessage,
   uploadDocument,
 } from '../api/client';
+import { useT, useReplyT } from '../lib/i18n';
 
 const MOBILE_TYPES = ['mobile_otp', 'guardian_mobile_otp'];
 const QUICK_REPLY_TYPES = ['product_confirm'];
@@ -36,6 +37,8 @@ export default function ChatWindow({
   onSubmitted,
   emptyHint,
 }) {
+  const t = useT();
+  const tr = useReplyT();   // backend chat replies
   const [messages, setMessages] = useState([]);
   const [application, setApplication] = useState(null);
   const [input, setInput] = useState('');
@@ -64,7 +67,7 @@ export default function ChatWindow({
         onApplicationUpdate && onApplicationUpdate(app);
         const hydrated = (state.messages || []).map((m) => ({
           direction: m.direction,
-          text: m.content?.text || '',
+          text: tr(m.content?.text || ''),
           variant: 'default',
         }));
         setMessages(hydrated);
@@ -111,13 +114,13 @@ export default function ChatWindow({
       const rejected = (res.actions_applied || []).some((a) => a.result === 'rejected');
       setMessages((prev) => [
         ...prev,
-        { direction: 'outbound', text: res.reply_text, variant: rejected ? 'error' : 'default' },
+        { direction: 'outbound', text: tr(res.reply_text), variant: rejected ? 'error' : 'default' },
       ]);
       await refreshApplication();
     } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { direction: 'outbound', text: 'Something went wrong reaching the server. Please try again.', variant: 'error' },
+        { direction: 'outbound', text: t('Something went wrong reaching the server. Please try again.'), variant: 'error' },
       ]);
     } finally {
       setLoading(false);
@@ -131,7 +134,7 @@ export default function ChatWindow({
     e.target.value = '';
     if (!file || !activeReq) return;
     setDocBusy(true);
-    setMessages((prev) => [...prev, { direction: 'inbound', text: `📎 Uploaded: ${file.name}` }]);
+    setMessages((prev) => [...prev, { direction: 'inbound', text: `📎 ${t('Uploaded: {name}', { name: file.name })}` }]);
     try {
       const form = new FormData();
       form.append('requirement_id', activeReq.id);
@@ -140,13 +143,13 @@ export default function ChatWindow({
       await uploadDocument(applicationId, form);
       setMessages((prev) => [
         ...prev,
-        { direction: 'outbound', text: `Thanks! "${activeReq.label}" is being reviewed — this usually takes a few seconds in this demo.` },
+        { direction: 'outbound', text: t(`Thanks! "{label}" is being reviewed — this usually takes a few seconds in this demo.`, { label: t(activeReq.label) }) },
       ]);
       await pollDocument(activeReq.id);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { direction: 'outbound', text: 'Upload failed — please check the file and try again.', variant: 'error' },
+        { direction: 'outbound', text: t('Upload failed — please check the file and try again.'), variant: 'error' },
       ]);
     } finally {
       setDocBusy(false);
@@ -162,7 +165,7 @@ export default function ChatWindow({
       if (req.state === 'VERIFIED') {
         setMessages((prev) => [
           ...prev,
-          { direction: 'outbound', text: `✅ "${req.label}" verified successfully.` },
+          { direction: 'outbound', text: `✅ ${t('"{label}" verified successfully.', { label: t(req.label) })}` },
         ]);
         return;
       }
@@ -174,8 +177,8 @@ export default function ChatWindow({
             variant: 'error',
             text:
               req.state === 'ESCALATED'
-                ? `We couldn't verify "${req.label}" after a couple of tries, so we've flagged it for our support team to review manually.`
-                : `We couldn't read "${req.label}" clearly — the image may be blurry or the wrong document. Please try uploading again.`,
+                ? t(`We couldn't verify "{label}" after a couple of tries, so we've flagged it for our support team to review manually.`, { label: t(req.label) })
+                : t(`We couldn't read "{label}" clearly — the image may be blurry or the wrong document. Please try uploading again.`, { label: t(req.label) }),
           },
         ]);
         return;
@@ -187,6 +190,31 @@ export default function ChatWindow({
   const showDocUpload = activeReq && activeReq.type === 'document';
   const showOtpHint = activeReq && MOBILE_TYPES.includes(activeReq.type) && activeReq.state === 'VERIFYING';
 
+  // Nothing is waiting on the user, and the effect above found nothing to
+  // navigate to either. Without this the screen simply stops: no prompt, no
+  // next step, no explanation -- and the last thing said was usually a
+  // confirmation, so it reads as "done" while leaving the user sitting on it.
+  //
+  // The usual cause is a requirement that ESCALATED. pickActiveRequirement
+  // does not count ESCALATED as active (correctly -- the user cannot act on
+  // it), so it falls out of the flow entirely while review_submit is still
+  // unverified, and neither branch of the navigation effect fires.
+  const requirements = application?.requirements || [];
+  const escalated = requirements.filter((r) => r.state === 'ESCALATED');
+  const awaitingAsync = requirements.filter(
+    (r) => r.state === 'VERIFYING' && !MOBILE_TYPES.includes(r.type)
+  );
+  const idleNotice =
+    application && !activeReq && !escalated.length && !awaitingAsync.length
+      ? null
+      : escalated.length
+        ? t("A specialist is reviewing {items}. We'll pick up where you left off as soon as that's done — you don't need to wait here.",
+            { items: escalated.map((r) => `"${t(r.label)}"`).join(' / ') })
+        : awaitingAsync.length && !activeReq
+          ? t("We're verifying {items} now. This usually takes a moment — you don't need to do anything.",
+              { items: awaitingAsync.map((r) => `"${t(r.label)}"`).join(' / ') })
+          : null;
+
   return (
     <div className="flex flex-col flex-1">
       {application?.progress && <ProgressStepper progress={application.progress} />}
@@ -194,7 +222,7 @@ export default function ChatWindow({
         onClick={() => setSheetOpen(true)}
         className="self-end mb-3 text-[12px] font-semibold text-primary underline underline-offset-2"
       >
-        View checklist
+        {t('View checklist')}
       </button>
       <div className="flex-1 flex flex-col gap-3 overflow-y-auto pb-3">
         {messages.length === 0 && emptyHint && <BotBubble>{emptyHint}</BotBubble>}
@@ -213,7 +241,13 @@ export default function ChatWindow({
 
       {showOtpHint && (
         <p className="text-[11.5px] text-on-surface-variant mb-2 bg-surface-container-low rounded-lg p-2">
-          A 6-digit code was sent (mocked in this sandbox — check the backend server console/log for the code).
+          {t('A 6-digit code was sent (mocked in this sandbox — check the backend server console/log for the code).')}
+        </p>
+      )}
+
+      {idleNotice && (
+        <p className="text-[12px] text-on-surface-variant mb-2 bg-surface-container-low rounded-lg p-3 leading-relaxed">
+          {idleNotice}
         </p>
       )}
 
@@ -223,18 +257,18 @@ export default function ChatWindow({
             value={debugOutcome}
             onChange={(e) => setDebugOutcome(e.target.value)}
             className="text-[11px] bg-surface-container-low border border-outline-variant rounded-full px-2 py-1 text-on-surface-variant"
-            title="Demo control: forces the async review outcome for this upload"
+            title={t('Demo control: forces the async review outcome for this upload')}
           >
-            <option value="verify">Demo outcome: verify</option>
-            <option value="reject">Demo outcome: reject</option>
-            <option value="random">Demo outcome: default</option>
+            <option value="verify">{t('Demo outcome: verify')}</option>
+            <option value="reject">{t('Demo outcome: reject')}</option>
+            <option value="random">{t('Demo outcome: default')}</option>
           </select>
           <button
             onClick={handleFilePick}
             disabled={docBusy}
             className="flex-1 h-11 rounded-full bg-primary text-on-primary font-heading font-bold text-[13px] disabled:opacity-50"
           >
-            {docBusy ? 'Uploading…' : `📎 Upload: ${activeReq.label}`}
+            {docBusy ? t('Uploading…') : `📎 ${t('Upload: {label}', { label: t(activeReq.label) })}`}
           </button>
           <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFile} />
         </div>
@@ -267,7 +301,13 @@ export default function ChatWindow({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={activeReq ? `Type: ${activeReq.format_hint || activeReq.label}` : 'Type a message…'}
+          placeholder={
+            activeReq
+              ? `${t('Type')}: ${t(activeReq.format_hint || activeReq.label)}`
+              : idleNotice
+                ? t('Nothing needed right now')
+                : t('Type a message…')
+          }
           className="flex-1 bg-transparent border-none outline-none text-[14px] text-on-surface placeholder:text-outline"
         />
         <button

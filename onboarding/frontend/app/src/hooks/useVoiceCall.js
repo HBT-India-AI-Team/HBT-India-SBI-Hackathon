@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { PCMFrameBuffer, floatTo16kPCM16 } from '../lib/liveCall';
 import { logMicStart, logSttSent, logSttReceived, debugLog } from '../lib/pipelineLog';
+import { wsUrl } from '../lib/basePath';
 
 // Same-origin WS that the Vite dev proxy forwards straight to Sarvam's own
 // realtime STT endpoint (wss://api.sarvam.ai/speech-to-text-realtime/ws),
@@ -21,13 +22,12 @@ import { logMicStart, logSttSent, logSttReceived, debugLog } from '../lib/pipeli
 // what was heard -- the caller uses it to update the language picker and
 // drive the reply's TTS language, same as turn mode.
 function sarvamWsUrl() {
-  const u = new URL('/sarvam-stt-ws', window.location.href);
-  u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-  u.searchParams.set('language_code', 'auto');
-  u.searchParams.set('model', 'saaras:v3-realtime');
-  u.searchParams.set('sample_rate', '16000');
-  u.searchParams.set('encoding', 'linear16');
-  return u.toString();
+  return wsUrl('/sarvam-stt-ws', {
+    language_code: 'auto',
+    model: 'saaras:v3-realtime',
+    sample_rate: '16000',
+    encoding: 'linear16',
+  });
 }
 
 // Sarvam recommends ~100ms audio chunks (3200 bytes / 1600 samples at 16kHz)

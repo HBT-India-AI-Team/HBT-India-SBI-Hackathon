@@ -4,8 +4,10 @@ import PhoneScreen from '../components/PhoneScreen';
 import { BotBubble, TypingBubble, UserBubble } from '../components/ChatBubble';
 import { useApp } from '../context/AppContext';
 import { escalateSupport } from '../api/client';
+import { useT } from '../lib/i18n';
 
 export default function SupportChat() {
+  const t = useT();
   const navigate = useNavigate();
   const { applicationId, sessionId } = useApp();
   const [ticket, setTicket] = useState(null);
@@ -28,11 +30,11 @@ export default function SupportChat() {
         setMessages([
           {
             from: 'bot',
-            text: `You're connected. Ticket #${res.ticket_id.slice(0, 8)} has been raised with our support team — a human agent will pick this up shortly.`,
+            text: t("You're connected. Ticket #{id} has been raised with our support team — a human agent will pick this up shortly.", { id: res.ticket_id.slice(0, 8) }),
           },
         ]);
       } catch (e) {
-        setMessages([{ from: 'bot', text: 'Could not reach support right now. Please try again shortly.' }]);
+        setMessages([{ from: 'bot', text: t('Could not reach support right now. Please try again shortly.') }]);
       }
     })();
   }, [applicationId, sessionId]);
@@ -53,7 +55,7 @@ export default function SupportChat() {
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { from: 'bot', text: "Thanks for the details — noted on your ticket. Our team will follow up on your registered mobile number shortly." },
+        { from: 'bot', text: t('Thanks for the details — noted on your ticket. Our team will follow up on your registered mobile number shortly.') },
       ]);
       setLoading(false);
     }, 1200);
@@ -65,7 +67,7 @@ export default function SupportChat() {
   }
 
   return (
-    <PhoneScreen title="Support">
+    <PhoneScreen title={t('Support')}>
       <p className="text-[11px] text-on-surface-variant bg-surface-container-low rounded-lg p-2 mb-3">
         Mocked: agent replies below are simulated for this demo. The escalation ticket itself
         {ticket ? ` (#${ticket.ticket_id.slice(0, 8)})` : ''} is created for real via POST /support/escalate.
@@ -87,7 +89,7 @@ export default function SupportChat() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message…"
+          placeholder={t('Type a message…')}
           className="flex-1 bg-transparent border-none outline-none text-[14px]"
         />
         <button type="submit" className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center">

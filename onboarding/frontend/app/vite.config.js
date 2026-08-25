@@ -27,7 +27,33 @@ export default defineConfig(({ mode }) => {
   const sarvamTarget = 'https://api.sarvam.ai'
   const sarvamKey = env.SARVAM_API_KEY || ''
 
+  // Where the app is mounted. '/' for local dev; a deployment behind a
+  // sub-path sets APP_BASE=/onboarding-v2/ (leading and trailing slash).
+  //
+  // This has to reach three places at once or the app half-works: Vite's own
+  // `base` (so built asset URLs resolve), import.meta.env.BASE_URL (which
+  // src/lib/basePath.js builds every same-origin URL from), and the proxy
+  // routes below -- the browser will now ask for `/onboarding-v2/tts-ws`, so a
+  // proxy key of `/tts-ws` would never match and the socket would hang at
+  // "Connecting…" exactly as if the route did not exist.
+  const rawBase = env.APP_BASE || '/'
+  const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`
+  // Named `mount`, not `p`: the rewrite callbacks below take the path as `p`,
+  // and a one-letter helper here would be shadowed inside exactly the place
+  // that needs it.
+  const mount = (route) => `${base.replace(/\/+$/, '')}${route}`   // '/voice-api' -> '/onboarding-v2/voice-api'
+  // Strips the app base AND the route prefix, so the upstream sees the path it
+  // expects regardless of where this app is mounted.
+  const strip = (route) => (path) => path.replace(new RegExp(`^${mount(route)}`), '')
+  // Strips ONLY the app base, keeping the route. For upstreams that own the
+  // route name themselves (/agents/..., /api/tools/...) rather than having it
+  // rewritten away. Without this the backend receives
+  // "/onboarding-v2/agents/finguru/invoke" and answers 404 -- which reads as a
+  // broken backend rather than a mis-proxied path.
+  const stripBase = (path) => path.replace(new RegExp(`^${base.replace(/\/+$/, '')}`), '') || '/'
+
   return {
+    base,
     plugins: [react()],
     server: {
       port: frontendPort,
@@ -42,6 +68,8 @@ export default defineConfig(({ mode }) => {
         '.ngrok-free.dev',
         '.ngrok.io',
         '.trycloudflare.com',
+        '.innohub.sbi',          // sandbox/demo hosting
+        'localhost',
         ...(env.FRONTEND_ALLOWED_HOSTS
           ? env.FRONTEND_ALLOWED_HOSTS.split(',').map((h) => h.trim()).filter(Boolean)
           : []),
@@ -61,23 +89,25 @@ export default defineConfig(({ mode }) => {
         // Set VITE_FINGURU_URL=/agents/finguru/invoke to use this. An
         // absolute URL still works and bypasses this entirely, so nothing
         // that already points at a hosted backend changes.
-        '/agents': {
+        [mount('/agents')]: {
           target: env.FINGURU_BACKEND_TARGET || 'http://localhost:8080',
           changeOrigin: true,
           secure: false,
+          rewrite: stripBase,
         },
         // Same-origin path for the name-identity + dynamic-tools endpoints
         // (/api/history, /api/tools, /api/tools/execute) on that same backend.
-        '/api/tools': {
+        [mount('/api/tools')]: {
           target: env.FINGURU_BACKEND_TARGET || 'http://localhost:8080',
           changeOrigin: true,
           secure: false,
+          rewrite: stripBase,
         },
-        '/voice-api': {
+        [mount('/voice-api')]: {
           target: voiceTarget,
           changeOrigin: true,
           secure: true,
-          rewrite: (p) => p.replace(/^\/voice-api/, '/voice'),
+          rewrite: (path) => `/voice${strip('/voice-api')(path)}`,
           headers: {
             'ngrok-skip-browser-warning': 'true',
             ...(voiceKey ? { Authorization: `Bearer ${voiceKey}` } : {}),
@@ -85,7 +115,7 @@ export default defineConfig(({ mode }) => {
         },
         // Streaming-TTS WebSocket for the Ollama-fallback voice path -- the
         // voice server's own local (Parler-TTS) streaming synth, never Sarvam.
-        '/tts-ws': {
+        [mount('/tts-ws')]: {
           target: voiceTarget,
           changeOrigin: true,
           secure: true,
@@ -96,11 +126,11 @@ export default defineConfig(({ mode }) => {
         // Sarvam batch STT (/speech-to-text) and TTS (/text-to-speech) REST
         // calls. Same-origin /sarvam-api/* -> https://api.sarvam.ai/* with the
         // subscription key attached here.
-        '/sarvam-api': {
+        [mount('/sarvam-api')]: {
           target: sarvamTarget,
           changeOrigin: true,
           secure: true,
-          rewrite: (p) => p.replace(/^\/sarvam-api/, ''),
+          rewrite: strip('/sarvam-api'),
           headers: sarvamKey ? { 'api-subscription-key': sarvamKey } : {},
         },
         // Sarvam's realtime STT WebSocket (saaras:v3-realtime), used for live
@@ -108,12 +138,12 @@ export default defineConfig(({ mode }) => {
         // Vite upgrades and proxies straight to Sarvam with the subscription
         // key attached server-side (browsers can't set custom WS handshake
         // headers, so this proxy is what keeps the key out of the client).
-        '/sarvam-stt-ws': {
+        [mount('/sarvam-stt-ws')]: {
           target: sarvamTarget,
           changeOrigin: true,
           secure: true,
           ws: true,
-          rewrite: (p) => p.replace(/^\/sarvam-stt-ws/, '/speech-to-text-realtime/ws'),
+          rewrite: (path) => `/speech-to-text-realtime/ws${strip('/sarvam-stt-ws')(path)}`,
           headers: sarvamKey ? { 'api-subscription-key': sarvamKey } : {},
         },
       },

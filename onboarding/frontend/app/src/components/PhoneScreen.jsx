@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
+import { useT } from '../lib/i18n';
 
 export default function PhoneScreen({ title, onBack, right, children, footer, noPad }) {
   const navigate = useNavigate();
+  const t = useT();
   return (
     <div className="flex flex-col min-h-screen bg-surface">
       {title !== undefined && (
@@ -10,7 +12,7 @@ export default function PhoneScreen({ title, onBack, right, children, footer, no
             <button
               onClick={onBack || (() => navigate(-1))}
               className="w-9 h-9 rounded-full flex items-center justify-center text-primary hover:bg-surface-container active:scale-95 transition"
-              aria-label="Back"
+              aria-label={t('Back')}
             >
               <ArrowIcon />
             </button>

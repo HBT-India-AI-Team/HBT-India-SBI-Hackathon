@@ -1,4 +1,5 @@
 import { logTtsReceived, logTtsPlaybackStart, debugLog } from '../lib/pipelineLog';
+import { wsUrl } from '../lib/basePath';
 
 // Streaming TTS over the voice server's WebSocket, shared by both brains.
 //
@@ -30,9 +31,7 @@ import { logTtsReceived, logTtsPlaybackStart, debugLog } from '../lib/pipelineLo
 // Same-origin WS; Vite proxies /tts-ws to <voice-server>/voice/tts/stream and
 // attaches the token (path configurable via VOICE_TTS_STREAM_PATH).
 function ttsWsUrl() {
-  const u = new URL('/tts-ws', window.location.href);
-  u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-  return u.toString();
+  return wsUrl('/tts-ws');
 }
 
 // Short/bounded: this connection is scoped to a single conversational turn.

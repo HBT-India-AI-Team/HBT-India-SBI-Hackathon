@@ -3,12 +3,13 @@ import { logTtsSent, logTtsReceived, logTtsPlaybackStart, debugError, debugWarn 
 import { normalizeForTTS } from '../lib/ttsText';
 import { sarvamTranscribe, sarvamSynthesize } from './sarvam';
 import { needsSarvamTts } from '../lib/ttsRouter';
+import { apiPath } from '../lib/basePath';
 
 // Talks to the reference voice server (voice_ai_server_client) via the
 // same-origin Vite proxy declared in vite.config.js. The proxy attaches the
 // Bearer token and rewrites /voice-api -> <server>/voice, so there is no CORS
 // preflight and no API key in the browser bundle.
-const VOICE_BASE = '/voice-api';
+const VOICE_BASE = apiPath('/voice-api');
 
 // Prompt 7 (fallback UI): lightweight probe used to auto-retry the voice
 // pipeline in the background while the user is on the text fallback, so they

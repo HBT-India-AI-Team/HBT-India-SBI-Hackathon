@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { logSttSent, logSttReceived, logTtsSent, logTtsReceived, debugError } from '../lib/pipelineLog';
+import { apiPath } from '../lib/basePath';
 
 // Direct calls to Sarvam's own API (proxied same-origin via /sarvam-api so
 // the subscription key stays server-side, see vite.config.js) -- NOT routed
 // through the voice server. Its outbound path to api.sarvam.ai fails
 // (corporate TLS-inspection proxy on that machine rejects Sarvam's cert
 // chain); the browser's own network has no such interception.
-const SARVAM_BASE = '/sarvam-api';
+const SARVAM_BASE = apiPath('/sarvam-api');
 
 // This app's 2-letter codes (see lib/languages.js) -> Sarvam's required
 // BCP-47 codes. Only covers codes LANGUAGE_NAMES actually defines.

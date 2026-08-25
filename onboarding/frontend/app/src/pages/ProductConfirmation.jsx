@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PhoneScreen from '../components/PhoneScreen';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { useT } from '../lib/i18n';
 
 const PRODUCTS = [
   {
@@ -32,10 +33,11 @@ export default function ProductConfirmation() {
   const navigate = useNavigate();
   const { patch, productId } = useApp();
   const [selected, setSelected] = useState(productId || 'savings_account');
+  const t = useT();
 
   return (
     <PhoneScreen
-      title="Open Account"
+      title={t('Open Account')}
       footer={
         <PrimaryButton
           onClick={() => {
@@ -43,7 +45,7 @@ export default function ProductConfirmation() {
             navigate('/consent');
           }}
         >
-          Yes, this one
+          {t('Yes, this one')}
         </PrimaryButton>
       }
     >
@@ -52,7 +54,7 @@ export default function ProductConfirmation() {
           🤖
         </div>
         <div className="bg-surface-container-low p-3.5 rounded-2xl rounded-bl-sm border border-surface-highest text-[14.5px]">
-          Based on what you're looking for, here are the accounts we can open for you today. Pick one to continue.
+          {t("Based on what you're looking for, here are the accounts we can open for you today. Pick one to continue.")}
         </div>
       </div>
       <div className="flex flex-col gap-4">
@@ -66,8 +68,8 @@ export default function ProductConfirmation() {
           >
             <div className="flex items-start justify-between mb-2">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-primary">{p.tag}</span>
-                <h2 className="font-heading font-bold text-[17px] text-on-surface">{p.name}</h2>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary">{t(p.tag)}</span>
+                <h2 className="font-heading font-bold text-[17px] text-on-surface">{t(p.name)}</h2>
               </div>
               <div className="w-11 h-11 rounded-full bg-primary-container/15 flex items-center justify-center text-xl shrink-0">
                 {p.icon}
@@ -76,7 +78,7 @@ export default function ProductConfirmation() {
             <ul className="flex flex-col gap-1 mt-2">
               {p.perks.map((perk) => (
                 <li key={perk} className="text-[13px] text-on-surface-variant flex items-center gap-2">
-                  <span className="text-primary">✓</span> {perk}
+                  <span className="text-primary">✓</span> {t(perk)}
                 </li>
               ))}
             </ul>

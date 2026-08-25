@@ -37,6 +37,21 @@ NUDGE_COOLDOWN_SECONDS = float(os.environ.get("NUDGE_COOLDOWN_SECONDS", "300"))
 OTP_EXPIRY_SECONDS = int(os.environ.get("OTP_EXPIRY_SECONDS", "300"))
 OTP_DELIVERY_CHANNEL = os.environ.get("OTP_DELIVERY_CHANNEL", "auto")  # auto/telegram/email/sms
 
+# DEV ONLY. When true, ANY input passes the OTP step -- a wrong code, a
+# ten-digit number, an empty string. The code is still generated, dispatched
+# and logged; only the check on the way back in is skipped.
+#
+# It exists because OTP delivery is not wired up yet (SMS is mock-only, and
+# email/Telegram need credentials this environment does not have), which
+# leaves every demo of the flow blocked behind a code nobody can receive.
+#
+# Off unless explicitly switched on, and never to be on anywhere real: with
+# this set, anyone can claim any mobile number without proving they hold it,
+# which is the single thing the OTP step exists to prevent. Every bypassed
+# verification logs a WARNING naming the requirement, so an environment that
+# has it on by accident says so loudly in its own logs.
+OTP_BYPASS = os.environ.get("OTP_BYPASS", "false").strip().lower() == "true"
+
 # --- Telegram (Phase 6) ---
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "yono3_bot")

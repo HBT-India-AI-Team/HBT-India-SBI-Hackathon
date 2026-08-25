@@ -1,12 +1,18 @@
 import axios from 'axios';
 import { logLlmSent, logLlmReceived, debugError } from '../lib/pipelineLog';
+import { resolveConfiguredUrl } from '../lib/basePath';
 
 // FinGuru talks to its OWN hosted agent backend -- deliberately NOT the
 // shared onboarding `client` in ./client.js. Keeping this isolated means the
 // onboarding API and FinGuru can point at completely different servers.
-const FINGURU_URL =
-  import.meta.env.VITE_FINGURU_URL ||
-  'https://ominous-ripening-droplet.ngrok-free.dev/agents/finguru/invoke';
+// A relative value (the default deployment style, e.g.
+// "/agents/finguru/invoke") is mounted under the app's base so it still
+// resolves when the app is served from a sub-path. An absolute URL is left
+// exactly as configured -- see lib/basePath.js.
+const FINGURU_URL = resolveConfiguredUrl(
+  import.meta.env.VITE_FINGURU_URL,
+  'https://ominous-ripening-droplet.ngrok-free.dev/agents/finguru/invoke',
+);
 const FINGURU_KEY = import.meta.env.VITE_FINGURU_KEY || 'z_oz7yXmwrkZq64hJHstqzuKNVziPUKa';
 
 const finguruClient = axios.create({

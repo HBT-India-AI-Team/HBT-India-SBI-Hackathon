@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { PrimaryButton, GhostButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { useT } from '../lib/i18n';
 
 export default function Greeting() {
+  const t = useT();
   const navigate = useNavigate();
   const { reset } = useApp();
 
@@ -13,12 +15,12 @@ export default function Greeting() {
           Y
         </div>
         <h1 className="font-heading font-bold text-3xl text-primary leading-tight mt-2">
-          Hey there 👋
+          {t('Hey there')} 👋
           <br />
-          Welcome to YONO 3.0
+          {t('Welcome to YONO 3.0')}
         </h1>
         <p className="text-on-surface-variant text-[15px] max-w-xs">
-          Open a bank account in a few minutes — just chat with us, no forms, no branch visits.
+          {t('Open a bank account in a few minutes — just chat with us, no forms, no branch visits.')}
         </p>
       </div>
 
@@ -33,9 +35,9 @@ export default function Greeting() {
               navigate('/language');
             }}
           >
-            Let's get started
+            {t("Let's get started")}
           </PrimaryButton>
-          <GhostButton onClick={() => navigate('/home')}>I already have an application</GhostButton>
+          <GhostButton onClick={() => navigate('/home')}>{t('I already have an application')}</GhostButton>
         </div>
       </div>
     </div>

@@ -150,6 +150,109 @@ def _fraud_response() -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Curated deterministic answer: "what education loans does SBI offer?"
+#
+# This is the ONE question where the scheme list must come back complete,
+# verbatim and in SBI's own order every single time -- an LLM summarising the
+# topic body would reorder it and drop entries to stay inside the ~120-word
+# answer_text budget in _build_prompt(). So this question short-circuits to the
+# curated text below BEFORE the LLM call, exactly like _fraud_response() does.
+# The wording mirrors the sbi_education_loans knowledge topic
+# (data/finguru_knowledge/education_loans.json), which is what the citation
+# chip and the citation view resolve against.
+# ---------------------------------------------------------------------------
+_EDUCATION_LOANS_TOPIC_ID = "sbi_education_loans"
+
+# The exact list, verbatim and in SBI's published order. Kept as a plain
+# triple-quoted literal (no escapes) so what you read here is byte-for-byte
+# what the user sees; blank lines and '*' bullets are the light markdown the
+# frontend's Markdown component in pages/FinGuruChat.jsx already renders.
+_EDUCATION_LOANS_ANSWER = """SBI offers a full range of education loan schemes — here are all of them:
+
+**SBI PM-Vidyalaxmi Scheme**
+* For Quality Higher Educational Institutions (QHEIs) selected by Government
+
+**SBI Student Loan Scheme**
+
+**SBI Scholar Loan Scheme**
+* For Select Premier Institutions
+
+**SBI Global Ed-Vantage Scheme**
+* For Studies abroad (above ₹7.50 lakhs)
+
+**SBI Skill Loan Scheme**
+* For pursuing Skill development courses
+
+**Takeover Of Education Loans**
+
+**Dr. Ambedkar Interest Subsidy Scheme for Overseas Studies for OBCs and EBCs**
+
+**Padho Pardesh Interest Subsidy Scheme for Overseas Studies for the Minority Communities**
+
+**Repayment**
+
+**CSIS Scheme**
+* INTEREST SUBSIDY SCHEME
+
+**Education Loan MITC**
+
+**Shaurya Education Loan**
+* For Defence, Indian Coast Guard & Central Armed Police Force Personnel
+
+**Deceased Borrower/Guarantor**
+
+**Release of Property Documents of EL**"""
+
+_EDUCATION_LOANS_FOLLOW_UPS = [
+    "Which one fits studying abroad?",
+    "What documents do I need for an education loan?",
+    "How does the repayment moratorium work?",
+]
+
+# An education word AND a loan word must both appear -- "education" alone would
+# also match e.g. the Sukanya Samriddhi topic ("for a girl child's education").
+_EDU_WORDS = ("education", "educational", "student", "study", "studies", "college", "university", "tuition")
+_LOAN_WORDS = ("loan", "loans", "borrow", "finance", "financing", "funding")
+# A named scheme is specific enough to match on its own.
+_EDU_SCHEME_NAMES = (
+    "vidyalaxmi", "vidya laxmi", "ed-vantage", "ed vantage", "edvantage",
+    "scholar loan", "skill loan", "shaurya", "padho pardesh", "csis",
+    "ambedkar interest subsidy",
+)
+
+
+def _detect_education_loan_query(question_text: str) -> bool:
+    q = (question_text or "").lower()
+    if any(name in q for name in _EDU_SCHEME_NAMES):
+        return True
+    return any(w in q for w in _EDU_WORDS) and any(w in q for w in _LOAN_WORDS)
+
+
+def _education_loans_response(db) -> dict:
+    """Curated list response. Cites the real sbi_education_loans topic when it
+    has been seeded (python -m backend.scripts.seed_finguru_knowledge); if the
+    KB has not been seeded the answer is still returned, just uncited, rather
+    than pointing the citation view at a topic id that does not exist."""
+    cited = []
+    try:
+        if db.query(m.FinGuruTopic).filter_by(id=_EDUCATION_LOANS_TOPIC_ID).first():
+            cited = [{"topic_id": _EDUCATION_LOANS_TOPIC_ID, "label": "SBI Education Loan Schemes"}]
+    except Exception as e:  # DB hiccup must not lose the answer itself
+        logger.warning("[finguru] education-loan citation lookup failed: %s: %s", type(e).__name__, e)
+    return {
+        "answer_text": _EDUCATION_LOANS_ANSWER,
+        "citations": cited,
+        "follow_up_questions": list(_EDUCATION_LOANS_FOLLOW_UPS),
+        "confidence": "grounded",
+        "retrieved_topic_ids": [c["topic_id"] for c in cited],
+        "suggested_widget": None,
+        "suggested_action": None,
+        "suggested_product_id": None,
+        "fraud_warning": False,
+        "fraud_bullets": [],
+    }
+
 def _detect_product_handoff(citations: list, id_to_topic: dict) -> str | None:
     """Phase 8: if any cited topic maps to a real onboarding product (via its
     "product_id:<id>" tag), validate that id against the SAME product catalog
@@ -354,6 +457,12 @@ def ask(conversation, question_text: str, db, history: list | None = None) -> di
     if _detect_fraud(question_text):
         logger.info("[finguru] fraud-pattern keywords matched for %r", question_text)
         return _fraud_response()
+
+    # Curated deterministic answer for the SBI education-loan scheme list --
+    # also before the LLM call, for the reasons documented above.
+    if _detect_education_loan_query(question_text):
+        logger.info("[finguru] education-loan query matched for %r -> curated list", question_text)
+        return _education_loans_response(db)
 
     # Context-aware retrieval: a follow-up like "who is eligible to open one?"
     # has no topic keywords on its own, so anchor it with the most recent user

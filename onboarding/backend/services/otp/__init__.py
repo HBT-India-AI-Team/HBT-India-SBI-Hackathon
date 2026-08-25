@@ -45,6 +45,15 @@ def verify_otp(requirement, submitted_code: str):
     """Checks match + not expired. Returns {ok, error} with error being one
     of 'wrong_code' | 'expired_code' | None, per the frontend's separate
     copy requirement for each case."""
+    if config.OTP_BYPASS:
+        # See config.OTP_BYPASS. Deliberately ahead of every other check,
+        # including no_otp_pending and expiry, so the step cannot block for any
+        # reason while delivery is unavailable.
+        logger.warning(
+            "[OTP][BYPASS] accepting %r without verification (OTP_BYPASS=true) requirement=%s",
+            submitted_code, requirement.id,
+        )
+        return {"ok": True, "error": None, "bypassed": True}
     if not requirement.otp_code_hash or not requirement.otp_expires_at:
         return {"ok": False, "error": "no_otp_pending"}
     if datetime.utcnow() > requirement.otp_expires_at:

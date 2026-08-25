@@ -1,6 +1,9 @@
 import axios from 'axios';
+import { resolveConfiguredUrl } from '../lib/basePath';
 
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+// Relative values are mounted under the app's base (so a sub-path deployment
+// works); absolute URLs are used as configured. See lib/basePath.js.
+export const API_BASE = resolveConfiguredUrl(import.meta.env.VITE_API_BASE, 'http://localhost:8000');
 
 const client = axios.create({ baseURL: API_BASE });
 

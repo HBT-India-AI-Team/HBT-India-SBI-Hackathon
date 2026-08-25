@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import PhoneScreen from '../components/PhoneScreen';
 import ChatWindow from '../components/ChatWindow';
 import { useApp } from '../context/AppContext';
+import { useT } from '../lib/i18n';
 
 // Reachable at /onboarding. An external caller can deep-link here with known
 // details, e.g. /onboarding?name=Asha&mobile=9876543210 -- those are captured
@@ -13,6 +14,7 @@ import { useApp } from '../context/AppContext';
 // caller's details already known by the time the user gets there.
 export default function ChatPage() {
   const navigate = useNavigate();
+  const t = useT();
   const [searchParams] = useSearchParams();
   const { applicationId, sessionId, name, patch } = useApp();
 
@@ -35,12 +37,12 @@ export default function ChatPage() {
 
   return (
     <PhoneScreen
-      title="YONO Assistant"
+      title={t('Onboarding Assistant')}
       right={
         <button
           onClick={() => navigate('/support')}
           className="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-sm"
-          title="Get help"
+          title={t('Get help')}
         >
           ❓
         </button>
@@ -51,8 +53,8 @@ export default function ChatPage() {
         applicationId={applicationId}
         emptyHint={
           name
-            ? `Hi ${name}! Let's get your account set up — send me your details whenever you're ready.`
-            : "Hi! Let's get your account set up — send me your details whenever you're ready."
+            ? t("Hi {name}! Let's get your account set up — send me your details whenever you're ready.", { name })
+            : t("Hi! Let's get your account set up — send me your details whenever you're ready.")
         }
         onApplicationUpdate={(app) => patch({ application: app })}
         onNeedsGuardian={() => navigate('/guardian')}
