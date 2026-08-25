@@ -95,9 +95,17 @@ export default defineConfig(({ mode }) => {
           secure: false,
           rewrite: stripBase,
         },
-        // Same-origin path for the name-identity + dynamic-tools endpoints
-        // (/api/history, /api/tools, /api/tools/execute) on that same backend.
-        [mount('/api/tools')]: {
+        // Same-origin path for the name-identity + dynamic-tools endpoints on
+        // that same backend: /api/history, /api/tools, /api/tools/execute,
+        // /api/tools/save, /api/tools/saved.
+        //
+        // Keyed on '/api', not '/api/tools': proxy keys are prefix matches, so
+        // the narrower key never matched /api/history. That request fell
+        // through to the SPA and came back as index.html with a 200 -- the
+        // client then tried to parse HTML as JSON. The onboarding API is
+        // reached through VITE_API_BASE (an absolute URL, different port), so
+        // nothing else competes for this prefix.
+        [mount('/api')]: {
           target: env.FINGURU_BACKEND_TARGET || 'http://localhost:8080',
           changeOrigin: true,
           secure: false,
